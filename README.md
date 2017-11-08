@@ -12,11 +12,16 @@ $ pip install -r requirements.txt
 ### Run
 
 ```
-$ Python main.py
+$ python main.py
 ```
 
 ### Help
 
 ```
 $ python main.py --help
+```
+
+### Python versions supported ?
+```
+Only tested Python versions 2.7.12 and 3.5.2 on Ubuntu 16.04. 
 ```
