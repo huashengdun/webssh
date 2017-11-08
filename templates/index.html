@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title> WebSSH </title>
+    <link href="static/img/favicon.png" rel="icon" type="image/png">
+    <link href="static/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <link href="static/css/xterm.min.css" rel="stylesheet" type="text/css"/>
+    <link href="static/css/fullscreen.min.css" rel="stylesheet" type="text/css"/>
+    <style>
+      .row {
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .container {
+        margin-top: 20px;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
+			<form id="connect" action="" type="post" enctype="multipart/form-data">
+				<div class="row">
+					<div class="col">
+            <label for="Hostname">Hostname</label>
+						<input class="form-control" type="text" name="hostname" value="">
+					</div>
+					<div class="col">
+            <label for="Port">Port</label>
+						<input class="form-control" type="text" name="port" value="">
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+            <label for="Username">Username</label>
+						<input class="form-control" type="text" name="username" value="">
+	 				</div>
+					<div class="col">
+            <label for="Username">Private Key</label>
+						<input class="form-control" type="file" name="privatekey" value="">
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+            <label for="Password">Password</label>
+						<input class="form-control" type="password" name="password" placeholder=""  value="">
+	 				</div>
+					<div class="col">
+            If Private Key is chosen, password will be used to decrypt the Private Key if it is encrypted, otherwise used as the password of username.
+          </div>
+				</div>
+        {% module xsrf_form_html() %}
+        <button type="submit" class="btn btn-primary">Connect</button>
+			</form>
+
+    </div>
+
+    <div class="container">
+      <div id="status"></div>
+      <div id="terminal"></div>
+    </div>
+
+
+    <script src="static/js/jquery.min.js"></script>
+    <script src="static/js/popper.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+    <script src="static/js/xterm.min.js"></script>
+    <script src="static/js/fullscreen.min.js"></script>
+    <script src="static/js/main.js"></script>
+  </body>
+</html>
