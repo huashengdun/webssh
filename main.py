@@ -2,6 +2,7 @@ import io
 import logging
 import os.path
 import socket
+import traceback
 import uuid
 import weakref
 import paramiko
@@ -166,9 +167,8 @@ class IndexHandler(tornado.web.RequestHandler):
         try:
             worker = self.ssh_connect()
         except Exception as e:
-            logging.error((type(e), e))
+            logging.error(traceback.format_exc())
             status = str(e)
-            # raise
         else:
             worker_id = worker.id
             workers[worker_id] = worker
