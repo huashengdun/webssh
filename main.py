@@ -1,18 +1,14 @@
+import io
 import logging
 import os.path
 import socket
-import weakref
 import uuid
+import weakref
 import paramiko
 import tornado.web
 import tornado.websocket
 from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO
 
 
 define('address', default='127.0.0.1', help='listen address')
@@ -109,10 +105,7 @@ class IndexHandler(tornado.web.RequestHandler):
         if not password:
             password = None
 
-        try:
-            spkey = StringIO(privatekey)
-        except TypeError:
-            spkey = StringIO(privatekey.decode('utf-8'))
+        spkey = io.StringIO(privatekey.decode('utf-8'))
 
         try:
             pkey = paramiko.RSAKey.from_private_key(spkey, password=password)
