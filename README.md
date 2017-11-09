@@ -37,3 +37,8 @@ location / {
     proxy_set_header Connection "upgrade";
     proxy_set_header Host $host;
 } 
+```
+
+### Tips
+* If you want to run it in production server, please disable debug mode, set debug as False in settings.
+* Try to use Nginx a front web server and enable HTTPS, this will prevent your ssh credentials from being uncovered. Also the communication between your browser and the web server will be encrypted as they use secured websockets.
