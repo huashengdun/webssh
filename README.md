@@ -22,11 +22,6 @@ $ python main.py
 $ python main.py --help
 ```
 
-### Python versions supported ?
-```
-Only tested with Python versions 2.7.12 and 3.5.2 on Ubuntu 16.04. 
-```
-
 ### A config example for putting Nginx as a front web server
 ```
 location / { 
@@ -42,3 +37,6 @@ location / {
 ### Tips
 * If you want to run it in a production server, please disable debug mode, set debug as False in settings.
 * Try to use Nginx as a front web server (see config example above) and enable HTTPS, this will prevent your ssh credentials from being uncovered. Also the communication between your browser and the web server will be encrypted as they use secured websockets.
+
+### About Python version
+Should work from 2.6 to 3.6, but if you happen to find it does work for a specific version please open an issue here.
