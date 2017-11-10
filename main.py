@@ -84,6 +84,9 @@ class Worker(object):
             data = data[sent:]
             if data:
                 self.data_to_dst.append(data)
+                self.loop.update_handler(self.fd, IOLoop.WRITE)
+            else:
+                self.loop.update_handler(self.fd, IOLoop.READ)
 
     def close(self):
         logging.debug('Closing worker {}'.format(self.id))
@@ -196,7 +199,7 @@ class WsockHandler(tornado.websocket.WebSocketHandler):
         self.set_nodelay(True)
         worker.set_handler(self)
         self.worker_ref = weakref.ref(worker)
-        self.loop.add_handler(worker.fd, worker, IOLoop.READ | IOLoop.WRITE)
+        self.loop.add_handler(worker.fd, worker, IOLoop.READ)
 
     def on_message(self, message):
         logging.debug('"{}" from {}'.format(message, self.src_addr))
