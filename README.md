@@ -36,7 +36,7 @@ location / {
 
 ### Tips
 * If you want to run it in a production server, please disable debug mode, set debug as False in settings.
-* Try to use Nginx as a front web server (see config example above) and enable HTTPS, this will prevent your ssh credentials from being uncovered. Also the communication between your browser and the web server will be encrypted as they use secured websockets.
+* Try to use Nginx as a front web server (see config example above) and enable HTTPS, this will prevent your ssh credentials from being uncovered. Also afterwards the communication between your browser and the web server will be encrypted as they use secured websockets.
 
 ### About Python version
-Should work from 2.6 to 3.6, but if you happen to find it does work for a specific version please open an issue here.
+Should work from 2.6 to 3.6, but if you happen to find it does work for a specific python version, please open an issue here.
