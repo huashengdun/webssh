@@ -1,7 +1,6 @@
 import io
 import logging
 import os.path
-import socket
 import traceback
 import uuid
 import weakref
@@ -9,7 +8,9 @@ import paramiko
 import tornado.web
 import tornado.websocket
 from tornado.ioloop import IOLoop
+from tornado.iostream import _ERRNO_CONNRESET
 from tornado.options import define, options, parse_command_line
+from tornado.util import errno_from_exception
 
 
 define('address', default='127.0.0.1', help='listen address')
@@ -56,31 +57,42 @@ class Worker(object):
 
     def on_read(self):
         logging.debug('worker {} on read'.format(self.id))
-        data = self.chan.recv(BUF_SIZE)
-        logging.debug('"{}" from {}'.format(data, self.dst_addr))
-        if not data:
-            self.close()
-            return
-
-        logging.debug('"{}" to {}'.format(data, self.handler.src_addr))
         try:
-            self.handler.write_message(data)
-        except tornado.websocket.WebSocketClosedError:
-            self.close()
+            data = self.chan.recv(BUF_SIZE)
+        except (OSError, IOError) as e:
+            logging.error(e)
+            if errno_from_exception(e) in _ERRNO_CONNRESET:
+                self.close()
+        else:
+            logging.debug('"{}" from {}'.format(data, self.dst_addr))
+            if not data:
+                self.close()
+                return
+
+            logging.debug('"{}" to {}'.format(data, self.handler.src_addr))
+            try:
+                self.handler.write_message(data)
+            except tornado.websocket.WebSocketClosedError:
+                self.close()
 
     def on_write(self):
         logging.debug('worker {} on write'.format(self.id))
         if not self.data_to_dst:
             return
+
         data = ''.join(self.data_to_dst)
-        self.data_to_dst = []
         logging.debug('"{}" to {}'.format(data, self.dst_addr))
+
         try:
             sent = self.chan.send(data)
-        except socket.error as e:
+        except (OSError, IOError) as e:
             logging.error(e)
-            self.close()
+            if errno_from_exception(e) in _ERRNO_CONNRESET:
+                self.close()
+            else:
+                self.loop.update_handler(self.fd, IOLoop.WRITE)
         else:
+            self.data_to_dst = []
             data = data[sent:]
             if data:
                 self.data_to_dst.append(data)
