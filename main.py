@@ -41,6 +41,7 @@ class Worker(object):
         self.id = str(id(self))
         self.data_to_dst = []
         self.handler = None
+        self.mode = IOLoop.READ
 
     def __call__(self, fd, events):
         if events & IOLoop.READ:
@@ -51,9 +52,13 @@ class Worker(object):
             self.close()
 
     def set_handler(self, handler):
-        if self.handler:
-            return
-        self.handler = handler
+        if not self.handler:
+            self.handler = handler
+
+    def update_handler(self, mode):
+        if self.mode != mode:
+            self.loop.update_handler(self.fd, mode)
+            self.mode = mode
 
     def on_read(self):
         logging.debug('worker {} on read'.format(self.id))
@@ -90,15 +95,15 @@ class Worker(object):
             if errno_from_exception(e) in _ERRNO_CONNRESET:
                 self.close()
             else:
-                self.loop.update_handler(self.fd, IOLoop.WRITE)
+                self.update_handler(IOLoop.WRITE)
         else:
             self.data_to_dst = []
             data = data[sent:]
             if data:
                 self.data_to_dst.append(data)
-                self.loop.update_handler(self.fd, IOLoop.WRITE)
+                self.update_handler(IOLoop.WRITE)
             else:
-                self.loop.update_handler(self.fd, IOLoop.READ)
+                self.update_handler(IOLoop.READ)
 
     def close(self):
         logging.debug('Closing worker {}'.format(self.id))
