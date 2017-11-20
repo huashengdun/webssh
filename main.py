@@ -144,12 +144,12 @@ class IndexHandler(tornado.web.RequestHandler):
         if 0 < port < 65536:
             return port
 
-        raise ValueError("Invalid port {}".format(value))
+        raise ValueError('Invalid port {}'.format(value))
 
     def get_value(self, name):
         value = self.get_argument(name)
         if not value:
-            raise ValueError("Empty {}".format(name))
+            raise ValueError('Empty {}'.format(name))
         return value
 
     def get_args(self):
