@@ -206,8 +206,16 @@ class WsockHandler(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
+    def get_addr(self):
+        ip = self.request.headers.get_list('X-Real-Ip')
+        port = self.request.headers.get_list('X-Real-Port')
+        addr = ':'.join(ip + port)
+        if not addr:
+            addr = '{}:{}'.format(*self.stream.socket.getpeername())
+        return addr
+
     def open(self):
-        self.src_addr = '{}:{}'.format(*self.stream.socket.getpeername())
+        self.src_addr = self.get_addr()
         logging.info('Connected from {}'.format(self.src_addr))
         worker = workers.pop(self.get_argument('id'), None)
         if not worker:
