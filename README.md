@@ -22,7 +22,7 @@ $ python main.py
 $ python main.py --help
 ```
 
-### A config example for putting Nginx as a front web server
+### Nginx config example for running this app behind an nginx server
 ```
 location / { 
     proxy_pass http://127.0.0.1:8888;
