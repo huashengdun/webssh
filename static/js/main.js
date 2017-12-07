@@ -28,7 +28,7 @@ jQuery(function($){
 
     var ws_url = window.location.href.replace('http', 'ws'),
         join = (ws_url[ws_url.length-1] == '/' ? '' : '/'),
-        url = ws_url + join + 'ws?id=' + msg.id;
+        url = ws_url + join + 'ws?id=' + msg.id,
         socket = new WebSocket(url),
         terminal = document.getElementById('#terminal'),
         term = new Terminal({cursorBlink: true});
