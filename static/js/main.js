@@ -42,6 +42,7 @@ jQuery(function($){
     socket.onopen = function(e) {
       $('.container').hide();
       term.open(terminal, true);
+      term.toggleFullscreen(true);
     };
 
     socket.onmessage = function(msg) {
