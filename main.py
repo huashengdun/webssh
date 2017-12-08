@@ -144,11 +144,9 @@ class IndexHandler(tornado.web.RequestHandler):
             or self.get_specific_pkey(paramiko.ECDSAKey, privatekey, password)\
             or self.get_specific_pkey(paramiko.Ed25519Key, privatekey,
                                       password)
-
         if not pkey:
-            raise ValueError('Wrong password for decrypting the private key'
-                             ' or the private key is not valid.')
-
+            raise ValueError('Not a valid private key file or '
+                             'wrong password for decrypting the private key.')
         return pkey
 
     def get_port(self):
