@@ -1,6 +1,7 @@
 import io
 import logging
 import os.path
+import socket
 import traceback
 import uuid
 import weakref
@@ -186,7 +187,12 @@ class IndexHandler(tornado.web.RequestHandler):
         args = self.get_args()
         dst_addr = '{}:{}'.format(*args[:2])
         logging.info('Connecting to {}'.format(dst_addr))
-        ssh.connect(*args)
+        try:
+            ssh.connect(*args, timeout=6)
+        except socket.error:
+            raise ValueError('Unable to connect to {}'.format(dst_addr))
+        except paramiko.BadAuthenticationType:
+            raise ValueError('Authentication failed.')
         chan = ssh.invoke_shell(term='xterm')
         chan.setblocking(0)
         worker = Worker(ssh, chan, dst_addr)
