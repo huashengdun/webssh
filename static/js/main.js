@@ -67,7 +67,8 @@ jQuery(function($){
       console.log(e);
       term.destroy();
       $('.container').show();
-      $('#status').text(e.reason);
+      status.text(e.reason);
+      btn.prop('disabled', false);
     };
   }
 });
