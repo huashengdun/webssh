@@ -118,20 +118,36 @@ class Worker(object):
 class IndexHandler(tornado.web.RequestHandler):
     def get_privatekey(self):
         try:
-            return self.request.files.get('privatekey')[0]['body']
+            data = self.request.files.get('privatekey')[0]['body']
         except TypeError:
+            return
+        return data.decode('utf-8')
+
+    def get_specific_pkey(self, pkeycls, privatekey, password):
+        logging.info('Trying {}'.format(pkeycls.__name__))
+        try:
+            pkey = pkeycls.from_private_key(io.StringIO(privatekey),
+                                            password=password)
+        except paramiko.PasswordRequiredException:
+            raise ValueError('Need password to decrypt the private key.')
+        except paramiko.SSHException:
             pass
+        else:
+            return pkey
 
     def get_pkey(self, privatekey, password):
-        if not password:
-            password = None
+        password = password.encode('utf-8') if password else None
 
-        spkey = io.StringIO(privatekey.decode('utf-8'))
+        pkey = self.get_specific_pkey(paramiko.RSAKey, privatekey, password)\
+            or self.get_specific_pkey(paramiko.DSSKey, privatekey, password)\
+            or self.get_specific_pkey(paramiko.ECDSAKey, privatekey, password)\
+            or self.get_specific_pkey(paramiko.Ed25519Key, privatekey,
+                                      password)
 
-        try:
-            pkey = paramiko.RSAKey.from_private_key(spkey, password=password)
-        except paramiko.SSHException:
-            pkey = paramiko.DSSKey.from_private_key(spkey, password=password)
+        if not pkey:
+            raise ValueError('Wrong password for decrypting the private key'
+                             ' or the private key is not valid.')
+
         return pkey
 
     def get_port(self):
