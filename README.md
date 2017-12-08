@@ -13,7 +13,18 @@ $ pip install -r requirements.txt
 ### Run
 
 ```
+// default listen on 127.0.0.1:8888
 $ python main.py
+
+// change listen address and port
+$ python main.py --address='0.0.0.0' --port=8000
+
+// change logging level
+$ python main.py --logging=debug
+
+// log to file
+$ python main.py --log-file-prefix=main.log
+
 ```
 
 ### Help
