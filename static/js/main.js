@@ -1,6 +1,12 @@
 jQuery(function($){
+
+  var status = $('#status'),
+      btn = $('.btn-primary');
+
   $('form#connect').submit(function(event) {
       event.preventDefault();
+      status.text('');
+      btn.prop('disabled', true);
 
       var form = $(this),
           url = form.attr('action'),
@@ -22,7 +28,10 @@ jQuery(function($){
   function callback(msg) {
     // console.log(msg);
     if (msg.status) {
-      $('#status').text(msg.status);
+      status.text(msg.status);
+      setTimeout(function(){
+        btn.prop('disabled', false);
+      }, 3000);
       return;
     }
 
