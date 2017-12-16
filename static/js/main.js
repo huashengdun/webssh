@@ -5,13 +5,20 @@ jQuery(function($){
 
   $('form#connect').submit(function(event) {
       event.preventDefault();
-      status.text('');
-      btn.prop('disabled', true);
 
       var form = $(this),
           url = form.attr('action'),
           type = form.attr('type'),
           data = new FormData(this);
+
+      var pk = data.get('privatekey');
+      if (pk && pk.size > 16384) {
+        status.text('Key size exceeds maximum value.');
+        return;
+      }
+
+      status.text('');
+      btn.prop('disabled', true);
 
       $.ajax({
           url: url,
