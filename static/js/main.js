@@ -47,7 +47,7 @@ jQuery(function($){
         url = ws_url + join + 'ws?id=' + msg.id,
         socket = new WebSocket(url),
         terminal = document.getElementById('#terminal'),
-        term = new Terminal({cursorBlink: true});
+        term = new Terminal({cursorBlink: true,clos:80,rows:34});
 
     console.log(url);
     term.on('data', function(data) {
