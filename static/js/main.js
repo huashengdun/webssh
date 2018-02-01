@@ -32,6 +32,14 @@ jQuery(function($){
 
   });
 
+
+  function current_geometry() {
+    cols = parseInt(window.innerWidth / 10);
+    rows = parseInt(window.innerHeight / 24);
+    return [cols, rows];
+  }
+
+
   function callback(msg) {
     // console.log(msg);
     if (msg.status) {
@@ -47,7 +55,12 @@ jQuery(function($){
         url = ws_url + join + 'ws?id=' + msg.id,
         socket = new WebSocket(url),
         terminal = document.getElementById('#terminal'),
-        term = new Terminal({cursorBlink: true});
+        geometry = current_geometry();
+        term = new Terminal({
+          cursorBlink: true,
+          cols: geometry[0],
+          rows: geometry[1]
+        });
 
     console.log(url);
     term.on('data', function(data) {
@@ -78,4 +91,13 @@ jQuery(function($){
       btn.prop('disabled', false);
     };
   }
+
+  $(window).resize(function(){
+    if (typeof term != "undefined") {
+      geometry = current_geometry();
+      term.geometry = geometry;
+      term.resize(geometry[0], geometry[1]);
+    }
+  });
+
 });
