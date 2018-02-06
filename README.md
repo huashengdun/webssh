@@ -5,6 +5,12 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 ![Login](https://github.com/huashengdun/webssh/raw/master/preview/login.png)
 ![Terminal](https://github.com/huashengdun/webssh/raw/master/preview/terminal.png)
 
+### Features
+* SSH password authentication supported, including empty password.
+* SSH public-key authentication supported, including DSA RSA ECDSA Ed25519 keys.
+* Encrypted keys supported.
+* Terminal window resizable.
+
 ### Install dependencies
 ```
 $ pip install -r requirements.txt
@@ -49,10 +55,6 @@ location / {
 ### Tips
 * If you want to run it in a production server, please disable debug mode, set debug as False in settings.
 * Try to use Nginx as a front web server (see config example above) and enable SSL, this will prevent your ssh credentials from being uncovered. Also afterwards the communication between your browser and the web server will be encrypted as they use secured websockets.
-
-### About ssh authentication methods
-* Password authentication. Username is required, password not required.
-* Public-key authentication. DSA RSA ECDSA Ed25519 keys are supported. Keys also can be encrypted.
 
 ### About Python version
 Should work from 2.7 to 3.6, but if you happen to find it does work for a specific python version, please open an issue here.
