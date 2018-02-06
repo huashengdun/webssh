@@ -33,6 +33,10 @@ $ python main.py --log-file-prefix=main.log
 $ python main.py --help
 ```
 
+### SSH authentication methods
+* Password authentication. Username is required, password not required.
+* Public-key authentication. DSA RSA ECDSA Ed25519 keys are supported. Keys also can be encrypted.
+
 ### Nginx config example for running this app behind an nginx server
 ```
 location / { 
