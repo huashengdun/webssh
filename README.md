@@ -9,7 +9,7 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 * SSH password authentication supported, including empty password.
 * SSH public-key authentication supported, including DSA RSA ECDSA Ed25519 keys.
 * Encrypted keys supported.
-* Fullscreen terminal window supported.
+* Fullscreen terminal supported.
 * Terminal window resizable.
 
 ### Install dependencies
