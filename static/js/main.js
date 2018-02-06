@@ -11,6 +11,11 @@ jQuery(function($){
           type = form.attr('type'),
           data = new FormData(this);
 
+      if (!data.get('hostname') || !data.get('port') || !data.get('username')) {
+        status.text('Hostname, port and username are required.');
+        return;
+      }
+
       var pk = data.get('privatekey');
       if (pk && pk.size > 16384) {
         status.text('Key size exceeds maximum value.');
