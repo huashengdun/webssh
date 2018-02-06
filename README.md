@@ -24,7 +24,6 @@ $ python main.py --logging=debug
 
 // log to file
 $ python main.py --log-file-prefix=main.log
-
 ```
 
 ### Help
@@ -32,10 +31,6 @@ $ python main.py --log-file-prefix=main.log
 ```
 $ python main.py --help
 ```
-
-### SSH authentication methods
-* Password authentication. Username is required, password not required.
-* Public-key authentication. DSA RSA ECDSA Ed25519 keys are supported. Keys also can be encrypted.
 
 ### Nginx config example for running this app behind an nginx server
 ```
@@ -54,6 +49,10 @@ location / {
 ### Tips
 * If you want to run it in a production server, please disable debug mode, set debug as False in settings.
 * Try to use Nginx as a front web server (see config example above) and enable SSL, this will prevent your ssh credentials from being uncovered. Also afterwards the communication between your browser and the web server will be encrypted as they use secured websockets.
+
+### About ssh authentication methods
+* Password authentication. Username is required, password not required.
+* Public-key authentication. DSA RSA ECDSA Ed25519 keys are supported. Keys also can be encrypted.
 
 ### About Python version
 Should work from 2.7 to 3.6, but if you happen to find it does work for a specific python version, please open an issue here.
