@@ -1,7 +1,8 @@
 jQuery(function($){
 
   var status = $('#status'),
-      btn = $('.btn-primary');
+      btn = $('.btn-primary'),
+      style = {};
 
   $('form#connect').submit(function(event) {
       event.preventDefault();
@@ -37,10 +38,20 @@ jQuery(function($){
 
   });
 
+  function parse_xterm_style() {
+    var text = $('.xterm-helpers style').text();
+    var arr = text.split('xterm-normal-char{width:');
+    style.width = parseInt(arr[1]) + 1;
+    arr = text.split('div{height:');
+    style.height = parseInt(arr[1]);
+  }
 
   function current_geometry() {
-    cols = parseInt(window.innerWidth / 10);
-    rows = parseInt(window.innerHeight / 24);
+    if (!style.width || !style.height) {
+      parse_xterm_style();
+    }
+    cols = parseInt(window.innerWidth / style.width);
+    rows = parseInt(window.innerHeight / style.height);
     return [cols, rows];
   }
 
