@@ -16,6 +16,7 @@ from tornado.util import errno_from_exception
 
 define('address', default='127.0.0.1', help='listen address')
 define('port', default=8888, help='listen port', type=int)
+define('debug', default=False, help='debug mode', type=bool)
 
 
 BUF_SIZE = 1024
@@ -264,8 +265,7 @@ def main():
         'template_path': os.path.join(base_dir, 'templates'),
         'static_path': os.path.join(base_dir, 'static'),
         'cookie_secret': uuid.uuid1().hex,
-        'xsrf_cookies': True,
-        'debug': True
+        'xsrf_cookies': True
     }
 
     handlers = [
@@ -274,6 +274,7 @@ def main():
     ]
 
     parse_command_line()
+    settings.update(debug=options.debug)
     app = tornado.web.Application(handlers, **settings)
     app.listen(options.port, options.address)
     logging.info('Listening on {}:{}'.format(options.address, options.port))
