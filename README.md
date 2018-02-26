@@ -13,32 +13,28 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 * Terminal window resizable.
 * Compatible with Python 2.7-3.6.
 
-### Install dependencies
+### Instructions
 ```
-$ pip install -r requirements.txt
-```
-
-### Run
-
-```
-// default listen on 127.0.0.1:8888
-$ python main.py
-
-// change listen address and port
-$ python main.py --address='0.0.0.0' --port=8000
-
-// change logging level
-$ python main.py --logging=debug
-
-// log to file
-$ python main.py --log-file-prefix=main.log
+git clone https://github.com/huashengdun/webssh.git
+cd webssh
+pip install -r requirements.txt
+python main.py
 ```
 
-### Help
+### Options
+```
+# configure listen address and port
+python main.py --address='0.0.0.0' --port=8000
 
-```
-$ python main.py --help
-```
+# configure logging level
+python main.py --logging=debug
+
+# log to file
+python main.py --log-file-prefix=main.log
+
+# more options
+python main.py --help
+```````
 
 ### Nginx config example for running this app behind an nginx server
 ```
