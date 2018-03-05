@@ -224,9 +224,6 @@ class WsockHandler(tornado.websocket.WebSocketHandler):
         self.worker_ref = None
         super(self.__class__, self).__init__(*args, **kwargs)
 
-    def check_origin(self, origin):
-        return True
-
     def get_addr(self):
         ip = self.request.headers.get_list('X-Real-Ip')
         port = self.request.headers.get_list('X-Real-Port')
