@@ -246,18 +246,15 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def open(self):
         self.src_addr = self.get_addr()
         logging.info('Connected from {}:{}'.format(*self.src_addr))
-        worker = workers.pop(self.get_argument('id'), None)
-        if not worker:
-            self.close(reason='Invalid worker id.')
-            return
-        if self.src_addr[0] != worker.src_addr[0]:
-            self.close(reason='Invalid client addr.')
-            return
-
-        self.set_nodelay(True)
-        worker.set_handler(self)
-        self.worker_ref = weakref.ref(worker)
-        self.loop.add_handler(worker.fd, worker, IOLoop.READ)
+        worker = workers.get(self.get_argument('id'), None)
+        if worker and worker.src_addr[0] == self.src_addr[0]:
+            workers.pop(worker.id)
+            self.set_nodelay(True)
+            worker.set_handler(self)
+            self.worker_ref = weakref.ref(worker)
+            self.loop.add_handler(worker.fd, worker, IOLoop.READ)
+        else:
+            self.close()
 
     def on_message(self, message):
         logging.debug('"{}" from {}:{}'.format(message, *self.src_addr))
