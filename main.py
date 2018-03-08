@@ -119,23 +119,24 @@ class Worker(object):
 
 class MixinHandler(object):
 
-    def get_addr(self):
+    def __init__(self, *args, **kwargs):
+        super(MixinHandler, self).__init__(*args, **kwargs)
+
+    def get_client_addr(self):
         ip = self.request.headers.get('X-Real-Ip')
         port = self.request.headers.get('X-Real-Port')
+        addr = None
 
         if ip and port:
             addr = (ip, int(port))
-        elif not ip and not port:
-            if not getattr(self, 'stream', None):
-                self.stream = self.request.connection.stream
-            addr = self.stream.socket.getpeername()
-        else:
-            raise ValueError('Wrong nginx configuration.')
+        elif ip or port:
+            logging.warn('Wrong nginx configuration.')
 
         return addr
 
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
+
     def get_privatekey(self):
         try:
             data = self.request.files.get('privatekey')[0]['body']
@@ -197,6 +198,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         logging.debug(args)
         return args
 
+    def get_client_addr(self):
+        return super(IndexHandler, self).get_client_addr() or self.request.\
+                connection.stream.socket.getpeername()
+
     def ssh_connect(self):
         ssh = paramiko.SSHClient()
         ssh.load_system_host_keys()
@@ -229,7 +234,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             logging.error(traceback.format_exc())
             status = str(e)
         else:
-            worker.src_addr = self.get_addr()
+            worker.src_addr = self.get_client_addr()
             worker_id = worker.id
             workers[worker_id] = worker
 
@@ -241,10 +246,14 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def __init__(self, *args, **kwargs):
         self.loop = IOLoop.current()
         self.worker_ref = None
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(WsockHandler, self).__init__(*args, **kwargs)
+
+    def get_client_addr(self):
+        return super(WsockHandler, self).get_client_addr() or self.stream.\
+                socket.getpeername()
 
     def open(self):
-        self.src_addr = self.get_addr()
+        self.src_addr = self.get_client_addr()
         logging.info('Connected from {}:{}'.format(*self.src_addr))
         worker = workers.get(self.get_argument('id'), None)
         if worker and worker.src_addr[0] == self.src_addr[0]:
