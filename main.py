@@ -317,6 +317,10 @@ def main():
     base_dir = os.path.dirname(__file__)
     host_file = os.path.join(base_dir, 'known_hosts')
     host_keys = create_host_file(host_file)
+    policy_class = get_policy_class(options.policy)
+
+    if not host_keys and policy_class is paramiko.client.RejectPolicy:
+        raise ValueError('Empty known_hosts with reject policy?')
 
     settings = {
         'template_path': os.path.join(base_dir, 'templates'),
@@ -335,7 +339,7 @@ def main():
         debug=options.debug,
         host_file=host_file,
         host_keys=host_keys,
-        policy=get_policy_class(options.policy)()
+        policy=policy_class()
     )
     app = tornado.web.Application(handlers, **settings)
     app.listen(options.port, options.address)
