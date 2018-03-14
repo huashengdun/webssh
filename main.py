@@ -18,7 +18,7 @@ define('address', default='127.0.0.1', help='listen address')
 define('port', default=8888, help='listen port', type=int)
 define('debug', default=False, help='debug mode', type=bool)
 define('policy', default='reject',
-       help='missing host key polilcy, reject|autoadd|warning')
+       help='missing host key policy, reject|autoadd|warning')
 
 
 BUF_SIZE = 1024
