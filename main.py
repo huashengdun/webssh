@@ -314,6 +314,7 @@ def get_policy_class(policy):
 
 
 def main():
+    parse_command_line()
     base_dir = os.path.dirname(__file__)
     host_file = os.path.join(base_dir, 'known_hosts')
     host_keys = create_host_file(host_file)
@@ -334,13 +335,13 @@ def main():
         (r'/ws', WsockHandler)
     ]
 
-    parse_command_line()
     settings.update(
         debug=options.debug,
         host_file=host_file,
         host_keys=host_keys,
         policy=policy_class()
     )
+
     app = tornado.web.Application(handlers, **settings)
     app.listen(options.port, options.address)
     logging.info('Listening on {}:{}'.format(options.address, options.port))
