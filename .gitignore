@@ -59,3 +59,6 @@ target/
 
 # temporary file
 *.swp
+
+# known_hosts file
+known_hosts
