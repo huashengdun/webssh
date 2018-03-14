@@ -200,7 +200,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         if isinstance(self.settings['policy'], paramiko.client.AutoAddPolicy):
             ssh.load_host_keys(self.settings['host_file'])
         else:
-            ssh._host_keys = self.settings.get('host_keys')
+            ssh._host_keys = self.settings['host_keys']
         ssh.set_missing_host_key_policy(self.settings['policy'])
         args = self.get_args()
         dst_addr = (args[0], args[1])
@@ -253,7 +253,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def open(self):
         self.src_addr = self.get_client_addr()
         logging.info('Connected from {}:{}'.format(*self.src_addr))
-        worker = workers.get(self.get_argument('id'), None)
+        worker = workers.get(self.get_argument('id'))
         if worker and worker.src_addr[0] == self.src_addr[0]:
             workers.pop(worker.id)
             self.set_nodelay(True)
@@ -304,8 +304,8 @@ def get_policy_class(policy):
     if not policy.endswith('policy'):
         policy += 'policy'
 
-    dic = {k.lower(): v for k, v in vars(paramiko.client).items()}
-
+    dic = {k.lower(): v for k, v in vars(paramiko.client).items() if type(v)
+           is type and issubclass(v, paramiko.client.MissingHostKeyPolicy)}
     try:
         cls = dic[policy]
     except KeyError:
