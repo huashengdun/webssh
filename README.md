@@ -29,6 +29,9 @@ python main.py --address='0.0.0.0' --port=8000
 # configure logging level
 python main.py --logging=debug
 
+# configure missing host key policy
+python main.py --policy=warning
+
 # log to file
 python main.py --log-file-prefix=main.log
 
