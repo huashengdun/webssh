@@ -26,11 +26,11 @@ python main.py
 # configure listen address and port
 python main.py --address='0.0.0.0' --port=8000
 
-# configure logging level
-python main.py --logging=debug
-
 # configure missing host key policy
 python main.py --policy=warning
+
+# configure logging level
+python main.py --logging=debug
 
 # log to file
 python main.py --log-file-prefix=main.log
@@ -55,3 +55,4 @@ location / {
 
 ### Tips
 * Try to use Nginx as a front web server (see config example above) and enable SSL, this will prevent your ssh credentials from being uncovered. Also afterwards the communication between your browser and the web server will be encrypted as they use secured websockets.
+* Try to use reject policy for handling missing host key, this will prevent man-in-the-middle attacks.
