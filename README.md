@@ -55,4 +55,4 @@ location / {
 
 ### Tips
 * Try to use Nginx as a front web server (see config example above) and enable SSL, this will prevent your ssh credentials from being uncovered. Also afterwards the communication between your browser and the web server will be encrypted as they use secured websockets.
-* Try to use reject policy for handling missing host key, this will prevent man-in-the-middle attacks.
+* Try to use reject policy as the missing host key policy, this will prevent man-in-the-middle attacks. The idea is that it checks the system host keys file("~/.ssh/known_hosts") and the application host keys file("./known_hosts") in order, if the ssh server's hostname is not found, the connection will be aborted.
