@@ -20,7 +20,7 @@ define('port', default=8888, help='listen port', type=int)
 define('debug', default=False, help='debug mode', type=bool)
 define('policy', default='reject',
        help='missing host key policy, reject|autoadd|warning')
-define('period', default=10, help='seconds for PeriodicCallback', type=int)
+define('period', default=10, help='seconds for periodic callback', type=int)
 
 
 BUF_SIZE = 1024
@@ -322,7 +322,7 @@ def main():
     policy_class = get_policy_class(options.policy)
 
     if policy_class is paramiko.client.AutoAddPolicy:
-        host_keys.save(filename)  # for permssion test
+        host_keys.save(filename)  # for permission test
         host_keys._last_len = len(host_keys)
         tornado.ioloop.PeriodicCallback(
             lambda: save_host_keys(host_keys, filename),
