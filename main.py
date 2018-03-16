@@ -6,6 +6,7 @@ import traceback
 import uuid
 import weakref
 import paramiko
+import tornado.ioloop
 import tornado.web
 import tornado.websocket
 from tornado.ioloop import IOLoop
@@ -19,6 +20,7 @@ define('port', default=8888, help='listen port', type=int)
 define('debug', default=False, help='debug mode', type=bool)
 define('policy', default='reject',
        help='missing host key policy, reject|autoadd|warning')
+define('period', default=10, help='seconds for PeriodicCallback', type=int)
 
 
 BUF_SIZE = 1024
@@ -197,10 +199,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def ssh_connect(self):
         ssh = paramiko.SSHClient()
-        if isinstance(self.settings['policy'], paramiko.client.AutoAddPolicy):
-            ssh.load_host_keys(self.settings['host_file'])
-        else:
-            ssh._host_keys = self.settings['host_keys']
+        ssh._system_host_keys = self.settings['system_host_keys']
+        ssh._host_keys = self.settings['host_keys']
         ssh.set_missing_host_key_policy(self.settings['policy'])
         args = self.get_args()
         dst_addr = (args[0], args[1])
@@ -290,12 +290,12 @@ def get_host_keys(path):
     return paramiko.hostkeys.HostKeys()
 
 
-def create_host_file(host_file):
-    host_keys = get_host_keys(host_file)
-    if not host_keys:
-        host_keys = get_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
-    host_keys.save(host_file)
-    return host_keys
+def save_host_keys(host_keys, filename):
+    length = len(host_keys)
+    if length != host_keys._last_len:
+        logging.info('Updating {}'.format(filename))
+        host_keys.save(filename)
+        host_keys._last_len = length
 
 
 def get_policy_class(policy):
@@ -316,12 +316,21 @@ def get_policy_class(policy):
 def main():
     parse_command_line()
     base_dir = os.path.dirname(__file__)
-    host_file = os.path.join(base_dir, 'known_hosts')
-    host_keys = create_host_file(host_file)
+    filename = os.path.join(base_dir, 'known_hosts')
+    host_keys = get_host_keys(filename)
+    system_host_keys = get_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
     policy_class = get_policy_class(options.policy)
 
-    if not host_keys and policy_class is paramiko.client.RejectPolicy:
-        raise ValueError('Empty known_hosts with reject policy?')
+    if policy_class is paramiko.client.AutoAddPolicy:
+        host_keys.save(filename)  # for permssion test
+        host_keys._last_len = len(host_keys)
+        tornado.ioloop.PeriodicCallback(
+            lambda: save_host_keys(host_keys, filename),
+            options.period * 1000  # milliseconds
+        ).start()
+    elif policy_class is paramiko.client.RejectPolicy:
+        if not host_keys and not system_host_keys:
+            raise ValueError('Empty known_hosts with reject policy?')
 
     settings = {
         'template_path': os.path.join(base_dir, 'templates'),
@@ -337,8 +346,8 @@ def main():
 
     settings.update(
         debug=options.debug,
-        host_file=host_file,
         host_keys=host_keys,
+        system_host_keys=system_host_keys,
         policy=policy_class()
     )
 
