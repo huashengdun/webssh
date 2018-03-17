@@ -18,7 +18,7 @@ from tornado.util import errno_from_exception
 define('address', default='127.0.0.1', help='listen address')
 define('port', default=8888, help='listen port', type=int)
 define('debug', default=False, help='debug mode', type=bool)
-define('policy', default='reject',
+define('policy', default='warning',
        help='missing host key policy, reject|autoadd|warning')
 define('period', default=10, help='seconds for periodic callback', type=int)
 
