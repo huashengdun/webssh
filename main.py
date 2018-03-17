@@ -335,7 +335,7 @@ def main():
     settings = {
         'template_path': os.path.join(base_dir, 'templates'),
         'static_path': os.path.join(base_dir, 'static'),
-        'cookie_secret': uuid.uuid1().hex,
+        'cookie_secret': uuid.uuid4().hex,
         'xsrf_cookies': True
     }
 
