@@ -202,9 +202,11 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         ssh._system_host_keys = self.settings['system_host_keys']
         ssh._host_keys = self.settings['host_keys']
         ssh.set_missing_host_key_policy(self.settings['policy'])
+
         args = self.get_args()
         dst_addr = (args[0], args[1])
         logging.info('Connecting to {}:{}'.format(*dst_addr))
+
         try:
             ssh.connect(*args, timeout=6)
         except socket.error:
@@ -213,6 +215,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             raise ValueError('Authentication failed.')
         except paramiko.BadHostKeyException:
             raise ValueError('Bad host key.')
+
         chan = ssh.invoke_shell(term='xterm')
         chan.setblocking(0)
         worker = Worker(ssh, chan, dst_addr)
@@ -313,8 +316,7 @@ def get_policy_class(policy):
     return cls
 
 
-def main():
-    parse_command_line()
+def get_application_settings():
     base_dir = os.path.dirname(__file__)
     filename = os.path.join(base_dir, 'known_hosts')
     host_keys = get_host_keys(filename)
@@ -332,24 +334,28 @@ def main():
         if not host_keys and not system_host_keys:
             raise ValueError('Empty known_hosts with reject policy?')
 
-    settings = {
-        'template_path': os.path.join(base_dir, 'templates'),
-        'static_path': os.path.join(base_dir, 'static'),
-        'cookie_secret': uuid.uuid4().hex,
-        'xsrf_cookies': True
-    }
+    settings = dict(
+        template_path=os.path.join(base_dir, 'templates'),
+        static_path=os.path.join(base_dir, 'static'),
+        cookie_secret=uuid.uuid4().hex,
+        xsrf_cookies=True,
+        host_keys=host_keys,
+        system_host_keys=system_host_keys,
+        policy=policy_class(),
+        debug=options.debug
+    )
+
+    return settings
+
+
+def main():
+    parse_command_line()
+    settings = get_application_settings()
 
     handlers = [
         (r'/',   IndexHandler),
         (r'/ws', WsockHandler)
     ]
-
-    settings.update(
-        debug=options.debug,
-        host_keys=host_keys,
-        system_host_keys=system_host_keys,
-        policy=policy_class()
-    )
 
     app = tornado.web.Application(handlers, **settings)
     app.listen(options.port, options.address)
