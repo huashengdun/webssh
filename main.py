@@ -322,6 +322,7 @@ def get_application_settings():
     host_keys = get_host_keys(filename)
     system_host_keys = get_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
     policy_class = get_policy_class(options.policy)
+    logging.info(policy_class.__name__)
 
     if policy_class is paramiko.client.AutoAddPolicy:
         host_keys.save(filename)  # for permission test
