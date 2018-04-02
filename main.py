@@ -2,13 +2,16 @@ import io
 import logging
 import os.path
 import socket
+import threading
 import traceback
 import uuid
 import weakref
 import paramiko
+import tornado.gen
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
+from tornado.concurrent import Future
 from tornado.ioloop import IOLoop
 from tornado.iostream import _ERRNO_CONNRESET
 from tornado.options import define, options, parse_command_line
@@ -222,19 +225,34 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         IOLoop.current().call_later(DELAY, recycle, worker)
         return worker
 
+    def ssh_connect_wrapped(self, future):
+        try:
+            worker = self.ssh_connect()
+        except Exception as exc:
+            future.set_exception(exc)
+            raise exc
+        else:
+            future.set_result(worker)
+
     def get(self):
         self.render('index.html')
 
+    @tornado.gen.coroutine
     def post(self):
         worker_id = None
         status = None
 
+        future = Future()
         try:
-            worker = self.ssh_connect()
-        except Exception as e:
+            threading.Thread(
+                target=self.ssh_connect_wrapped, args=(future,)
+            ).start()
+            yield future
+        except Exception as exc:
             logging.error(traceback.format_exc())
-            status = str(e)
+            status = str(exc)
         else:
+            worker = future.result()
             worker.src_addr = self.get_client_addr()
             worker_id = worker.id
             workers[worker_id] = worker
