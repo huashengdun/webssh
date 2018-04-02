@@ -229,8 +229,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         try:
             worker = self.ssh_connect()
         except Exception as exc:
+            logging.error(traceback.format_exc())
             future.set_exception(exc)
-            raise exc
         else:
             future.set_result(worker)
 
@@ -243,16 +243,15 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         status = None
 
         future = Future()
+        threading.Thread(
+            target=self.ssh_connect_wrapped, args=(future,)
+        ).start()
+
         try:
-            threading.Thread(
-                target=self.ssh_connect_wrapped, args=(future,)
-            ).start()
-            yield future
+            worker = yield future
         except Exception as exc:
-            logging.error(traceback.format_exc())
             status = str(exc)
         else:
-            worker = future.result()
             worker.src_addr = self.get_client_addr()
             worker_id = worker.id
             workers[worker_id] = worker
