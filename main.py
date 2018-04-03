@@ -222,7 +222,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         chan = ssh.invoke_shell(term='xterm')
         chan.setblocking(0)
         worker = Worker(ssh, chan, dst_addr)
-        IOLoop.current().call_later(DELAY, recycle, worker)
+        worker.src_addr = self.get_client_addr()
         return worker
 
     def ssh_connect_wrapped(self, future):
@@ -243,18 +243,18 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         status = None
 
         future = Future()
-        threading.Thread(
-            target=self.ssh_connect_wrapped, args=(future,)
-        ).start()
+        t = threading.Thread(target=self.ssh_connect_wrapped, args=(future,))
+        t.setDaemon(True)
+        t.start()
 
         try:
             worker = yield future
         except Exception as exc:
             status = str(exc)
         else:
-            worker.src_addr = self.get_client_addr()
             worker_id = worker.id
             workers[worker_id] = worker
+            IOLoop.current().call_later(DELAY, recycle, worker)
 
         self.write(dict(id=worker_id, status=status))
 
