@@ -11,11 +11,15 @@ import tornado.gen
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-from tornado.concurrent import Future
 from tornado.ioloop import IOLoop
 from tornado.iostream import _ERRNO_CONNRESET
 from tornado.options import define, options, parse_command_line
 from tornado.util import errno_from_exception
+
+try:
+    from concurrent.futures import Future
+except:
+    from tornado.concurrent import Future
 
 
 define('address', default='127.0.0.1', help='listen address')
@@ -32,8 +36,8 @@ workers = {}
 
 
 class Worker(object):
-    def __init__(self, ssh, chan, dst_addr):
-        self.loop = IOLoop.current()
+    def __init__(self, loop, ssh, chan, dst_addr):
+        self.loop = loop
         self.ssh = ssh
         self.chan = chan
         self.dst_addr = dst_addr
@@ -118,6 +122,7 @@ class Worker(object):
 class MixinHandler(object):
 
     def __init__(self, *args, **kwargs):
+        self.loop = args[0]._loop
         super(MixinHandler, self).__init__(*args, **kwargs)
 
     def get_client_addr(self):
@@ -221,7 +226,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         chan = ssh.invoke_shell(term='xterm')
         chan.setblocking(0)
-        worker = Worker(ssh, chan, dst_addr)
+        worker = Worker(self.loop, ssh, chan, dst_addr)
         worker.src_addr = self.get_client_addr()
         return worker
 
@@ -262,7 +267,6 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
 
     def __init__(self, *args, **kwargs):
-        self.loop = IOLoop.current()
         self.worker_ref = None
         super(WsockHandler, self).__init__(*args, **kwargs)
 
@@ -375,10 +379,12 @@ def main():
         (r'/ws', WsockHandler)
     ]
 
+    loop = IOLoop.current()
     app = tornado.web.Application(handlers, **settings)
+    app._loop = loop
     app.listen(options.port, options.address)
     logging.info('Listening on {}:{}'.format(options.address, options.port))
-    IOLoop.current().start()
+    loop.start()
 
 
 if __name__ == '__main__':
