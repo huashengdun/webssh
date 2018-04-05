@@ -259,7 +259,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         else:
             worker_id = worker.id
             workers[worker_id] = worker
-            IOLoop.current().call_later(DELAY, recycle, worker)
+            self.loop.call_later(DELAY, recycle, worker)
 
         self.write(dict(id=worker_id, status=status))
 
