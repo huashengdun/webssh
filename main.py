@@ -18,7 +18,7 @@ from tornado.util import errno_from_exception
 
 try:
     from concurrent.futures import Future
-except:
+except ImportError:
     from tornado.concurrent import Future
 
 
