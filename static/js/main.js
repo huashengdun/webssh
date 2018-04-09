@@ -109,7 +109,7 @@ jQuery(function($){
   }
 
   $(window).resize(function(){
-    if (typeof term != "undefined") {
+    if (typeof term != 'undefined') {
       geometry = current_geometry();
       term.geometry = geometry;
       term.resize(geometry[0], geometry[1]);
