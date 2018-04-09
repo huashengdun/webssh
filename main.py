@@ -73,12 +73,12 @@ class Worker(object):
             if errno_from_exception(e) in _ERRNO_CONNRESET:
                 self.close()
         else:
-            logging.debug('"{}" from {}:{}'.format(data, *self.dst_addr))
+            logging.debug('{!r} from {}:{}'.format(data, *self.dst_addr))
             if not data:
                 self.close()
                 return
 
-            logging.debug('"{}" to {}:{}'.format(data, *self.handler.src_addr))
+            logging.debug('{!r} to {}:{}'.format(data, *self.handler.src_addr))
             try:
                 self.handler.write_message(data)
             except tornado.websocket.WebSocketClosedError:
@@ -90,7 +90,7 @@ class Worker(object):
             return
 
         data = ''.join(self.data_to_dst)
-        logging.debug('"{}" to {}:{}'.format(data, *self.dst_addr))
+        logging.debug('{!r} to {}:{}'.format(data, *self.dst_addr))
 
         try:
             sent = self.chan.send(data)
@@ -288,7 +288,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
             self.close()
 
     def on_message(self, message):
-        logging.debug('"{}" from {}:{}'.format(message, *self.src_addr))
+        logging.debug('{!r} from {}:{}'.format(message, *self.src_addr))
         worker = self.worker_ref()
         worker.data_to_dst.append(message)
         worker.on_write()
