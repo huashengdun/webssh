@@ -56,7 +56,9 @@ class AutoAddPolicy(paramiko.client.MissingHostKeyPolicy):
                 logging.info(
                     'Adding {} host key for {}'.format(keytype, hostname)
                 )
-                client._host_keys.add(hostname, keytype,  key)
+                client._host_keys._entries.append(
+                    paramiko.hostkeys.HostKeyEntry([hostname], key)
+                )
 
                 with open(client._host_keys_filename, 'a') as f:
                     f.write('{} {} {}\n'.format(
