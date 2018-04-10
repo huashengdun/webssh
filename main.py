@@ -34,7 +34,6 @@ workers = {}
 
 
 class AutoAddPolicy(paramiko.client.MissingHostKeyPolicy):
-
     """
     thread-safe AutoAddPolicy
     """
@@ -353,7 +352,8 @@ def get_policy_class(policy):
         policy += 'policy'
 
     dic = {k.lower(): v for k, v in vars(paramiko.client).items() if type(v)
-           is type and issubclass(v, paramiko.client.MissingHostKeyPolicy)}
+           is type and issubclass(v, paramiko.client.MissingHostKeyPolicy)
+           and v is not paramiko.client.MissingHostKeyPolicy}
     try:
         cls = dic[policy]
     except KeyError:
