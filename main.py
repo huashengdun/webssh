@@ -1,7 +1,7 @@
 import logging
 import tornado.web
+import tornado.ioloop
 
-from tornado.ioloop import IOLoop
 from tornado.options import parse_command_line, options
 from handler import IndexHandler, WsockHandler
 from settings import get_application_settings
@@ -16,7 +16,7 @@ def main():
         (r'/ws', WsockHandler)
     ]
 
-    loop = IOLoop.current()
+    loop = tornado.ioloop.IOLoop.current()
     app = tornado.web.Application(handlers, **settings)
     app._loop = loop
     app.listen(options.port, options.address)

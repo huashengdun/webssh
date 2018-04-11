@@ -41,7 +41,7 @@ class AutoAddPolicy(paramiko.client.MissingHostKeyPolicy):
     """
     lock = threading.Lock()
 
-    def is_missing_host_keys(self, client, hostname, key):
+    def is_missing_host_key(self, client, hostname, key):
         k = client._host_keys.lookup(hostname)
         if k is None:
             return True
@@ -53,7 +53,7 @@ class AutoAddPolicy(paramiko.client.MissingHostKeyPolicy):
 
     def missing_host_key(self, client, hostname, key):
         with self.lock:
-            if self.is_missing_host_keys(client, hostname, key):
+            if self.is_missing_host_key(client, hostname, key):
                 keytype = key.get_name()
                 logging.info(
                     'Adding {} host key for {}'.format(keytype, hostname)
