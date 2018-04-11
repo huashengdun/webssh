@@ -21,7 +21,7 @@ DELAY = 3
 
 class MixinHandler(object):
 
-    def get_client_addr(self):
+    def get_real_client_addr(self):
         ip = self.request.headers.get('X-Real-Ip')
         port = self.request.headers.get('X-Real-Port')
         addr = None
@@ -103,8 +103,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return args
 
     def get_client_addr(self):
-        return super(IndexHandler, self).get_client_addr() or self.request.\
-                connection.stream.socket.getpeername()
+        return self.get_real_client_addr() or self.request.connection.stream.\
+            socket.getpeername()
 
     def ssh_connect(self):
         ssh = paramiko.SSHClient()
@@ -173,8 +173,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         self.worker_ref = None
 
     def get_client_addr(self):
-        return super(WsockHandler, self).get_client_addr() or self.stream.\
-                socket.getpeername()
+        return self.get_real_client_addr() or self.stream.socket.getpeername()
 
     def open(self):
         self.src_addr = self.get_client_addr()
