@@ -60,7 +60,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         else:
             return pkey
 
-    def get_pkey(self, privatekey, password):
+    def get_pkey_obj(self, privatekey, password):
         password = password.encode('utf-8') if password else None
 
         pkey = self.get_specific_pkey(paramiko.RSAKey, privatekey, password)\
@@ -97,7 +97,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         username = self.get_value('username')
         password = self.get_argument('password')
         privatekey = self.get_privatekey()
-        pkey = self.get_pkey(privatekey, password) if privatekey else None
+        pkey = self.get_pkey_obj(privatekey, password) if privatekey else None
         args = (hostname, port, username, password, pkey)
         logging.debug(args)
         return args
