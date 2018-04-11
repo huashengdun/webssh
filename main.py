@@ -2,7 +2,7 @@ import logging
 import tornado.web
 import tornado.ioloop
 
-from tornado.options import define, parse_command_line, options
+from tornado.options import parse_command_line, options
 from handler import IndexHandler, WsockHandler
 from settings import (get_app_settings, get_host_keys_settings,
                       get_policy_setting)
