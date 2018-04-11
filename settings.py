@@ -11,8 +11,8 @@ define('port', default=8888, help='listen port', type=int)
 define('debug', default=False, help='debug mode', type=bool)
 define('policy', default='warning',
        help='missing host key policy, reject|autoadd|warning')
-define('hostFile', default='', help='User-defined host keys file')
-define('sysHostFile', default='', help='System-wide host keys File')
+define('hostFile', default='', help='User defined host keys file')
+define('sysHostFile', default='', help='System wide host keys file')
 
 
 base_dir = os.path.dirname(__file__)
