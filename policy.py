@@ -4,7 +4,7 @@ import threading
 import paramiko
 
 
-def get_host_keys(path):
+def load_host_keys(path):
     if os.path.exists(path) and os.path.isfile(path):
         return paramiko.hostkeys.HostKeys(filename=path)
     return paramiko.hostkeys.HostKeys()

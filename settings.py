@@ -3,7 +3,7 @@ import os.path
 import uuid
 
 from tornado.options import define
-from policy import get_host_keys, get_policy_class, check_policy_setting
+from policy import load_host_keys, get_policy_class, check_policy_setting
 
 
 define('address', default='127.0.0.1', help='listen address')
@@ -34,13 +34,13 @@ def get_host_keys_settings(options):
         host_keys_filename = os.path.join(base_dir, 'known_hosts')
     else:
         host_keys_filename = options.hostFile
-    host_keys = get_host_keys(host_keys_filename)
+    host_keys = load_host_keys(host_keys_filename)
 
     if not options.sysHostFile:
         filename = os.path.expanduser('~/.ssh/known_hosts')
     else:
         filename = options.sysHostFile
-    system_host_keys = get_host_keys(filename)
+    system_host_keys = load_host_keys(filename)
 
     settings = dict(
         host_keys=host_keys,
