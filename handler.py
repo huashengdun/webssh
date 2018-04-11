@@ -21,10 +21,6 @@ DELAY = 3
 
 class MixinHandler(object):
 
-    def __init__(self, *args, **kwargs):
-        self.loop = args[0]._loop
-        super(MixinHandler, self).__init__(*args, **kwargs)
-
     def get_client_addr(self):
         ip = self.request.headers.get('X-Real-Ip')
         port = self.request.headers.get('X-Real-Port')
@@ -39,6 +35,11 @@ class MixinHandler(object):
 
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
+
+    def initialize(self, loop, policy, host_keys_settings):
+        self.loop = loop
+        self.policy = policy
+        self.host_keys_settings = host_keys_settings
 
     def get_privatekey(self):
         try:
@@ -107,10 +108,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def ssh_connect(self):
         ssh = paramiko.SSHClient()
-        ssh._system_host_keys = self.settings['system_host_keys']
-        ssh._host_keys = self.settings['host_keys']
-        ssh._host_keys_filename = self.settings['host_keys_filename']
-        ssh.set_missing_host_key_policy(self.settings['policy'])
+        ssh._system_host_keys = self.host_keys_settings['system_host_keys']
+        ssh._host_keys = self.host_keys_settings['host_keys']
+        ssh._host_keys_filename = self.host_keys_settings['host_keys_filename']
+        ssh.set_missing_host_key_policy(self.policy)
 
         args = self.get_args()
         dst_addr = (args[0], args[1])
@@ -167,9 +168,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
 class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
 
-    def __init__(self, *args, **kwargs):
+    def initialize(self, loop):
+        self.loop = loop
         self.worker_ref = None
-        super(WsockHandler, self).__init__(*args, **kwargs)
 
     def get_client_addr(self):
         return super(WsockHandler, self).get_client_addr() or self.stream.\

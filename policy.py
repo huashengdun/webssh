@@ -35,6 +35,20 @@ def get_policy_class(policy):
     return cls
 
 
+def check_policy_setting(policy_class, host_keys_settings):
+    host_keys = host_keys_settings['host_keys']
+    host_keys_filename = host_keys_settings['host_keys_filename']
+    system_host_keys = host_keys_settings['system_host_keys']
+
+    if policy_class is paramiko.client.AutoAddPolicy:
+        host_keys.save(host_keys_filename)  # for permission test
+    elif policy_class is paramiko.client.RejectPolicy:
+        if not host_keys and not system_host_keys:
+            raise ValueError(
+                'Reject policy could not be used without host keys.'
+            )
+
+
 class AutoAddPolicy(paramiko.client.MissingHostKeyPolicy):
     """
     thread-safe AutoAddPolicy

@@ -2,23 +2,26 @@ import logging
 import tornado.web
 import tornado.ioloop
 
-from tornado.options import parse_command_line, options
+from tornado.options import define, parse_command_line, options
 from handler import IndexHandler, WsockHandler
-from settings import get_application_settings
+from settings import (get_app_settings, get_host_keys_settings,
+                      get_policy_setting)
 
 
 def main():
     parse_command_line()
-    settings = get_application_settings()
+    app_settings = get_app_settings(options)
+    host_keys_settings = get_host_keys_settings(options)
+    policy = get_policy_setting(options, host_keys_settings)
+    loop = tornado.ioloop.IOLoop.current()
 
     handlers = [
-        (r'/',   IndexHandler),
-        (r'/ws', WsockHandler)
+        (r'/', IndexHandler, dict(loop=loop, policy=policy,
+                                  host_keys_settings=host_keys_settings)),
+        (r'/ws', WsockHandler, dict(loop=loop))
     ]
 
-    loop = tornado.ioloop.IOLoop.current()
-    app = tornado.web.Application(handlers, **settings)
-    app._loop = loop
+    app = tornado.web.Application(handlers, **app_settings)
     app.listen(options.port, options.address)
     logging.info('Listening on {}:{}'.format(options.address, options.port))
     loop.start()
