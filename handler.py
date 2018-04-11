@@ -24,14 +24,18 @@ class MixinHandler(object):
     def get_real_client_addr(self):
         ip = self.request.headers.get('X-Real-Ip')
         port = self.request.headers.get('X-Real-Port')
-        addr = None
 
-        if ip and port:
-            addr = (ip, int(port))
-        elif ip or port:
-            logging.warn('Wrong nginx configuration.')
+        if ip is None and port is None:
+            return
 
-        return addr
+        try:
+            port = int(port)
+        except (TypeError, ValueError):
+            pass
+        else:
+            if ip:  # does not validate ip and port here
+                return (ip, port)
+        logging.warn('Bad nginx configuration.')
 
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
