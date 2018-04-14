@@ -126,7 +126,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:
-            raise ValueError('Authentication failed.')
+            raise ValueError('SSH authentication failed.')
         except paramiko.BadHostKeyException:
             raise ValueError('Bad host key.')
 
@@ -190,7 +190,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
             self.worker_ref = weakref.ref(worker)
             self.loop.add_handler(worker.fd, worker, IOLoop.READ)
         else:
-            self.close()
+            self.close(reason='Websocket authentication failed.')
 
     def on_message(self, message):
         logging.debug('{!r} from {}:{}'.format(message, *self.src_addr))
@@ -202,4 +202,6 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         logging.info('Disconnected from {}:{}'.format(*self.src_addr))
         worker = self.worker_ref() if self.worker_ref else None
         if worker:
-            worker.close()
+            if self.close_reason is None:
+                self.close_reason = 'client disconnected'
+            worker.close(reason=self.close_reason)

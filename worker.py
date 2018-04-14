@@ -13,9 +13,9 @@ workers = {}
 def recycle_worker(worker):
     if worker.handler:
         return
-    logging.debug('Recycling worker {}'.format(worker.id))
+    logging.warn('Recycling worker {}'.format(worker.id))
     workers.pop(worker.id, None)
-    worker.close()
+    worker.close(reason='worker recycled')
 
 
 class Worker(object):
@@ -36,7 +36,7 @@ class Worker(object):
         if events & IOLoop.WRITE:
             self.on_write()
         if events & IOLoop.ERROR:
-            self.close()
+            self.close(reason='error event occurred')
 
     def set_handler(self, handler):
         if not self.handler:
@@ -54,18 +54,18 @@ class Worker(object):
         except (OSError, IOError) as e:
             logging.error(e)
             if errno_from_exception(e) in _ERRNO_CONNRESET:
-                self.close()
+                self.close(reason='chan error on reading')
         else:
             logging.debug('{!r} from {}:{}'.format(data, *self.dst_addr))
             if not data:
-                self.close()
+                self.close(reason='chan closed')
                 return
 
             logging.debug('{!r} to {}:{}'.format(data, *self.handler.src_addr))
             try:
                 self.handler.write_message(data)
             except tornado.websocket.WebSocketClosedError:
-                self.close()
+                self.close(reason='websocket closed')
 
     def on_write(self):
         logging.debug('worker {} on write'.format(self.id))
@@ -80,7 +80,7 @@ class Worker(object):
         except (OSError, IOError) as e:
             logging.error(e)
             if errno_from_exception(e) in _ERRNO_CONNRESET:
-                self.close()
+                self.close(reason='chan error on writing')
             else:
                 self.update_handler(IOLoop.WRITE)
         else:
@@ -92,8 +92,10 @@ class Worker(object):
             else:
                 self.update_handler(IOLoop.READ)
 
-    def close(self):
-        logging.debug('Closing worker {}'.format(self.id))
+    def close(self, reason=None):
+        logging.info(
+            'Closing worker {} with reason {}'.format(self.id, reason)
+        )
         if self.handler:
             self.loop.remove_handler(self.fd)
             self.handler.close()
