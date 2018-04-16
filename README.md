@@ -14,11 +14,22 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 * Compatible with Python 2.7-3.6.
 
 ### Instructions
+
+#### Without Docker
+
 ```
 git clone https://github.com/huashengdun/webssh.git
 cd webssh
 pip install -r requirements.txt
 python main.py
+```
+
+#### With Docker
+```
+git clone https://github.com/huashengdun/webssh.git
+cd webssh
+docker build -t webssh:latest .
+docker -p 8022:8022 --name WebSSH webssh:latest
 ```
 
 ### Options
