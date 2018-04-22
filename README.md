@@ -1,5 +1,9 @@
 ## WebSSH
-A simple web application to be used as an ssh client to connect to your ssh servers. It is written in Python, base on Tornado and Paramiko.
+[![Build Status](https://travis-ci.org/huashengdun/webssh.svg?branch=master)](https://travis-ci.org/huashengdun/webssh)
+[![codecov](https://codecov.io/gh/huashengdun/webssh/branch/master/graph/badge.svg)](https://codecov.io/gh/huashengdun/webssh)
+![license](https://img.shields.io/github/license/mashape/apistatus.svg)
+
+A simple web application to be used as an ssh client to connect to your ssh servers. It is written in Python, base on tornado and paramiko.
 
 ### Preview
 ![Login](https://github.com/huashengdun/webssh/raw/master/preview/login.png)
@@ -18,7 +22,7 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 git clone https://github.com/huashengdun/webssh.git
 cd webssh
 pip install -r requirements.txt
-python main.py
+python webssh/main.py
 ```
 
 ### Options
@@ -41,7 +45,7 @@ python main.py --help
 
 ### Nginx config example for running this app behind an nginx server
 ```
-location / { 
+location / {
     proxy_pass http://127.0.0.1:8888;
     proxy_http_version 1.1;
     proxy_read_timeout 300;
@@ -50,7 +54,7 @@ location / {
     proxy_set_header Host $http_host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Real-PORT $remote_port;
-} 
+}
 ```
 
 ### Tips
