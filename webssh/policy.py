@@ -80,4 +80,6 @@ class AutoAddPolicy(paramiko.client.MissingHostKeyPolicy):
                     f.write('{} {} {}\n'.format(
                         hostname, keytype, key.get_base64()
                     ))
+
+
 paramiko.client.AutoAddPolicy = AutoAddPolicy
