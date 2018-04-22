@@ -1,6 +1,6 @@
 ## WebSSH
 [![Build Status](https://travis-ci.org/huashengdun/webssh.svg?branch=master)](https://travis-ci.org/huashengdun/webssh)
-[![codecov](https://codecov.io/gh/huashengdun/webssh/branch/master/graph/badge.svg)](https://codecov.io/gh/huashengdun/webssh)
+<!-- [![codecov](https://codecov.io/gh/huashengdun/webssh/branch/master/graph/badge.svg)](https://codecov.io/gh/huashengdun/webssh) -->
 ![license](https://img.shields.io/github/license/mashape/apistatus.svg)
 
 A simple web application to be used as an ssh client to connect to your ssh servers. It is written in Python, base on tornado and paramiko.
@@ -61,3 +61,6 @@ location / {
 ### Tips
 * Try to use Nginx as a front web server (see config example above) and enable SSL, this will prevent your ssh credentials from being uncovered. Also afterwards the communication between your browser and the web server will be encrypted as they use secured websockets.
 * Try to use reject policy as the missing host key policy along with your verified known_hosts, this will prevent man-in-the-middle attacks. The idea is that it checks the system host keys file("~/.ssh/known_hosts") and the application host keys file("./known_hosts") in order, if the ssh server's hostname is not found or the key is not matched, the connection will be aborted.
+
+### Todo
+Add more unittests
