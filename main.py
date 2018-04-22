@@ -8,13 +8,7 @@ from settings import (get_app_settings, get_host_keys_settings,
                       get_policy_setting)
 
 
-def main():
-    parse_command_line()
-    app_settings = get_app_settings(options)
-    host_keys_settings = get_host_keys_settings(options)
-    policy = get_policy_setting(options, host_keys_settings)
-    loop = tornado.ioloop.IOLoop.current()
-
+def make_app(loop, policy, host_keys_settings, app_settings):
     handlers = [
         (r'/', IndexHandler, dict(loop=loop, policy=policy,
                                   host_keys_settings=host_keys_settings)),
@@ -22,6 +16,17 @@ def main():
     ]
 
     app = tornado.web.Application(handlers, **app_settings)
+    return app
+
+
+def main():
+    parse_command_line()
+    app_settings = get_app_settings(options)
+    host_keys_settings = get_host_keys_settings(options)
+    policy = get_policy_setting(options, host_keys_settings)
+
+    loop = tornado.ioloop.IOLoop.current()
+    app = make_app(loop, policy, host_keys_settings, app_settings)
     app.listen(options.port, options.address)
     logging.info('Listening on {}:{}'.format(options.address, options.port))
     loop.start()
