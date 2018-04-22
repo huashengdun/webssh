@@ -22,7 +22,8 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 git clone https://github.com/huashengdun/webssh.git
 cd webssh
 pip install -r requirements.txt
-python webssh/main.py
+cd webssh
+python main.py
 ```
 
 ### Options
