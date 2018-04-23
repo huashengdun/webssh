@@ -3,8 +3,8 @@ import unittest
 import paramiko
 
 from paramiko.client import RejectPolicy, WarningPolicy
-from webssh.policy import AutoAddPolicy, get_policy_dictionary, load_host_keys
-from webssh.policy import get_policy_class, check_policy_setting
+from policy import (AutoAddPolicy, get_policy_dictionary, load_host_keys,
+                    get_policy_class, check_policy_setting)
 
 
 class TestPolicy(unittest.TestCase):
@@ -24,6 +24,10 @@ class TestPolicy(unittest.TestCase):
         path = '/tmp'
         host_keys = load_host_keys(path)
         self.assertFalse(host_keys)
+
+        path = 'tests/known_hosts_example'
+        host_keys = load_host_keys(path)
+        self.assertEqual(host_keys, paramiko.hostkeys.HostKeys(path))
 
     def test_get_policy_class(self):
         keys = ['autoadd', 'reject', 'warning']
