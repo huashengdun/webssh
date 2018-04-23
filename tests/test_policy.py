@@ -2,6 +2,7 @@ import os
 import unittest
 import paramiko
 
+from shutil import copyfile
 from paramiko.client import RejectPolicy, WarningPolicy
 from policy import (AutoAddPolicy, get_policy_dictionary, load_host_keys,
                     get_policy_class, check_policy_setting)
@@ -57,3 +58,53 @@ class TestPolicy(unittest.TestCase):
             pass
         check_policy_setting(AutoAddPolicy, host_keys_settings)
         self.assertEqual(os.path.exists(host_keys_filename), True)
+
+    def test_is_missing_host_key(self):
+        client = paramiko.SSHClient()
+        file1 = 'tests/known_hosts_example'
+        file2 = 'tests/known_hosts_example2'
+        client.load_host_keys(file1)
+        client.load_system_host_keys(file2)
+
+        autoadd = AutoAddPolicy()
+        for f in [file1, file2]:
+            entry = paramiko.hostkeys.HostKeys(f)._entries[0]
+            hostname = entry.hostnames[0]
+            key = entry.key
+            self.assertIsNone(
+                autoadd.is_missing_host_key(client, hostname, key)
+            )
+
+        for f in [file1, file2]:
+            entry = paramiko.hostkeys.HostKeys(f)._entries[0]
+            hostname = entry.hostnames[0][1:]
+            key = entry.key
+            self.assertTrue(
+                autoadd.is_missing_host_key(client, hostname, key)
+            )
+
+        file3 = 'tests/known_hosts_example3'
+        entry = paramiko.hostkeys.HostKeys(file3)._entries[0]
+        hostname = entry.hostnames[0]
+        key = entry.key
+        with self.assertRaises(paramiko.BadHostKeyException):
+            autoadd.is_missing_host_key(client, hostname, key)
+
+    def test_missing_host_key(self):
+        client = paramiko.SSHClient()
+        file1 = 'tests/known_hosts_example'
+        file2 = 'tests/known_hosts_example2'
+        filename = 'tests/known_hosts'
+        copyfile(file1, filename)
+        client.load_host_keys(filename)
+        n1 = len(client._host_keys)
+
+        autoadd = AutoAddPolicy()
+        entry = paramiko.hostkeys.HostKeys(file2)._entries[0]
+        hostname = entry.hostnames[0]
+        key = entry.key
+        autoadd.missing_host_key(client, hostname, key)
+        self.assertEqual(len(client._host_keys),  n1 + 1)
+        self.assertEqual(paramiko.hostkeys.HostKeys(filename),
+                         client._host_keys)
+        os.unlink(filename)
