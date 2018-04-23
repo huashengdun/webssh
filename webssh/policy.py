@@ -56,7 +56,8 @@ class AutoAddPolicy(paramiko.client.MissingHostKeyPolicy):
     lock = threading.Lock()
 
     def is_missing_host_key(self, client, hostname, key):
-        k = client._host_keys.lookup(hostname)
+        k = client._system_host_keys.lookup(hostname) or \
+                client._host_keys.lookup(hostname)
         if k is None:
             return True
         host_key = k.get(key.get_name(), None)
