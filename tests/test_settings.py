@@ -52,6 +52,8 @@ class TestSettings(unittest.TestCase):
         try:
             instance = get_policy_setting(options, settings)
         except ValueError:
-            pass
+            self.assertFalse(
+                settings['host_keys'] and settings['system_host_keys']
+            )
         else:
             self.assertIsInstance(instance, paramiko.client.RejectPolicy)
