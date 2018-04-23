@@ -37,7 +37,7 @@ class TestPolicy(unittest.TestCase):
             get_policy_class(key)
 
     def test_check_policy_setting(self):
-        host_keys_filename = './webssh/host_keys_test.db'
+        host_keys_filename = './tests/host_keys_test.db'
         host_keys_settings = dict(
             host_keys=paramiko.hostkeys.HostKeys(),
             system_host_keys=paramiko.hostkeys.HostKeys(),
