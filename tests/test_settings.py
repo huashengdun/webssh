@@ -1,8 +1,9 @@
 import os.path
 import unittest
+import paramiko
 import tornado.options as options
 
-from settings import get_host_keys_settings, base_dir
+from settings import get_host_keys_settings, get_policy_setting, base_dir
 from policy import load_host_keys
 
 
@@ -28,3 +29,29 @@ class TestSettings(unittest.TestCase):
         self.assertEqual(dic2['host_keys_filename'], options.hostFile)
         self.assertEqual(dic2['system_host_keys'],
                          load_host_keys(options.sysHostFile))
+
+    def test_get_policy_setting(self):
+        options.policy = 'warning'
+        options.hostFile = ''
+        options.sysHostFile = ''
+        settings = get_host_keys_settings(options)
+        instance = get_policy_setting(options, settings)
+        self.assertIsInstance(instance, paramiko.client.WarningPolicy)
+
+        options.policy = 'autoadd'
+        options.hostFile = ''
+        options.sysHostFile = ''
+        settings = get_host_keys_settings(options)
+        instance = get_policy_setting(options, settings)
+        self.assertIsInstance(instance, paramiko.client.AutoAddPolicy)
+
+        options.policy = 'reject'
+        options.hostFile = ''
+        options.sysHostFile = ''
+        settings = get_host_keys_settings(options)
+        try:
+            instance = get_policy_setting(options, settings)
+        except ValueError:
+            pass
+        else:
+            self.assertIsInstance(instance, paramiko.client.RejectPolicy)
