@@ -44,6 +44,7 @@ class TestSettings(unittest.TestCase):
         settings = get_host_keys_settings(options)
         instance = get_policy_setting(options, settings)
         self.assertIsInstance(instance, paramiko.client.AutoAddPolicy)
+        os.unlink(settings['host_keys_filename'])
 
         options.policy = 'reject'
         options.hostFile = ''
