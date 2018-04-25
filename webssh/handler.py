@@ -35,7 +35,9 @@ class MixinHandler(object):
         else:
             if ip:  # does not validate ip and port here
                 return (ip, port)
+
         logging.warn('Bad nginx configuration.')
+        return False
 
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
