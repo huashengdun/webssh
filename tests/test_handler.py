@@ -1,7 +1,6 @@
 import unittest
 import os.path
 import paramiko
-from paramiko import RSAKey, DSSKey, Ed25519Key, ECDSAKey
 
 from tornado.httputil import HTTPServerRequest
 from handler import MixinHandler, IndexHandler
