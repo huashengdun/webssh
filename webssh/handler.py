@@ -54,6 +54,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             return
         return data.decode('utf-8')
 
+    @classmethod
     def get_specific_pkey(self, pkeycls, privatekey, password):
         logging.info('Trying {}'.format(pkeycls.__name__))
         try:
@@ -66,6 +67,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         else:
             return pkey
 
+    @classmethod
     def get_pkey_obj(self, privatekey, password):
         password = password.encode('utf-8') if password else None
 
