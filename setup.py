@@ -21,6 +21,7 @@ setup(
     version=version,
     description='Web based ssh client',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Shengdun Hua',
     author_email='webmaster0115@gmail.com',
     url='https://github.com/huashengdun/webssh',
