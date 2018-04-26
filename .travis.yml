@@ -14,7 +14,7 @@ install:
 
 script:
   - pytest --cov=webssh
-  - flake8 --exclude='.git'
+  - flake8
 
 after_success:
   - codecov
