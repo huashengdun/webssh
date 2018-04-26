@@ -55,7 +55,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return data.decode('utf-8')
 
     @classmethod
-    def get_specific_pkey(self, pkeycls, privatekey, password):
+    def get_specific_pkey(cls, pkeycls, privatekey, password):
         logging.info('Trying {}'.format(pkeycls.__name__))
         try:
             pkey = pkeycls.from_private_key(io.StringIO(privatekey),
@@ -68,14 +68,14 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             return pkey
 
     @classmethod
-    def get_pkey_obj(self, privatekey, password):
+    def get_pkey_obj(cls, privatekey, password):
         password = password.encode('utf-8') if password else None
 
-        pkey = self.get_specific_pkey(paramiko.RSAKey, privatekey, password)\
-            or self.get_specific_pkey(paramiko.DSSKey, privatekey, password)\
-            or self.get_specific_pkey(paramiko.ECDSAKey, privatekey, password)\
-            or self.get_specific_pkey(paramiko.Ed25519Key, privatekey,
-                                      password)
+        pkey = cls.get_specific_pkey(paramiko.RSAKey, privatekey, password)\
+            or cls.get_specific_pkey(paramiko.DSSKey, privatekey, password)\
+            or cls.get_specific_pkey(paramiko.ECDSAKey, privatekey, password)\
+            or cls.get_specific_pkey(paramiko.Ed25519Key, privatekey,
+                                     password)
         if not pkey:
             raise ValueError('Not a valid private key file or '
                              'wrong password for decrypting the private key.')
