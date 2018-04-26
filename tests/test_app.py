@@ -56,10 +56,6 @@ class TestApp(AsyncHTTPTestCase):
         response = self.fetch('/', method="POST", body=body)
         self.assertIn(b'"status": "Empty username"', response.body)
 
-        body = u'hostname=127.0.0.1&port=22&username=user&password'
-        response = self.fetch('/', method="POST", body=body)
-        self.assertIn(b'Unable to connect to', response.body)
-
     def test_app_with_wrong_credentials(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
