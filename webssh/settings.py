@@ -23,7 +23,7 @@ def get_app_settings(options):
         template_path=os.path.join(base_dir, 'templates'),
         static_path=os.path.join(base_dir, 'static'),
         cookie_secret=uuid.uuid4().hex,
-        xsrf_cookies=True,
+        xsrf_cookies=(not options.debug),
         debug=options.debug
     )
     return settings
