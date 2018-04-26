@@ -3,7 +3,7 @@ import os.path
 import paramiko
 
 from tornado.httputil import HTTPServerRequest
-from handler import MixinHandler, IndexHandler
+from webssh.handler import MixinHandler, IndexHandler
 
 
 class TestMixinHandler(unittest.TestCase):

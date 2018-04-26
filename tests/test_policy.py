@@ -4,8 +4,10 @@ import paramiko
 
 from shutil import copyfile
 from paramiko.client import RejectPolicy, WarningPolicy
-from policy import (AutoAddPolicy, get_policy_dictionary, load_host_keys,
-                    get_policy_class, check_policy_setting)
+from webssh.policy import (
+    AutoAddPolicy, get_policy_dictionary, load_host_keys,
+    get_policy_class, check_policy_setting
+)
 
 
 class TestPolicy(unittest.TestCase):

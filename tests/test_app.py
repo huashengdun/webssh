@@ -1,5 +1,5 @@
 import json
-import handler
+import webssh.handler as handler
 import random
 import threading
 import tornado.websocket
@@ -7,8 +7,8 @@ import tornado.gen
 
 from tornado.testing import AsyncHTTPTestCase
 from tornado.options import options
-from main import make_app, make_handlers
-from settings import get_app_settings
+from webssh.main import make_app, make_handlers
+from webssh.settings import get_app_settings
 from tests.sshserver import run_ssh_server
 
 

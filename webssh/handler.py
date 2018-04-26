@@ -8,7 +8,7 @@ import paramiko
 import tornado.web
 
 from tornado.ioloop import IOLoop
-from worker import Worker, recycle_worker, workers
+from webssh.worker import Worker, recycle_worker, workers
 
 try:
     from concurrent.futures import Future

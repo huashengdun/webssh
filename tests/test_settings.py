@@ -3,8 +3,10 @@ import unittest
 import paramiko
 import tornado.options as options
 
-from settings import get_host_keys_settings, get_policy_setting, base_dir
-from policy import load_host_keys
+from webssh.settings import (
+    get_host_keys_settings, get_policy_setting, base_dir
+)
+from webssh.policy import load_host_keys
 
 
 class TestSettings(unittest.TestCase):

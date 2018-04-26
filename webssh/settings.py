@@ -3,7 +3,9 @@ import os.path
 import uuid
 
 from tornado.options import define
-from policy import load_host_keys, get_policy_class, check_policy_setting
+from webssh.policy import (
+    load_host_keys, get_policy_class, check_policy_setting
+)
 
 
 define('address', default='127.0.0.1', help='listen address')

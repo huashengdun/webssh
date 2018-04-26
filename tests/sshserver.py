@@ -29,7 +29,7 @@ from paramiko.py3compat import u, decodebytes
 
 
 # setup logging
-paramiko.util.log_to_file('sshserver.log')
+paramiko.util.log_to_file('tests/sshserver.log')
 
 host_key = paramiko.RSAKey(filename='tests/test_rsa.key')
 # host_key = paramiko.DSSKey(filename='test_dss.key')
