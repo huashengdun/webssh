@@ -19,8 +19,7 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 
 ### Instructions
 ```
-git clone https://github.com/huashengdun/webssh.git
-pip install ./webssh/
+pip install webssh
 wssh
 ```
 
