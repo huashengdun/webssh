@@ -102,7 +102,7 @@ class TestApp(AsyncHTTPTestCase):
         ws.close()
 
     @tornado.testing.gen_test
-    def test_app_with_correct_credentials_welcome(self):
+    def test_app_with_correct_credentials_user_robey(self):
         url = self.get_url('/')
         client = self.get_http_client()
         response = yield client.fetch(url)
@@ -117,4 +117,24 @@ class TestApp(AsyncHTTPTestCase):
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
         self.assertIn('Welcome!', msg)
+        ws.close()
+
+    @tornado.testing.gen_test
+    def test_app_with_correct_credentials_user_bar(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        body = self.body.replace('robey', 'bar')
+        response = yield client.fetch(url, method="POST", body=body)
+        worker_id = json.loads(response.body.decode('utf-8'))['id']
+        self.assertIsNotNone(worker_id)
+
+        url = url.replace('http', 'ws')
+        ws_url = url + 'ws?id=' + worker_id
+        ws = yield tornado.websocket.websocket_connect(ws_url)
+        msg = yield ws.read_message()
+        self.assertIn('Welcome!', msg)
+        yield ws.write_message('bye')
         ws.close()

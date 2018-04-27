@@ -55,7 +55,7 @@ class Server (paramiko.ServerInterface):
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_auth_password(self, username, password):
-        if (username == 'robey') and (password == 'foo'):
+        if (username in ['robey', 'bar']) and (password == 'foo'):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
@@ -104,7 +104,8 @@ def run_ssh_server(port=2200, running=True):
             print('*** No channel.')
             continue
 
-        print('Authenticated!')
+        username = t.get_username()
+        print('{} Authenticated!'.format(username))
 
         server.event.wait(10)
         if not server.event.is_set():
@@ -112,6 +113,9 @@ def run_ssh_server(port=2200, running=True):
             continue
 
         chan.send('\r\n\r\nWelcome!\r\n\r\n')
+        if username == 'bar':
+            print(chan.recv(1024))
+        chan.close()
 
     try:
         sock.close()
