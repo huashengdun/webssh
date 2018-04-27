@@ -77,11 +77,11 @@ class Server (paramiko.ServerInterface):
         return True
 
 
-def run_ssh_server(running=True):
+def run_ssh_server(port=2200, running=True):
     # now connect
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('127.0.0.1', 2200))
+    sock.bind(('127.0.0.1', port))
     sock.listen(100)
 
     while running:

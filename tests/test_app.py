@@ -18,6 +18,8 @@ handler.DELAY = 0.1
 class TestApp(AsyncHTTPTestCase):
 
     _is_running = False
+    sshserver_port = 2200
+    body = u'hostname=127.0.0.1&port={}&username=robey&password=foo'.format(sshserver_port) # noqa
 
     def get_app(self):
         loop = self.io_loop
@@ -27,6 +29,14 @@ class TestApp(AsyncHTTPTestCase):
         options.sysHostFile = ''
         app = make_app(make_handlers(loop, options), get_app_settings(options))
         return app
+
+    @classmethod
+    def setUpClass(cls):
+        t = threading.Thread(
+            target=run_ssh_server, args=(cls.sshserver_port, cls)
+        )
+        t.setDaemon(True)
+        t.start()
 
     @classmethod
     def tearDownClass(cls):
@@ -62,15 +72,13 @@ class TestApp(AsyncHTTPTestCase):
     def test_app_with_wrong_credentials(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
-        body = u'hostname=127.0.0.1&port=2200&username=robey&password=foos'
-        response = self.fetch('/', method="POST", body=body)
+        response = self.fetch('/', method="POST", body=self.body + u's')
         self.assertIn(b'Authentication failed.', response.body)
 
     def test_app_with_correct_credentials(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
-        body = u'hostname=127.0.0.1&port=2200&username=robey&password=foo'
-        response = self.fetch('/', method="POST", body=body)
+        response = self.fetch('/', method="POST", body=self.body)
         worker_id = json.loads(response.body.decode('utf-8'))['id']
         self.assertIsNotNone(worker_id)
 
@@ -81,8 +89,7 @@ class TestApp(AsyncHTTPTestCase):
         response = yield client.fetch(url)
         self.assertEqual(response.code, 200)
 
-        body = u'hostname=127.0.0.1&port=2200&username=robey&password=foo'
-        response = yield client.fetch(url, method="POST", body=body)
+        response = yield client.fetch(url, method="POST", body=self.body)
         worker_id = json.loads(response.body.decode('utf-8'))['id']
         self.assertIsNotNone(worker_id)
 
@@ -101,8 +108,7 @@ class TestApp(AsyncHTTPTestCase):
         response = yield client.fetch(url)
         self.assertEqual(response.code, 200)
 
-        body = u'hostname=127.0.0.1&port=2200&username=robey&password=foo'
-        response = yield client.fetch(url, method="POST", body=body)
+        response = yield client.fetch(url, method="POST", body=self.body)
         worker_id = json.loads(response.body.decode('utf-8'))['id']
         self.assertIsNotNone(worker_id)
 
@@ -112,8 +118,3 @@ class TestApp(AsyncHTTPTestCase):
         msg = yield ws.read_message()
         self.assertIn('Welcome!', msg)
         ws.close()
-
-
-t = threading.Thread(target=run_ssh_server, args=(TestApp,))
-t.setDaemon(True)
-t.start()
