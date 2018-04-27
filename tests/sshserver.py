@@ -115,7 +115,10 @@ def run_ssh_server(port=2200, running=True):
         chan.send('\r\n\r\nWelcome!\r\n\r\n')
         if username == 'bar':
             print(chan.recv(1024))
+
         chan.close()
+        t.close()
+        client.close()
 
     try:
         sock.close()
