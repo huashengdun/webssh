@@ -13,7 +13,7 @@ workers = {}
 def recycle_worker(worker):
     if worker.handler:
         return
-    logging.warn('Recycling worker {}'.format(worker.id))
+    logging.warning('Recycling worker {}'.format(worker.id))
     workers.pop(worker.id, None)
     worker.close(reason='worker recycled')
 

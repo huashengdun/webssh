@@ -36,7 +36,7 @@ class MixinHandler(object):
             if ip:  # does not validate ip and port here
                 return (ip, port)
 
-        logging.warn('Bad nginx configuration.')
+        logging.warning('Bad nginx configuration.')
         return False
 
 
