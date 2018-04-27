@@ -1,7 +1,7 @@
 WebSSH
 ------
 
-|Build Status| |codecov| |license|
+|Build Status| |codecov| |PyPI - Python Version| |PyPI|
 
 A simple web application to be used as an ssh client to connect to your
 ssh servers. It is written in Python, base on tornado and paramiko.
@@ -84,7 +84,8 @@ Tips
    :target: https://travis-ci.org/huashengdun/webssh
 .. |codecov| image:: https://codecov.io/gh/huashengdun/webssh/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/huashengdun/webssh
-.. |license| image:: https://img.shields.io/github/license/mashape/apistatus.svg
+.. |PyPI - Python Version| image:: https://img.shields.io/pypi/pyversions/webssh.svg
+.. |PyPI| image:: https://img.shields.io/pypi/v/webssh.svg
 .. |Login| image:: https://github.com/huashengdun/webssh/raw/master/preview/login.png
 .. |Terminal| image:: https://github.com/huashengdun/webssh/raw/master/preview/terminal.png
 
