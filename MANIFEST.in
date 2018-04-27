@@ -1,2 +1,13 @@
 include LICENSE
-recursive-include tests *.py *.key *.db known_hosts*
+
+recursive-include tests *
+prune tests/__pycache__
+prune tests/.pytest_cache
+
+recursive-include webssh *
+prune webssh/__pycache__
+prune webssh/.pytest_cache
+
+global-exclude *.pyc
+global-exclude *.log
+global-exclude .coverage

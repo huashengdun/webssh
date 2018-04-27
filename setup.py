@@ -21,6 +21,7 @@ setup(
     wssh = webssh.main:main
     ''',
     license='MIT',
+    include_package_data=True,
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
