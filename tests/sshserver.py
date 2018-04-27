@@ -77,14 +77,14 @@ class Server (paramiko.ServerInterface):
         return True
 
 
-def run_ssh_server(app):
+def run_ssh_server(running=True):
     # now connect
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(('127.0.0.1', 2200))
     sock.listen(100)
 
-    while not app._tear_down:
+    while running:
         client, addr = sock.accept()
         print('Got a connection!')
 
@@ -120,4 +120,4 @@ def run_ssh_server(app):
 
 
 if __name__ == '__main__':
-    run_ssh_server(False)
+    run_ssh_server()

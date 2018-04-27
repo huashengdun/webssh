@@ -17,11 +17,10 @@ handler.DELAY = 0.1
 
 class TestApp(AsyncHTTPTestCase):
 
-    _tear_down = False
+    _is_running = False
 
     def get_app(self):
         loop = self.io_loop
-        self._tear_down = False
         options.debug = True
         options.policy = random.choice(['warning', 'autoadd'])
         options.hostFile = ''
@@ -31,7 +30,11 @@ class TestApp(AsyncHTTPTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls._tear_down = True
+        cls._is_running = True
+
+    @classmethod
+    def __bool__(cls):
+        return cls._is_running
 
     def test_app_with_invalid_form(self):
         response = self.fetch('/')
