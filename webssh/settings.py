@@ -1,11 +1,19 @@
 import logging
 import os.path
+import sys
 import uuid
 
 from tornado.options import define
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
 )
+from webssh._version import __version__
+
+
+def print_version(flag):
+    if flag:
+        print(__version__)
+        sys.exit(0)
 
 
 define('address', default='127.0.0.1', help='listen address')
@@ -15,6 +23,8 @@ define('policy', default='warning',
        help='missing host key policy, reject|autoadd|warning')
 define('hostFile', default='', help='User defined host keys file')
 define('sysHostFile', default='', help='System wide host keys file')
+define('version', type=bool, help='show version information',
+       callback=print_version)
 
 
 base_dir = os.path.dirname(__file__)

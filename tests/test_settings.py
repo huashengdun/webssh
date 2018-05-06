@@ -4,12 +4,18 @@ import paramiko
 import tornado.options as options
 
 from webssh.settings import (
-    get_host_keys_settings, get_policy_setting, base_dir
+    get_host_keys_settings, get_policy_setting, base_dir, print_version
 )
 from webssh.policy import load_host_keys
+from webssh._version import __version__
 
 
 class TestSettings(unittest.TestCase):
+
+    def test_print_version(self):
+        self.assertNotEqual(print_version(False), 2, msg=__version__)
+        with self.assertRaises(SystemExit):
+            self.assertEqual(print_version(True), 2, msg=__version__)
 
     def test_get_host_keys_settings(self):
         options.hostFile = ''
