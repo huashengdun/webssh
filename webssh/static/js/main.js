@@ -91,8 +91,14 @@ jQuery(function($){
     };
 
     socket.onmessage = function(msg) {
-      // console.log(msg);
-      term.write(msg.data);
+      var reader = new FileReader();
+      reader.onloadend = function(event){
+          var decoder = new TextDecoder();
+          var text = decoder.decode(reader.result);
+          // console.log(text);
+          term.write(text);
+      };
+      reader.readAsArrayBuffer(msg.data);
     };
 
     socket.onerror = function(e) {
