@@ -116,7 +116,7 @@ class TestApp(AsyncHTTPTestCase):
         ws_url = url + 'ws?id=' + worker_id
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
-        self.assertIn('Welcome!', msg)
+        self.assertIn(b'Welcome!', msg)
         ws.close()
 
     @tornado.testing.gen_test
@@ -135,6 +135,6 @@ class TestApp(AsyncHTTPTestCase):
         ws_url = url + 'ws?id=' + worker_id
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
-        self.assertIn('Welcome!', msg)
+        self.assertIn(b'Welcome!', msg)
         yield ws.write_message('bye')
         ws.close()
