@@ -1,4 +1,5 @@
 import io
+import json
 import logging
 import socket
 import threading
@@ -199,8 +200,17 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         logging.debug('{!r} from {}:{}'.format(message, *self.src_addr))
         worker = self.worker_ref()
-        worker.data_to_dst.append(message)
-        worker.on_write()
+        msg = json.loads(message)
+        resize = msg.get('resize')
+        if resize:
+            try:
+                worker.chan.resize_pty(*resize)
+            except paramiko.SSHException:
+                pass
+        data = msg.get('data')
+        if data:
+            worker.data_to_dst.append(data)
+            worker.on_write()
 
     def on_close(self):
         logging.info('Disconnected from {}:{}'.format(*self.src_addr))

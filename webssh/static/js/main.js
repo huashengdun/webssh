@@ -38,6 +38,7 @@ jQuery(function($){
 
   });
 
+
   function parse_xterm_style() {
     var text = $('.xterm-helpers style').text();
     var arr = text.split('xterm-normal-char{width:');
@@ -46,13 +47,28 @@ jQuery(function($){
     style.height = parseInt(arr[1]);
   }
 
+
   function current_geometry() {
     if (!style.width || !style.height) {
       parse_xterm_style();
     }
     cols = parseInt(window.innerWidth / style.width);
     rows = parseInt(window.innerHeight / style.height);
-    return [cols, rows];
+    return {'cols': cols, 'rows': rows};
+  }
+
+
+  function resize_term(term, socket) {
+    var geometry = current_geometry(),
+        cols = geometry.cols,
+        rows = geometry.rows;
+    // console.log([cols, rows]);
+    // console.log(term.geometry);
+    if (cols != term.geometry[0] || rows != term.geometry[1]) {
+      console.log('resizing term');
+      term.resize(cols, rows);
+      socket.send(JSON.stringify({'resize': [cols, rows]}));
+    }
   }
 
 
@@ -69,19 +85,16 @@ jQuery(function($){
     var ws_url = window.location.href.replace('http', 'ws'),
         join = (ws_url[ws_url.length-1] == '/' ? '' : '/'),
         url = ws_url + join + 'ws?id=' + msg.id,
-        socket = new WebSocket(url),
-        terminal = document.getElementById('#terminal'),
-        geometry = current_geometry();
+        terminal = document.getElementById('#terminal');
+        socket = new WebSocket(url);
         term = new Terminal({
           cursorBlink: true,
-          cols: geometry[0],
-          rows: geometry[1]
         });
 
     console.log(url);
     term.on('data', function(data) {
       // console.log(data);
-      socket.send(data);
+      socket.send(JSON.stringify({'data': data}));
     });
 
     socket.onopen = function(e) {
@@ -93,10 +106,14 @@ jQuery(function($){
     socket.onmessage = function(msg) {
       var reader = new FileReader();
       reader.onloadend = function(event){
-          var decoder = new TextDecoder();
-          var text = decoder.decode(reader.result);
-          // console.log(text);
-          term.write(text);
+        var decoder = new TextDecoder();
+        var text = decoder.decode(reader.result);
+        // console.log(text);
+        term.write(text);
+        if (!term.resized) {
+          resize_term(term, socket);
+          term.resized = true;
+        }
       };
       reader.readAsArrayBuffer(msg.data);
     };
@@ -108,17 +125,18 @@ jQuery(function($){
     socket.onclose = function(e) {
       console.log(e);
       term.destroy();
+      term = undefined;
+      socket = undefined;
       $('.container').show();
       status.text(e.reason);
       btn.prop('disabled', false);
     };
   }
 
+
   $(window).resize(function(){
-    if (typeof term != 'undefined') {
-      geometry = current_geometry();
-      term.geometry = geometry;
-      term.resize(geometry[0], geometry[1]);
+    if (typeof term != 'undefined' && typeof socket != 'undefined') {
+      resize_term(term, socket);
     }
   });
 

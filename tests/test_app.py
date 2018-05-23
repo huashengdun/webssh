@@ -136,5 +136,5 @@ class TestApp(AsyncHTTPTestCase):
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
         self.assertIn(b'Welcome!', msg)
-        yield ws.write_message('bye')
+        yield ws.write_message(json.dumps({'resize': [79, 23], 'data': 'bye'}))
         ws.close()
