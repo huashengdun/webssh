@@ -18,6 +18,11 @@ try:
 except ImportError:
     from tornado.concurrent import Future
 
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
+
 
 DELAY = 3
 
@@ -204,9 +209,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         worker = self.worker_ref()
         try:
             msg = json.loads(message)
-        except ValueError:  # py2
-            return
-        except json.decoder.JSONDecodeError:  # py3
+        except JSONDecodeError:
             return
 
         if not isinstance(msg, dict):
