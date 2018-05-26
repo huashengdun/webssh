@@ -42,9 +42,9 @@ jQuery(function($){
   function parse_xterm_style() {
     var text = $('.xterm-helpers style').text();
     var arr = text.split('xterm-normal-char{width:');
-    style.width = parseInt(arr[1]) + 1;
+    style.width = parseFloat(arr[1]);
     arr = text.split('div{height:');
-    style.height = parseInt(arr[1]);
+    style.height = parseFloat(arr[1]);
   }
 
 
@@ -52,7 +52,7 @@ jQuery(function($){
     if (!style.width || !style.height) {
       parse_xterm_style();
     }
-    cols = parseInt(window.innerWidth / style.width);
+    cols = parseInt(window.innerWidth / style.width) - 1;
     rows = parseInt(window.innerHeight / style.height);
     return {'cols': cols, 'rows': rows};
   }
