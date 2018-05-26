@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import socket
+import struct
 import threading
 import traceback
 import weakref
@@ -9,6 +10,7 @@ import paramiko
 import tornado.web
 
 from tornado.ioloop import IOLoop
+from tornado.util import basestring_type
 from webssh.worker import Worker, recycle_worker, workers
 
 try:
@@ -200,15 +202,25 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         logging.debug('{!r} from {}:{}'.format(message, *self.src_addr))
         worker = self.worker_ref()
-        msg = json.loads(message)
+        try:
+            msg = json.loads(message)
+        except ValueError:  # py2
+            return
+        except json.decoder.JSONDecodeError:  # py3
+            return
+
+        if not isinstance(msg, dict):
+            return
+
         resize = msg.get('resize')
         if resize:
             try:
                 worker.chan.resize_pty(*resize)
-            except paramiko.SSHException:
+            except (TypeError, struct.error, paramiko.SSHException):
                 pass
+
         data = msg.get('data')
-        if data:
+        if data and isinstance(data, basestring_type):
             worker.data_to_dst.append(data)
             worker.on_write()
 
