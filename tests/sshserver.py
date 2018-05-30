@@ -38,6 +38,7 @@ host_key = paramiko.RSAKey(filename='tests/test_rsa.key')
 print('Read key: ' + u(hexlify(host_key.get_fingerprint())))
 
 banner = u'\r\n\u6b22\u8fce\r\n'
+event_timeout = 5
 
 
 class Server(paramiko.ServerInterface):
@@ -131,12 +132,12 @@ def run_ssh_server(port=2200, running=True):
         username = t.get_username()
         print('{} Authenticated!'.format(username))
 
-        server.shell_event.wait(2)
+        server.shell_event.wait(timeout=event_timeout)
         if not server.shell_event.is_set():
             print('*** Client never asked for a shell.')
             continue
 
-        server.exec_event.wait(2)
+        server.exec_event.wait(timeout=event_timeout)
         if not server.exec_event.is_set():
             print('*** Client never asked for a command.')
             continue
