@@ -20,6 +20,7 @@ Features
 -  Encrypted keys supported.
 -  Fullscreen terminal supported.
 -  Terminal window resizable.
+-  Auto detect system default encoding.
 -  Compatible with Python 2.7-3.6.
 
 Instructions

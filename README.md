@@ -16,6 +16,7 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 * Encrypted keys supported.
 * Fullscreen terminal supported.
 * Terminal window resizable.
+* Auto detect system default encoding.
 * Compatible with Python 2.7-3.6.
 
 ### Instructions
