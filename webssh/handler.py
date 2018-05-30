@@ -216,7 +216,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
             return
 
         resize = msg.get('resize')
-        if resize:
+        if resize and len(resize) == 2:
             try:
                 worker.chan.resize_pty(*resize)
             except (TypeError, struct.error, paramiko.SSHException):

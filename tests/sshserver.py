@@ -76,6 +76,11 @@ class Server (paramiko.ServerInterface):
                                   pixelwidth, pixelheight, modes):
         return True
 
+    def check_channel_window_change_request(self, channel, width, height,
+                                            pixelwidth, pixelheight):
+        channel.send('resized')
+        return True
+
 
 def run_ssh_server(port=2200, running=True):
     # now connect

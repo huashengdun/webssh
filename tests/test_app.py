@@ -137,12 +137,15 @@ class TestApp(AsyncHTTPTestCase):
         msg = yield ws.read_message()
         self.assertIn(b'Welcome!', msg)
 
-        # message will be ignored silently
+        # messages below will be ignored silently
         yield ws.write_message('hello')
         yield ws.write_message('"hello"')
         yield ws.write_message('[hello]')
         yield ws.write_message(json.dumps({'resize': []}))
         yield ws.write_message(json.dumps({'resize': {}}))
+        yield ws.write_message(json.dumps({'resize': 'ab'}))
+        yield ws.write_message(json.dumps({'resize': ['a', 'b']}))
+        yield ws.write_message(json.dumps({'resize': {'a': 1, 'b': 2}}))
         yield ws.write_message(json.dumps({'resize': [100]}))
         yield ws.write_message(json.dumps({'resize': [100]*10}))
         yield ws.write_message(json.dumps({'resize': [-1, -1]}))
@@ -152,7 +155,13 @@ class TestApp(AsyncHTTPTestCase):
         yield ws.write_message(json.dumps({'data': 1}))
         yield ws.write_message(json.dumps({'data': 2.1}))
         yield ws.write_message(json.dumps({'key-non-existed': 'hello'}))
-        yield ws.write_message(json.dumps({'resize': [79, 23], 'data': 'bye'}))
+        # end - those just for testing webssh websocket stablity
+
+        yield ws.write_message(json.dumps({'resize': [79, 23]}))
+        msg = yield ws.read_message()
+        self.assertEqual(b'resized', msg)
+
+        yield ws.write_message(json.dumps({'data': 'bye'}))
         msg = yield ws.read_message()
         self.assertEqual(b'bye', msg)
         ws.close()
