@@ -27,6 +27,13 @@ except ImportError:
 DELAY = 3
 
 
+def parse_encoding(data):
+    for line in data.split('\n'):
+        s = line.split('=')[-1]
+        if s:
+            return s.strip('"').split('.')[-1]
+
+
 class MixinHandler(object):
 
     def get_real_client_addr(self):
@@ -122,6 +129,17 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return self.get_real_client_addr() or self.request.connection.stream.\
             socket.getpeername()
 
+    def get_default_encoding(self, ssh):
+        try:
+            _, stdout, _ = ssh.exec_command('locale')
+        except paramiko.SSHException:
+            result = None
+        else:
+            data = stdout.read().decode()
+            result = parse_encoding(data)
+
+        return result if result else 'utf-8'
+
     def ssh_connect(self):
         ssh = paramiko.SSHClient()
         ssh._system_host_keys = self.host_keys_settings['system_host_keys']
@@ -146,6 +164,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         chan.setblocking(0)
         worker = Worker(self.loop, ssh, chan, dst_addr)
         worker.src_addr = self.get_client_addr()
+        worker.encoding = self.get_default_encoding(ssh)
         return worker
 
     def ssh_connect_wrapped(self, future):
@@ -164,6 +183,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
     def post(self):
         worker_id = None
         status = None
+        encoding = None
 
         future = Future()
         t = threading.Thread(target=self.ssh_connect_wrapped, args=(future,))
@@ -178,8 +198,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             worker_id = worker.id
             workers[worker_id] = worker
             self.loop.call_later(DELAY, recycle_worker, worker)
+            encoding = worker.encoding
 
-        self.write(dict(id=worker_id, status=status))
+        self.write(dict(id=worker_id, status=status, encoding=encoding))
 
 
 class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):

@@ -3,7 +3,22 @@ import os.path
 import paramiko
 
 from tornado.httputil import HTTPServerRequest
-from webssh.handler import MixinHandler, IndexHandler
+from webssh.handler import MixinHandler, IndexHandler, parse_encoding
+
+
+class TestHandler(unittest.TestCase):
+
+    def test_parse_encoding(self):
+        data = ''
+        self.assertIsNone(parse_encoding(data))
+        data = 'UTF-8'
+        self.assertEqual(parse_encoding(data), 'UTF-8')
+        data = 'en_US.UTF-8'
+        self.assertEqual(parse_encoding(data), 'UTF-8')
+        data = 'LANG=en_US.UTF-8\nLANGUAGE=\nLC_CTYPE="en_US.UTF-8"\n'
+        self.assertEqual(parse_encoding(data), 'UTF-8')
+        data = 'LANGUAGE=\nLC_CTYPE="en_US.UTF-8"\n'
+        self.assertEqual(parse_encoding(data), 'UTF-8')
 
 
 class TestMixinHandler(unittest.TestCase):

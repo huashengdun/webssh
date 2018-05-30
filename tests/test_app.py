@@ -9,7 +9,7 @@ from tornado.testing import AsyncHTTPTestCase
 from tornado.options import options
 from webssh.main import make_app, make_handlers
 from webssh.settings import get_app_settings
-from tests.sshserver import run_ssh_server
+from tests.sshserver import run_ssh_server, banner
 
 
 handler.DELAY = 0.1
@@ -79,8 +79,10 @@ class TestApp(AsyncHTTPTestCase):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
         response = self.fetch('/', method="POST", body=self.body)
-        worker_id = json.loads(response.body.decode('utf-8'))['id']
-        self.assertIsNotNone(worker_id)
+        data = json.loads(response.body.decode('utf-8'))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
 
     @tornado.testing.gen_test
     def test_app_with_correct_credentials_timeout(self):
@@ -90,11 +92,13 @@ class TestApp(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
 
         response = yield client.fetch(url, method="POST", body=self.body)
-        worker_id = json.loads(response.body.decode('utf-8'))['id']
-        self.assertIsNotNone(worker_id)
+        data = json.loads(response.body.decode('utf-8'))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
 
         url = url.replace('http', 'ws')
-        ws_url = url + 'ws?id=' + worker_id
+        ws_url = url + 'ws?id=' + data['id']
         yield tornado.gen.sleep(handler.DELAY + 0.1)
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
@@ -109,14 +113,16 @@ class TestApp(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
 
         response = yield client.fetch(url, method="POST", body=self.body)
-        worker_id = json.loads(response.body.decode('utf-8'))['id']
-        self.assertIsNotNone(worker_id)
+        data = json.loads(response.body.decode('utf-8'))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
 
         url = url.replace('http', 'ws')
-        ws_url = url + 'ws?id=' + worker_id
+        ws_url = url + 'ws?id=' + data['id']
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
-        self.assertIn(b'Welcome!', msg)
+        self.assertEqual(msg.decode(data['encoding']), banner)
         ws.close()
 
     @tornado.testing.gen_test
@@ -128,14 +134,16 @@ class TestApp(AsyncHTTPTestCase):
 
         body = self.body.replace('robey', 'bar')
         response = yield client.fetch(url, method="POST", body=body)
-        worker_id = json.loads(response.body.decode('utf-8'))['id']
-        self.assertIsNotNone(worker_id)
+        data = json.loads(response.body.decode('utf-8'))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
 
         url = url.replace('http', 'ws')
-        ws_url = url + 'ws?id=' + worker_id
+        ws_url = url + 'ws?id=' + data['id']
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
-        self.assertIn(b'Welcome!', msg)
+        self.assertEqual(msg.decode(data['encoding']), banner)
 
         # messages below will be ignored silently
         yield ws.write_message('hello')

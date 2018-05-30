@@ -22,6 +22,7 @@ from binascii import hexlify
 import socket
 # import sys
 import threading
+import random
 # import traceback
 
 import paramiko
@@ -36,8 +37,10 @@ host_key = paramiko.RSAKey(filename='tests/test_rsa.key')
 
 print('Read key: ' + u(hexlify(host_key.get_fingerprint())))
 
+banner = u'\r\n\u6b22\u8fce\r\n'
 
-class Server (paramiko.ServerInterface):
+
+class Server(paramiko.ServerInterface):
     # 'data' is the output of base64.b64encode(key)
     # (using the "user_rsa_key" files)
     data = (b'AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp'
@@ -46,8 +49,13 @@ class Server (paramiko.ServerInterface):
             b'UWT10hcuO4Ks8=')
     good_pub_key = paramiko.RSAKey(data=decodebytes(data))
 
+    langs = ['en_US.UTF-8', 'zh_CN.GBK']
+
     def __init__(self):
-        self.event = threading.Event()
+        self.shell_event = threading.Event()
+        self.exec_event = threading.Event()
+        self.lang = random.choice(self.langs)
+        self.encoding = self.lang.split('.')[-1]
 
     def check_channel_request(self, kind, chanid):
         if kind == 'session':
@@ -68,8 +76,19 @@ class Server (paramiko.ServerInterface):
     def get_allowed_auths(self, username):
         return 'password,publickey'
 
+    def check_channel_exec_request(self, channel, command):
+        if command != b'locale':
+            ret = False
+        else:
+            ret = True
+            result = 'LANG={lang}\nLANGUAGE=\nLC_CTYPE="{lang}"\n'.format(lang=self.lang)  # noqa
+            channel.send(result)
+            channel.shutdown(1)
+        self.exec_event.set()
+        return ret
+
     def check_channel_shell_request(self, channel):
-        self.event.set()
+        self.shell_event.set()
         return True
 
     def check_channel_pty_request(self, channel, term, width, height,
@@ -112,12 +131,19 @@ def run_ssh_server(port=2200, running=True):
         username = t.get_username()
         print('{} Authenticated!'.format(username))
 
-        server.event.wait(10)
-        if not server.event.is_set():
+        server.shell_event.wait(2)
+        if not server.shell_event.is_set():
             print('*** Client never asked for a shell.')
             continue
 
-        chan.send('\r\n\r\nWelcome!\r\n\r\n')
+        server.exec_event.wait(2)
+        if not server.exec_event.is_set():
+            print('*** Client never asked for a command.')
+            continue
+
+        # chan.send('\r\n\r\nWelcome!\r\n\r\n')
+        print(server.encoding)
+        chan.send(banner.encode(server.encoding))
         if username == 'bar':
             msg = chan.recv(1024)
             chan.send(msg)

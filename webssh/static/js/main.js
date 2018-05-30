@@ -59,12 +59,14 @@ jQuery(function($){
         join = (ws_url[ws_url.length-1] === '/' ? '' : '/'),
         url = ws_url + join + 'ws?id=' + msg.id,
         sock = new window.WebSocket(url),
+        encoding = msg.encoding,
         terminal = document.getElementById('#terminal'),
         term = new window.Terminal({
           cursorBlink: true,
         });
 
     console.log(url);
+    console.log(encoding);
     wssh.sock = sock;
     wssh.term = term;
 
@@ -83,7 +85,7 @@ jQuery(function($){
       var reader = new window.FileReader();
 
       reader.onloadend = function(){
-        var decoder = new window.TextDecoder();
+        var decoder = new window.TextDecoder(encoding);
         var text = decoder.decode(reader.result);
         // console.log(text);
         term.write(text);
