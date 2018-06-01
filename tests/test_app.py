@@ -17,7 +17,7 @@ handler.DELAY = 0.1
 
 class TestApp(AsyncHTTPTestCase):
 
-    _is_running = False
+    running = [True]
     sshserver_port = 2200
     body = u'hostname=127.0.0.1&port={}&username=robey&password=foo'.format(sshserver_port) # noqa
 
@@ -32,19 +32,17 @@ class TestApp(AsyncHTTPTestCase):
 
     @classmethod
     def setUpClass(cls):
+        print('='*20)
         t = threading.Thread(
-            target=run_ssh_server, args=(cls.sshserver_port, cls)
+            target=run_ssh_server, args=(cls.sshserver_port, cls.running)
         )
         t.setDaemon(True)
         t.start()
 
     @classmethod
     def tearDownClass(cls):
-        cls._is_running = True
-
-    @classmethod
-    def __bool__(cls):
-        return cls._is_running
+        cls.running.pop()
+        print('='*20)
 
     def test_app_with_invalid_form(self):
         response = self.fetch('/')

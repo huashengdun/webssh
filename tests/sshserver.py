@@ -124,7 +124,7 @@ def run_ssh_server(port=2200, running=True):
             continue
 
         # wait for auth
-        chan = t.accept(20)
+        chan = t.accept(2)
         if chan is None:
             print('*** No channel.')
             continue
