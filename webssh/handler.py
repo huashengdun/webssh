@@ -12,6 +12,8 @@ import tornado.web
 from tornado.ioloop import IOLoop
 from tornado.util import basestring_type
 from webssh.worker import Worker, recycle_worker, workers
+from webssh.utils import (is_valid_ipv4_address, is_valid_ipv6_address,
+                          is_valid_port)
 
 try:
     from concurrent.futures import Future
@@ -40,16 +42,17 @@ class MixinHandler(object):
         ip = self.request.headers.get('X-Real-Ip')
         port = self.request.headers.get('X-Real-Port')
 
-        if ip is None and port is None:
+        if ip is None and port is None:  # suppose the server doesn't use nginx
             return
 
-        try:
-            port = int(port)
-        except (TypeError, ValueError):
-            pass
-        else:
-            if ip:  # does not validate ip and port here
-                return (ip, port)
+        if is_valid_ipv4_address(ip) or is_valid_ipv6_address(ip):
+            try:
+                port = int(port)
+            except (TypeError, ValueError):
+                pass
+            else:
+                if is_valid_port(port):
+                    return (ip, port)
 
         logging.warning('Bad nginx configuration.')
         return False
@@ -101,10 +104,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         try:
             port = int(value)
         except ValueError:
-            port = 0
-
-        if 0 < port < 65536:
-            return port
+            pass
+        else:
+            if is_valid_port(port):
+                return port
 
         raise ValueError('Invalid port {}'.format(value))
 
@@ -135,7 +138,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         except paramiko.SSHException:
             result = None
         else:
-            data = stdout.read().decode()
+            data = stdout.read().decode('utf-8')
             result = parse_encoding(data)
 
         return result if result else 'utf-8'
