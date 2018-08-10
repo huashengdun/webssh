@@ -16,14 +16,15 @@ def print_version(flag):
         sys.exit(0)
 
 
-define('address', default='127.0.0.1', help='listen address')
-define('port', default=8888, help='listen port', type=int)
-define('debug', default=False, help='debug mode', type=bool)
+define('address', default='127.0.0.1', help='Listen address')
+define('port', type=int, default=8888,  help='Listen port')
+define('debug', type=bool, default=False, help='Debug mode')
 define('policy', default='warning',
-       help='missing host key policy, reject|autoadd|warning')
+       help='Missing host key policy, reject|autoadd|warning')
 define('hostFile', default='', help='User defined host keys file')
 define('sysHostFile', default='', help='System wide host keys file')
-define('version', type=bool, help='show version information',
+define('wpIntvl', type=int, default=0, help='Websocket ping interval')
+define('version', type=bool, help='Show version information',
        callback=print_version)
 
 
@@ -35,6 +36,7 @@ def get_app_settings(options):
         template_path=os.path.join(base_dir, 'templates'),
         static_path=os.path.join(base_dir, 'static'),
         cookie_secret=uuid.uuid4().hex,
+        websocket_ping_interval=options.wpIntvl,
         xsrf_cookies=(not options.debug),
         debug=options.debug
     )
