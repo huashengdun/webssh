@@ -21,7 +21,7 @@ Features
 -  Fullscreen terminal supported.
 -  Terminal window resizable.
 -  Auto detect system default encoding.
--  Compatible with Python 2.7-3.6.
+-  Compatible with Python 2.7-3.7.
 
 Instructions
 ~~~~~~~~~~~~
@@ -36,13 +36,13 @@ Options
 
 ::
 
-    # configure listen address and port
+    # listen address and port
     wssh --address='0.0.0.0' --port=8000
 
-    # configure missing host key policy
+    # missing host key policy
     wssh --policy=reject
 
-    # configure logging level
+    # logging level
     wssh --logging=debug
 
     # log to file
