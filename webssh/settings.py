@@ -29,6 +29,7 @@ define('version', type=bool, help='Show version information',
 
 
 base_dir = os.path.dirname(__file__)
+max_body_size = 1 * 1024 * 1024
 
 
 def get_app_settings(options):

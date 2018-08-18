@@ -1,15 +1,17 @@
 import json
-import webssh.handler as handler
 import random
 import threading
 import tornado.websocket
 import tornado.gen
+import webssh.handler as handler
 
 from tornado.testing import AsyncHTTPTestCase
+from tornado.httpclient import HTTPError
 from tornado.options import options
 from webssh.main import make_app, make_handlers
-from webssh.settings import get_app_settings
+from webssh.settings import get_app_settings, max_body_size
 from tests.sshserver import run_ssh_server, banner
+from tests.utils import encode_multipart_formdata
 
 
 handler.DELAY = 0.1
@@ -20,6 +22,12 @@ class TestApp(AsyncHTTPTestCase):
     running = [True]
     sshserver_port = 2200
     body = u'hostname=127.0.0.1&port={}&username=robey&password=foo'.format(sshserver_port) # noqa
+    body_dict = {
+        'hostname': '127.0.0.1',
+        'port': str(sshserver_port),
+        'username': 'robey',
+        'password': ''
+    }
 
     def get_app(self):
         loop = self.io_loop
@@ -43,6 +51,14 @@ class TestApp(AsyncHTTPTestCase):
     def tearDownClass(cls):
         cls.running.pop()
         print('='*20)
+
+    def read_privatekey(self, filename):
+        return open(filename, 'rb').read().decode('utf-8')
+
+    def get_httpserver_options(self):
+        options = super(TestApp, self).get_httpserver_options()
+        options.update(max_body_size=max_body_size)
+        return options
 
     def test_app_with_invalid_form(self):
         response = self.fetch('/')
@@ -102,6 +118,74 @@ class TestApp(AsyncHTTPTestCase):
         msg = yield ws.read_message()
         self.assertIsNone(msg)
         ws.close()
+
+    @tornado.testing.gen_test
+    def test_app_auth_with_valid_pubkey_for_user_robey(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        privatekey = self.read_privatekey('tests/user_rsa_key')
+        files = [('privatekey', 'user_rsa_key', privatekey)]
+        content_type, body = encode_multipart_formdata(self.body_dict.items(),
+                                                       files)
+        headers = {
+            "Content-Type": content_type, 'content-length': str(len(body))
+        }
+        response = yield client.fetch(url, method="POST", headers=headers,
+                                      body=body)
+        data = json.loads(response.body.decode('utf-8'))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
+
+        url = url.replace('http', 'ws')
+        ws_url = url + 'ws?id=' + data['id']
+        ws = yield tornado.websocket.websocket_connect(ws_url)
+        msg = yield ws.read_message()
+        self.assertEqual(msg.decode(data['encoding']), banner)
+        ws.close()
+
+    @tornado.testing.gen_test
+    def test_app_auth_with_invalid_pubkey_for_user_robey(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        privatekey = self.read_privatekey('tests/user_rsa_key')
+        privatekey = privatekey[:100] + u'bad' + privatekey[100:]
+        files = [('privatekey', 'user_rsa_key', privatekey)]
+        content_type, body = encode_multipart_formdata(self.body_dict.items(),
+                                                       files)
+        headers = {
+            "Content-Type": content_type, 'content-length': str(len(body))
+        }
+        response = yield client.fetch(url, method="POST", headers=headers,
+                                      body=body)
+        data = json.loads(response.body.decode('utf-8'))
+        self.assertIsNotNone(data['status'])
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+
+    @tornado.testing.gen_test
+    def test_app_post_form_with_large_body_size(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        privatekey = u'h' * (2 * max_body_size)
+        files = [('privatekey', 'user_rsa_key', privatekey)]
+        content_type, body = encode_multipart_formdata(self.body_dict.items(),
+                                                       files)
+        headers = {
+            "Content-Type": content_type, 'content-length': str(len(body))
+        }
+
+        with self.assertRaises(HTTPError):
+            yield client.fetch(url, method="POST", headers=headers, body=body)
 
     @tornado.testing.gen_test
     def test_app_with_correct_credentials_user_robey(self):

@@ -64,12 +64,13 @@ class Server(paramiko.ServerInterface):
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_auth_password(self, username, password):
+        print('Auth attempt with username: {!r} & password: {!r}'.format(username, password)) # noqa
         if (username in ['robey', 'bar']) and (password == 'foo'):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        print('Auth attempt with key: ' + u(hexlify(key.get_fingerprint())))
+        print('Auth attempt with username: {!r} & key: {!r}'.format(username, u(hexlify(key.get_fingerprint())))) # noqa
         if (username == 'robey') and (key == self.good_pub_key):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED

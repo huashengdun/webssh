@@ -5,7 +5,7 @@ import tornado.ioloop
 from tornado.options import parse_command_line, options
 from webssh.handler import IndexHandler, WsockHandler
 from webssh.settings import (get_app_settings, get_host_keys_settings,
-                             get_policy_setting)
+                             get_policy_setting, max_body_size)
 
 
 def make_handlers(loop, options):
@@ -29,7 +29,7 @@ def main():
     parse_command_line()
     loop = tornado.ioloop.IOLoop.current()
     app = make_app(make_handlers(loop, options), get_app_settings(options))
-    app.listen(options.port, options.address)
+    app.listen(options.port, options.address, max_body_size=max_body_size)
     logging.info('Listening on {}:{}'.format(options.address, options.port))
     loop.start()
 
