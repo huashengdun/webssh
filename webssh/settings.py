@@ -36,7 +36,6 @@ def get_app_settings(options):
     settings = dict(
         template_path=os.path.join(base_dir, 'webssh', 'templates'),
         static_path=os.path.join(base_dir, 'webssh', 'static'),
-        cookie_secret=uuid.uuid4().hex,
         websocket_ping_interval=options.wpIntvl,
         xsrf_cookies=(not options.debug),
         debug=options.debug
