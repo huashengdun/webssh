@@ -36,3 +36,7 @@ def encode_multipart_formdata(fields, files):
 
 def get_content_type(filename):
     return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+
+
+def read_file(path, encoding='utf-8'):
+    return open(path, 'rb').read().decode(encoding)

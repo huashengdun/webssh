@@ -3,10 +3,10 @@ import unittest
 import paramiko
 import tornado.options as options
 
+from webssh.policy import load_host_keys
 from webssh.settings import (
     get_host_keys_settings, get_policy_setting, base_dir, print_version
 )
-from webssh.policy import load_host_keys
 from webssh._version import __version__
 
 
@@ -30,8 +30,8 @@ class TestSettings(unittest.TestCase):
             load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
         )
 
-        options.hostFile = 'tests/known_hosts_example'
-        options.sysHostFile = 'tests/known_hosts_example2'
+        options.hostFile = os.path.join(base_dir, 'tests', 'known_hosts_example') # noqa
+        options.sysHostFile = os.path.join(base_dir, 'tests', 'known_hosts_example2') # noqa
         dic2 = get_host_keys_settings(options)
         self.assertEqual(dic2['host_keys'], load_host_keys(options.hostFile))
         self.assertEqual(dic2['host_keys_filename'], options.hostFile)

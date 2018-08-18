@@ -8,6 +8,7 @@ from webssh.policy import (
     AutoAddPolicy, get_policy_dictionary, load_host_keys,
     get_policy_class, check_policy_setting
 )
+from webssh.settings import base_dir
 
 
 class TestPolicy(unittest.TestCase):
@@ -28,7 +29,7 @@ class TestPolicy(unittest.TestCase):
         host_keys = load_host_keys(path)
         self.assertFalse(host_keys)
 
-        path = 'tests/known_hosts_example'
+        path = os.path.join(base_dir, 'tests', 'known_hosts_example')
         host_keys = load_host_keys(path)
         self.assertEqual(host_keys, paramiko.hostkeys.HostKeys(path))
 
@@ -44,7 +45,7 @@ class TestPolicy(unittest.TestCase):
             get_policy_class(key)
 
     def test_check_policy_setting(self):
-        host_keys_filename = './tests/host_keys_test.db'
+        host_keys_filename = os.path.join(base_dir, 'tests', 'host_keys_test.db') # noqa
         host_keys_settings = dict(
             host_keys=paramiko.hostkeys.HostKeys(),
             system_host_keys=paramiko.hostkeys.HostKeys(),
@@ -63,8 +64,8 @@ class TestPolicy(unittest.TestCase):
 
     def test_is_missing_host_key(self):
         client = paramiko.SSHClient()
-        file1 = 'tests/known_hosts_example'
-        file2 = 'tests/known_hosts_example2'
+        file1 = os.path.join(base_dir, 'tests', 'known_hosts_example')
+        file2 = os.path.join(base_dir, 'tests', 'known_hosts_example2')
         client.load_host_keys(file1)
         client.load_system_host_keys(file2)
 
@@ -85,7 +86,7 @@ class TestPolicy(unittest.TestCase):
                 autoadd.is_missing_host_key(client, hostname, key)
             )
 
-        file3 = 'tests/known_hosts_example3'
+        file3 = os.path.join(base_dir, 'tests', 'known_hosts_example3')
         entry = paramiko.hostkeys.HostKeys(file3)._entries[0]
         hostname = entry.hostnames[0]
         key = entry.key
@@ -94,9 +95,9 @@ class TestPolicy(unittest.TestCase):
 
     def test_missing_host_key(self):
         client = paramiko.SSHClient()
-        file1 = 'tests/known_hosts_example'
-        file2 = 'tests/known_hosts_example2'
-        filename = 'tests/known_hosts'
+        file1 = os.path.join(base_dir, 'tests', 'known_hosts_example')
+        file2 = os.path.join(base_dir, 'tests', 'known_hosts_example2')
+        filename = os.path.join(base_dir, 'tests', 'known_hosts')
         copyfile(file1, filename)
         client.load_host_keys(filename)
         n1 = len(client._host_keys)

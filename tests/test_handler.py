@@ -3,7 +3,9 @@ import os.path
 import paramiko
 
 from tornado.httputil import HTTPServerRequest
+from tests.utils import read_file
 from webssh.handler import MixinHandler, IndexHandler, parse_encoding
+from webssh.settings import base_dir
 
 
 class TestHandler(unittest.TestCase):
@@ -47,15 +49,11 @@ class TestMixinHandler(unittest.TestCase):
 
 class TestIndexHandler(unittest.TestCase):
 
-    def read_privatekey(self, filename):
-        with open(filename, 'rb') as f:
-            return f.read().decode('utf-8')
-
     def test_get_specific_pkey_with_plain_key(self):
 
         fname = 'test_rsa.key'
         cls = paramiko.RSAKey
-        key = self.read_privatekey(os.path.join('tests', fname))
+        key = read_file(os.path.join(base_dir, 'tests', fname))
         pkey = IndexHandler.get_specific_pkey(cls, key, None)
         self.assertIsInstance(pkey, cls)
         pkey = IndexHandler.get_specific_pkey(cls, key, b'iginored')
@@ -68,7 +66,7 @@ class TestIndexHandler(unittest.TestCase):
         cls = paramiko.RSAKey
         password = b'television'
 
-        key = self.read_privatekey(os.path.join('tests', fname))
+        key = read_file(os.path.join(base_dir, 'tests', fname))
         pkey = IndexHandler.get_specific_pkey(cls, key, password)
         self.assertIsInstance(pkey, cls)
         pkey = IndexHandler.get_specific_pkey(cls, 'x'+key, None)
@@ -80,7 +78,7 @@ class TestIndexHandler(unittest.TestCase):
     def test_get_pkey_obj_with_plain_key(self):
         fname = 'test_ed25519.key'
         cls = paramiko.Ed25519Key
-        key = self.read_privatekey(os.path.join('tests', fname))
+        key = read_file(os.path.join(base_dir, 'tests', fname))
         pkey = IndexHandler.get_pkey_obj(key, None)
         self.assertIsInstance(pkey, cls)
         pkey = IndexHandler.get_pkey_obj(key, u'iginored')
@@ -92,7 +90,7 @@ class TestIndexHandler(unittest.TestCase):
         fname = 'test_ed25519_password.key'
         password = 'abc123'
         cls = paramiko.Ed25519Key
-        key = self.read_privatekey(os.path.join('tests', fname))
+        key = read_file(os.path.join(base_dir, 'tests', fname))
         pkey = IndexHandler.get_pkey_obj(key, password)
         self.assertIsInstance(pkey, cls)
         with self.assertRaises(ValueError):

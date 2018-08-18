@@ -18,21 +18,23 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-from binascii import hexlify
+import os.path
+import random
 import socket
 # import sys
 import threading
-import random
 # import traceback
-
 import paramiko
+
+from binascii import hexlify
 from paramiko.py3compat import u, decodebytes
+from webssh.settings import base_dir
 
 
 # setup logging
-paramiko.util.log_to_file('tests/sshserver.log')
+paramiko.util.log_to_file(os.path.join(base_dir, 'tests', 'sshserver.log'))
 
-host_key = paramiko.RSAKey(filename='tests/test_rsa.key')
+host_key = paramiko.RSAKey(filename=os.path.join(base_dir, 'tests', 'test_rsa.key')) # noqa
 # host_key = paramiko.DSSKey(filename='test_dss.key')
 
 print('Read key: ' + u(hexlify(host_key.get_fingerprint())))

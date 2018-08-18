@@ -28,14 +28,14 @@ define('version', type=bool, help='Show version information',
        callback=print_version)
 
 
-base_dir = os.path.dirname(__file__)
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 max_body_size = 1 * 1024 * 1024
 
 
 def get_app_settings(options):
     settings = dict(
-        template_path=os.path.join(base_dir, 'templates'),
-        static_path=os.path.join(base_dir, 'static'),
+        template_path=os.path.join(base_dir, 'webssh', 'templates'),
+        static_path=os.path.join(base_dir, 'webssh', 'static'),
         cookie_secret=uuid.uuid4().hex,
         websocket_ping_interval=options.wpIntvl,
         xsrf_cookies=(not options.debug),
