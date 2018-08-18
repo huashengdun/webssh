@@ -66,9 +66,29 @@ jQuery(function($){
         });
 
     console.log(url);
-    console.log(encoding);
+    console.log('The deault encoding of your server is ' + encoding);
     wssh.sock = sock;
     wssh.term = term;
+    var test_decoder;
+
+    wssh.set_encoding = function (new_encoding) {
+      try {
+        test_decoder = new window.TextDecoder(new_encoding);
+      } catch(TypeError) {
+        console.log('Unvalid encoding ' + new_encoding);
+      } finally {
+        if (test_decoder !== undefined) {
+          encoding = new_encoding;
+          console.log('Set encoding to ' + encoding);
+        }
+        test_decoder = undefined;
+      }
+    };
+
+    wssh.reset_encoding = function () {
+      encoding = msg.encoding;
+      console.log('Reset encoding to ' + msg.encoding);
+    };
 
     term.on('data', function(data) {
       // console.log(data);
@@ -119,7 +139,7 @@ jQuery(function($){
 
       var form = $(this),
           url = form.attr('action'),
-          type = form.attr('type'),
+          type = form.attr('method'),
           data = new FormData(this);
 
       if (!data.get('hostname') || !data.get('port') || !data.get('username')) {
@@ -129,7 +149,7 @@ jQuery(function($){
 
       var pk = data.get('privatekey');
       if (pk && pk.size > 16384) {
-        status.text('Key size exceeds maximum value.');
+        status.text('Key size exceeds the maximum value.');
         return;
       }
 
