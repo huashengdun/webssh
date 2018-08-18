@@ -159,7 +159,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:
-            raise ValueError('SSH authentication failed.')
+            raise ValueError('Authentication failed.')
         except paramiko.BadHostKeyException:
             raise ValueError('Bad host key.')
 
