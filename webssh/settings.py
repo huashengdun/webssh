@@ -1,7 +1,6 @@
 import logging
 import os.path
 import sys
-import uuid
 
 from tornado.options import define
 from webssh.policy import (
