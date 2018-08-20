@@ -1,7 +1,7 @@
 import unittest
 
 from webssh.utils import (is_valid_ipv4_address, is_valid_ipv6_address,
-                          is_valid_port, to_str, to_bytes)
+                          is_valid_port, is_valid_hostname, to_str, to_bytes)
 
 
 class TestUitls(unittest.TestCase):
@@ -34,3 +34,14 @@ class TestUitls(unittest.TestCase):
         self.assertTrue(is_valid_port(80))
         self.assertFalse(is_valid_port(0))
         self.assertFalse(is_valid_port(65536))
+
+    def test_is_valid_hostname(self):
+        self.assertTrue(is_valid_hostname('google.com'))
+        self.assertTrue(is_valid_hostname('google.com.'))
+        self.assertTrue(is_valid_hostname('www.google.com'))
+        self.assertTrue(is_valid_hostname('www.google.com.'))
+        self.assertFalse(is_valid_hostname('.www.google.com'))
+        self.assertFalse(is_valid_hostname('http://www.google.com'))
+        self.assertFalse(is_valid_hostname('https://www.google.com'))
+        self.assertFalse(is_valid_hostname('127.0.0.1'))
+        self.assertFalse(is_valid_hostname('::1'))

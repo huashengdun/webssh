@@ -11,8 +11,10 @@ import tornado.web
 
 from tornado.ioloop import IOLoop
 from webssh.worker import Worker, recycle_worker, workers
-from webssh.utils import (is_valid_ipv4_address, is_valid_ipv6_address,
-                          is_valid_port, to_bytes, to_str, UnicodeType)
+from webssh.utils import (
+    is_valid_ipv4_address, is_valid_ipv6_address, is_valid_port,
+    is_valid_hostname, to_bytes, to_str, UnicodeType
+)
 
 try:
     from concurrent.futures import Future
@@ -98,6 +100,13 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                              'wrong password for decrypting the private key.')
         return pkey
 
+    def get_hostname(self):
+        value = self.get_value('hostname')
+        if not (is_valid_hostname(value) | is_valid_ipv4_address(value) |
+                is_valid_ipv6_address(value)):
+            raise ValueError('Invalid hostname {}'.format(value))
+        return value
+
     def get_port(self):
         value = self.get_value('port')
         try:
@@ -117,7 +126,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return value
 
     def get_args(self):
-        hostname = self.get_value('hostname')
+        hostname = self.get_hostname()
         port = self.get_port()
         username = self.get_value('username')
         password = self.get_argument('password')

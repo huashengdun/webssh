@@ -70,6 +70,14 @@ class TestApp(AsyncHTTPTestCase):
         response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'"status": "The port field is required"', response.body)
 
+        body = 'hostname=127.0.0&port=22&username=&password'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertIn(b'"status": "Invalid hostname', response.body)
+
+        body = 'hostname=http://www.googe.com&port=22&username=&password'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertIn(b'"status": "Invalid hostname', response.body)
+
         body = 'hostname=127.0.0.1&port=port&username=&password'
         response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'"status": "Invalid port', response.body)
