@@ -3,16 +3,20 @@ WebSSH
 
 |Build Status| |codecov| |PyPI - Python Version| |PyPI|
 
+Introduction
+------------
+
 A simple web application to be used as an ssh client to connect to your
 ssh servers. It is written in Python, base on tornado and paramiko.
 
-Preview
-~~~~~~~
+::
 
-|Login| |Terminal|
+    +---------+     http     +--------+    ssh    +-----------+                         
+    | browser | <==========> | webssh | <=======> | ssh server|
+    +---------+   websocket  +--------+    ssh    +-----------+
 
 Features
-~~~~~~~~
+--------
 
 -  SSH password authentication supported, including empty password.
 -  SSH public-key authentication supported, including DSA RSA ECDSA
@@ -20,8 +24,17 @@ Features
 -  Encrypted keys supported.
 -  Fullscreen terminal supported.
 -  Terminal window resizable.
--  Auto detect system default encoding.
--  Compatible with Python 2.7-3.7.
+-  Auto detect the ssh server's default encoding.
+
+Preview
+-------
+
+|Login| |Terminal|
+
+Requirement
+~~~~~~~~~~~
+
+-  Python 2.7/3.4+
 
 Instructions
 ~~~~~~~~~~~~
@@ -51,7 +64,22 @@ Options
     # more options
     wssh --help
 
-Nginx config example for running this app behind an nginx server
+Tests
+~~~~~
+
+Use unittest for running all tests
+
+::
+
+    python -m unittest discover tests
+
+Use pytest for running all tests
+
+::
+
+    python -m pytest tests
+
+An example of config for running this app behind an Nginx server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
@@ -68,7 +96,7 @@ Nginx config example for running this app behind an nginx server
     }
 
 Tips
-~~~~
+----
 
 -  Try to use Nginx as a front web server (see config example above) and
    enable SSL, this will prevent your ssh credentials from being
