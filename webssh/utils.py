@@ -1,10 +1,21 @@
 import ipaddress
 
+try:
+    from types import UnicodeType
+except ImportError:
+    UnicodeType = str
 
-def to_str(s):
-    if isinstance(s, bytes):
-        return s.decode('utf-8')
-    return s
+
+def to_str(bstr, encoding='utf-8'):
+    if isinstance(bstr, bytes):
+        return bstr.decode(encoding)
+    return bstr
+
+
+def to_bytes(ustr, encoding='utf-8'):
+    if isinstance(ustr, UnicodeType):
+        return ustr.encode(encoding)
+    return ustr
 
 
 def is_valid_ipv4_address(ipstr):

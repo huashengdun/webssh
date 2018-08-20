@@ -10,10 +10,9 @@ import paramiko
 import tornado.web
 
 from tornado.ioloop import IOLoop
-from tornado.util import basestring_type
 from webssh.worker import Worker, recycle_worker, workers
 from webssh.utils import (is_valid_ipv4_address, is_valid_ipv6_address,
-                          is_valid_port)
+                          is_valid_port, to_bytes, to_str, UnicodeType)
 
 try:
     from concurrent.futures import Future
@@ -70,7 +69,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             data = self.request.files.get('privatekey')[0]['body']
         except TypeError:
             return
-        return data.decode('utf-8')
+        return to_str(data)
 
     @classmethod
     def get_specific_pkey(cls, pkeycls, privatekey, password):
@@ -87,7 +86,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     @classmethod
     def get_pkey_obj(cls, privatekey, password):
-        password = password.encode('utf-8') if password else None
+        password = to_bytes(password)
 
         pkey = cls.get_specific_pkey(paramiko.RSAKey, privatekey, password)\
             or cls.get_specific_pkey(paramiko.DSSKey, privatekey, password)\
@@ -138,8 +137,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         except paramiko.SSHException:
             result = None
         else:
-            data = stdout.read().decode('utf-8')
-            result = parse_encoding(data)
+            data = stdout.read()
+            result = parse_encoding(to_str(data))
 
         return result if result else 'utf-8'
 
@@ -247,7 +246,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
                 pass
 
         data = msg.get('data')
-        if data and isinstance(data, basestring_type):
+        if data and isinstance(data, UnicodeType):
             worker.data_to_dst.append(data)
             worker.on_write()
 

@@ -56,7 +56,7 @@ class TestIndexHandler(unittest.TestCase):
         key = read_file(os.path.join(base_dir, 'tests', fname))
         pkey = IndexHandler.get_specific_pkey(cls, key, None)
         self.assertIsInstance(pkey, cls)
-        pkey = IndexHandler.get_specific_pkey(cls, key, b'iginored')
+        pkey = IndexHandler.get_specific_pkey(cls, key, 'iginored')
         self.assertIsInstance(pkey, cls)
         pkey = IndexHandler.get_specific_pkey(cls, 'x'+key, None)
         self.assertIsNone(pkey)
@@ -64,7 +64,7 @@ class TestIndexHandler(unittest.TestCase):
     def test_get_specific_pkey_with_encrypted_key(self):
         fname = 'test_rsa_password.key'
         cls = paramiko.RSAKey
-        password = b'television'
+        password = 'television'
 
         key = read_file(os.path.join(base_dir, 'tests', fname))
         pkey = IndexHandler.get_specific_pkey(cls, key, password)
@@ -81,7 +81,7 @@ class TestIndexHandler(unittest.TestCase):
         key = read_file(os.path.join(base_dir, 'tests', fname))
         pkey = IndexHandler.get_pkey_obj(key, None)
         self.assertIsInstance(pkey, cls)
-        pkey = IndexHandler.get_pkey_obj(key, u'iginored')
+        pkey = IndexHandler.get_pkey_obj(key, 'iginored')
         self.assertIsInstance(pkey, cls)
         with self.assertRaises(ValueError):
             pkey = IndexHandler.get_pkey_obj('x'+key, None)
@@ -94,6 +94,6 @@ class TestIndexHandler(unittest.TestCase):
         pkey = IndexHandler.get_pkey_obj(key, password)
         self.assertIsInstance(pkey, cls)
         with self.assertRaises(ValueError):
-            pkey = IndexHandler.get_pkey_obj(key, u'wrongpass')
+            pkey = IndexHandler.get_pkey_obj(key, 'wrongpass')
         with self.assertRaises(ValueError):
             pkey = IndexHandler.get_pkey_obj('x'+key, password)

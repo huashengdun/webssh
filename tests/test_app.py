@@ -13,6 +13,7 @@ from tests.sshserver import run_ssh_server, banner
 from tests.utils import encode_multipart_formdata, read_file
 from webssh.main import make_app, make_handlers
 from webssh.settings import get_app_settings, max_body_size, base_dir
+from webssh.utils import to_str
 
 
 handler.DELAY = 0.1
@@ -22,7 +23,7 @@ class TestApp(AsyncHTTPTestCase):
 
     running = [True]
     sshserver_port = 2200
-    body = u'hostname=127.0.0.1&port={}&username=robey&password=foo'.format(sshserver_port) # noqa
+    body = 'hostname=127.0.0.1&port={}&username=robey&password=foo'.format(sshserver_port) # noqa
     body_dict = {
         'hostname': '127.0.0.1',
         'port': str(sshserver_port),
@@ -61,37 +62,37 @@ class TestApp(AsyncHTTPTestCase):
     def test_app_with_invalid_form(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
-        body = u'hostname=&port=&username=&password'
+        body = 'hostname=&port=&username=&password'
         response = self.fetch('/', method="POST", body=body)
         self.assertIn(b'"status": "Empty hostname"', response.body)
 
-        body = u'hostname=127.0.0.1&port=&username=&password'
+        body = 'hostname=127.0.0.1&port=&username=&password'
         response = self.fetch('/', method="POST", body=body)
         self.assertIn(b'"status": "Empty port"', response.body)
 
-        body = u'hostname=127.0.0.1&port=port&username=&password'
+        body = 'hostname=127.0.0.1&port=port&username=&password'
         response = self.fetch('/', method="POST", body=body)
         self.assertIn(b'"status": "Invalid port', response.body)
 
-        body = u'hostname=127.0.0.1&port=70000&username=&password'
+        body = 'hostname=127.0.0.1&port=70000&username=&password'
         response = self.fetch('/', method="POST", body=body)
         self.assertIn(b'"status": "Invalid port', response.body)
 
-        body = u'hostname=127.0.0.1&port=7000&username=&password'
+        body = 'hostname=127.0.0.1&port=7000&username=&password'
         response = self.fetch('/', method="POST", body=body)
         self.assertIn(b'"status": "Empty username"', response.body)
 
     def test_app_with_wrong_credentials(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
-        response = self.fetch('/', method="POST", body=self.body + u's')
+        response = self.fetch('/', method="POST", body=self.body + 's')
         self.assertIn(b'Authentication failed.', response.body)
 
     def test_app_with_correct_credentials(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
         response = self.fetch('/', method="POST", body=self.body)
-        data = json.loads(response.body.decode('utf-8'))
+        data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
         self.assertIsNotNone(data['id'])
         self.assertIsNotNone(data['encoding'])
@@ -104,7 +105,7 @@ class TestApp(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
 
         response = yield client.fetch(url, method="POST", body=self.body)
-        data = json.loads(response.body.decode('utf-8'))
+        data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
         self.assertIsNotNone(data['id'])
         self.assertIsNotNone(data['encoding'])
@@ -133,7 +134,7 @@ class TestApp(AsyncHTTPTestCase):
         }
         response = yield client.fetch(url, method="POST", headers=headers,
                                       body=body)
-        data = json.loads(response.body.decode('utf-8'))
+        data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
         self.assertIsNotNone(data['id'])
         self.assertIsNotNone(data['encoding'])
@@ -142,7 +143,7 @@ class TestApp(AsyncHTTPTestCase):
         ws_url = url + 'ws?id=' + data['id']
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
-        self.assertEqual(msg.decode(data['encoding']), banner)
+        self.assertEqual(to_str(msg, data['encoding']), banner)
         ws.close()
 
     @tornado.testing.gen_test
@@ -153,7 +154,7 @@ class TestApp(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
 
         privatekey = read_file(os.path.join(base_dir, 'tests', 'user_rsa_key'))
-        privatekey = privatekey[:100] + u'bad' + privatekey[100:]
+        privatekey = privatekey[:100] + 'bad' + privatekey[100:]
         files = [('privatekey', 'user_rsa_key', privatekey)]
         content_type, body = encode_multipart_formdata(self.body_dict.items(),
                                                        files)
@@ -162,7 +163,7 @@ class TestApp(AsyncHTTPTestCase):
         }
         response = yield client.fetch(url, method="POST", headers=headers,
                                       body=body)
-        data = json.loads(response.body.decode('utf-8'))
+        data = json.loads(to_str(response.body))
         self.assertIsNotNone(data['status'])
         self.assertIsNone(data['id'])
         self.assertIsNone(data['encoding'])
@@ -174,7 +175,7 @@ class TestApp(AsyncHTTPTestCase):
         response = yield client.fetch(url)
         self.assertEqual(response.code, 200)
 
-        privatekey = u'h' * (2 * max_body_size)
+        privatekey = 'h' * (2 * max_body_size)
         files = [('privatekey', 'user_rsa_key', privatekey)]
         content_type, body = encode_multipart_formdata(self.body_dict.items(),
                                                        files)
@@ -193,7 +194,7 @@ class TestApp(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
 
         response = yield client.fetch(url, method="POST", body=self.body)
-        data = json.loads(response.body.decode('utf-8'))
+        data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
         self.assertIsNotNone(data['id'])
         self.assertIsNotNone(data['encoding'])
@@ -202,7 +203,7 @@ class TestApp(AsyncHTTPTestCase):
         ws_url = url + 'ws?id=' + data['id']
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
-        self.assertEqual(msg.decode(data['encoding']), banner)
+        self.assertEqual(to_str(msg, data['encoding']), banner)
         ws.close()
 
     @tornado.testing.gen_test
@@ -214,7 +215,7 @@ class TestApp(AsyncHTTPTestCase):
 
         body = self.body.replace('robey', 'bar')
         response = yield client.fetch(url, method="POST", body=body)
-        data = json.loads(response.body.decode('utf-8'))
+        data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
         self.assertIsNotNone(data['id'])
         self.assertIsNotNone(data['encoding'])
@@ -223,7 +224,7 @@ class TestApp(AsyncHTTPTestCase):
         ws_url = url + 'ws?id=' + data['id']
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
-        self.assertEqual(msg.decode(data['encoding']), banner)
+        self.assertEqual(to_str(msg, data['encoding']), banner)
 
         # messages below will be ignored silently
         yield ws.write_message('hello')
