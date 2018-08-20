@@ -63,35 +63,35 @@ class TestApp(AsyncHTTPTestCase):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
         body = 'hostname=&port=&username=&password'
-        response = self.fetch('/', method="POST", body=body)
+        response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'"status": "The hostname field is required"', response.body) # noqa
 
         body = 'hostname=127.0.0.1&port=&username=&password'
-        response = self.fetch('/', method="POST", body=body)
+        response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'"status": "The port field is required"', response.body)
 
         body = 'hostname=127.0.0.1&port=port&username=&password'
-        response = self.fetch('/', method="POST", body=body)
+        response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'"status": "Invalid port', response.body)
 
         body = 'hostname=127.0.0.1&port=70000&username=&password'
-        response = self.fetch('/', method="POST", body=body)
+        response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'"status": "Invalid port', response.body)
 
         body = 'hostname=127.0.0.1&port=7000&username=&password'
-        response = self.fetch('/', method="POST", body=body)
+        response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'"status": "The username field is required"', response.body) # noqa
 
     def test_app_with_wrong_credentials(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
-        response = self.fetch('/', method="POST", body=self.body + 's')
+        response = self.fetch('/', method='POST', body=self.body + 's')
         self.assertIn(b'Authentication failed.', response.body)
 
     def test_app_with_correct_credentials(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
-        response = self.fetch('/', method="POST", body=self.body)
+        response = self.fetch('/', method='POST', body=self.body)
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
         self.assertIsNotNone(data['id'])
@@ -104,7 +104,7 @@ class TestApp(AsyncHTTPTestCase):
         response = yield client.fetch(url)
         self.assertEqual(response.code, 200)
 
-        response = yield client.fetch(url, method="POST", body=self.body)
+        response = yield client.fetch(url, method='POST', body=self.body)
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
         self.assertIsNotNone(data['id'])
@@ -130,9 +130,9 @@ class TestApp(AsyncHTTPTestCase):
         content_type, body = encode_multipart_formdata(self.body_dict.items(),
                                                        files)
         headers = {
-            "Content-Type": content_type, 'content-length': str(len(body))
+            'Content-Type': content_type, 'content-length': str(len(body))
         }
-        response = yield client.fetch(url, method="POST", headers=headers,
+        response = yield client.fetch(url, method='POST', headers=headers,
                                       body=body)
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
@@ -159,9 +159,9 @@ class TestApp(AsyncHTTPTestCase):
         content_type, body = encode_multipart_formdata(self.body_dict.items(),
                                                        files)
         headers = {
-            "Content-Type": content_type, 'content-length': str(len(body))
+            'Content-Type': content_type, 'content-length': str(len(body))
         }
-        response = yield client.fetch(url, method="POST", headers=headers,
+        response = yield client.fetch(url, method='POST', headers=headers,
                                       body=body)
         data = json.loads(to_str(response.body))
         self.assertIsNotNone(data['status'])
@@ -180,11 +180,11 @@ class TestApp(AsyncHTTPTestCase):
         content_type, body = encode_multipart_formdata(self.body_dict.items(),
                                                        files)
         headers = {
-            "Content-Type": content_type, 'content-length': str(len(body))
+            'Content-Type': content_type, 'content-length': str(len(body))
         }
 
         with self.assertRaises(HTTPError):
-            yield client.fetch(url, method="POST", headers=headers, body=body)
+            yield client.fetch(url, method='POST', headers=headers, body=body)
 
     @tornado.testing.gen_test
     def test_app_with_correct_credentials_user_robey(self):
@@ -193,7 +193,7 @@ class TestApp(AsyncHTTPTestCase):
         response = yield client.fetch(url)
         self.assertEqual(response.code, 200)
 
-        response = yield client.fetch(url, method="POST", body=self.body)
+        response = yield client.fetch(url, method='POST', body=self.body)
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
         self.assertIsNotNone(data['id'])
@@ -214,7 +214,7 @@ class TestApp(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
 
         body = self.body.replace('robey', 'bar')
-        response = yield client.fetch(url, method="POST", body=body)
+        response = yield client.fetch(url, method='POST', body=body)
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['status'])
         self.assertIsNotNone(data['id'])
