@@ -75,13 +75,13 @@ jQuery(function($){
       try {
         test_decoder = new window.TextDecoder(new_encoding);
       } catch(TypeError) {
-        console.log('Unvalid encoding ' + new_encoding);
+        console.log('Unknown encoding ' + new_encoding);
       } finally {
         if (test_decoder !== undefined) {
+          test_decoder = undefined;
           encoding = new_encoding;
           console.log('Set encoding to ' + encoding);
         }
-        test_decoder = undefined;
       }
     };
 
