@@ -67,13 +67,13 @@ Options
 Tests
 ~~~~~
 
-Use unittest for running all tests
+Use unittest to run all tests
 
 ::
 
     python -m unittest discover tests
 
-Use pytest for running all tests
+Use pytest to run all tests
 
 ::
 
