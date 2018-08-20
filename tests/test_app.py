@@ -64,11 +64,11 @@ class TestApp(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         body = 'hostname=&port=&username=&password'
         response = self.fetch('/', method="POST", body=body)
-        self.assertIn(b'"status": "Empty hostname"', response.body)
+        self.assertIn(b'"status": "The hostname field is required"', response.body) # noqa
 
         body = 'hostname=127.0.0.1&port=&username=&password'
         response = self.fetch('/', method="POST", body=body)
-        self.assertIn(b'"status": "Empty port"', response.body)
+        self.assertIn(b'"status": "The port field is required"', response.body)
 
         body = 'hostname=127.0.0.1&port=port&username=&password'
         response = self.fetch('/', method="POST", body=body)
@@ -80,7 +80,7 @@ class TestApp(AsyncHTTPTestCase):
 
         body = 'hostname=127.0.0.1&port=7000&username=&password'
         response = self.fetch('/', method="POST", body=body)
-        self.assertIn(b'"status": "Empty username"', response.body)
+        self.assertIn(b'"status": "The username field is required"', response.body) # noqa
 
     def test_app_with_wrong_credentials(self):
         response = self.fetch('/')
