@@ -118,16 +118,14 @@ jQuery(function($){
       console.log('Reset encoding to ' + msg.encoding);
     };
 
-    wssh.resize_terminal = function (raw_cols, raw_rows) {
+    wssh.resize_terminal = function (cols, rows) {
       // for console use
       if (term === undefined) {
         console.log('Terminal was already destroryed');
         return;
       }
 
-      var cols = parseInt(raw_cols, 10),
-          rows = parseInt(raw_rows, 10),
-          valid_args = false;
+      var valid_args = false;
 
       if (cols > 0 && rows > 0)  {
         var geometry = current_geometry();
@@ -210,15 +208,30 @@ jQuery(function($){
       var form = $(this),
           url = form.attr('action'),
           type = form.attr('method'),
-          data = new FormData(this);
+          data = new FormData(this),
+          hostname = data.get('hostname'),
+          port = data.get('port'),
+          username = data.get('username'),
+          key_max_size = 16384,
+          hostname_tester = /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)/;
 
-      if (!data.get('hostname') || !data.get('port') || !data.get('username')) {
-        status.text('Hostname, port and username are required.');
+      if (!hostname || !port || !username) {
+        status.text('Fields hostname, port and username are all required.');
+        return;
+      }
+
+      if (!hostname_tester.test(hostname)) {
+        status.text('Not a valid hostname ' + hostname);
+        return;
+      }
+
+      if (port <= 0 || port > 63335) {
+        status.text('Not a valid port ' + port);
         return;
       }
 
       var pk = data.get('privatekey');
-      if (pk && pk.size > 16384) {
+      if (pk && pk.size > key_max_size) {
         status.text('Key size exceeds the maximum value.');
         return;
       }
