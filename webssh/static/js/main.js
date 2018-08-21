@@ -30,10 +30,16 @@ jQuery(function($){
   }
 
 
-  wssh.window_size = function() {
-    var geo = current_geometry();
-    console.log('Current window size: ' + geo.cols + ',' + geo.rows);
+  wssh.window_geometry = function() {
+    // for console use
+    var geometry = current_geometry();
+    console.log('Current window geometry: ' + JSON.stringify(geometry));
   };
+
+
+  function format_geometry(cols, rows) {
+    return JSON.stringify({'cols': cols, 'rows': rows});
+  }
 
 
   function callback(msg) {
@@ -67,7 +73,32 @@ jQuery(function($){
       term.on_resize(geometry.cols, geometry.rows);
     }
 
+    wssh.websocket_send = function (data) {
+      // for console use
+      if (!sock) {
+        console.log('Websocket was already closed');
+        return;
+      }
+
+      if (typeof data !== 'string') {
+        console.log('Only string is allowed');
+        return;
+      }
+
+      try {
+        JSON.parse(data);
+        sock.send(data);
+      } catch (SyntaxError) {
+        sock.send(JSON.stringify({'data': data}));
+      }
+    };
+
     wssh.set_encoding = function (new_encoding) {
+      // for console use
+      if (new_encoding === undefined) {
+        return;
+      }
+
       try {
         test_decoder = new window.TextDecoder(new_encoding);
       } catch(TypeError) {
@@ -82,12 +113,18 @@ jQuery(function($){
     };
 
     wssh.reset_encoding = function () {
+      // for console use
       encoding = msg.encoding;
       console.log('Reset encoding to ' + msg.encoding);
     };
 
     wssh.resize_terminal = function (raw_cols, raw_rows) {
       // for console use
+      if (term === undefined) {
+        console.log('Terminal was already destroryed');
+        return;
+      }
+
       var cols = parseInt(raw_cols, 10),
           rows = parseInt(raw_rows, 10),
           valid_args = false;
@@ -100,15 +137,16 @@ jQuery(function($){
       }
 
       if (!valid_args) {
-        console.log('Invalid arguments: ' + raw_cols + ',' + raw_rows);
+        console.log('Unable to resize terminal to geometry: ' + format_geometry(cols, rows));
       } else {
         term.on_resize(cols, rows);
       }
     };
 
+
     term.on_resize = function (cols, rows) {
       if (cols !== this.geometry[0] || rows !== this.geometry[1]) {
-        console.log('Resizing terminal size to: ' + cols + ',' + rows);
+        console.log('Resizing terminal to geometry: ' + format_geometry(cols, rows));
         this.resize(cols, rows);
         sock.send(JSON.stringify({'resize': [cols, rows]}));
       }
@@ -132,10 +170,12 @@ jQuery(function($){
         var decoder = new window.TextDecoder(encoding);
         var text = decoder.decode(reader.result);
         // console.log(text);
-        term.write(text);
-        if (!term.resized) {
-          resize_terminal(term);
-          term.resized = true;
+        if (term) {
+          term.write(text);
+          if (!term.resized) {
+            resize_terminal(term);
+            term.resized = true;
+          }
         }
       };
 
@@ -149,13 +189,17 @@ jQuery(function($){
     sock.onclose = function(e) {
       console.log(e);
       term.destroy();
+      term = undefined;
+      sock = undefined;
       $('.container').show();
       status.text(e.reason);
       btn.prop('disabled', false);
     };
 
     $(window).resize(function(){
-      resize_terminal(term);
+      if (term) {
+        resize_terminal(term);
+      }
     });
   }
 
