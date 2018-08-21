@@ -30,19 +30,10 @@ jQuery(function($){
   }
 
 
-  function resize_term(term, sock) {
-    var geometry = current_geometry(),
-        cols = geometry.cols,
-        rows = geometry.rows;
-    // console.log([cols, rows]);
-    // console.log(term.geometry);
-
-    if (cols !== term.geometry[0] || rows !== term.geometry[1]) {
-      console.log('resizing term');
-      term.resize(cols, rows);
-      sock.send(JSON.stringify({'resize': [cols, rows]}));
-    }
-  }
+  wssh.window_size = function() {
+    var geo = current_geometry();
+    console.log('Current window size: ' + geo.cols + ',' + geo.rows);
+  };
 
 
   function callback(msg) {
@@ -67,9 +58,14 @@ jQuery(function($){
 
     console.log(url);
     console.log('The deault encoding of your server is ' + encoding);
-    wssh.sock = sock;
-    wssh.term = term;
+    // wssh.sock = sock;
+    // wssh.term = term;
     var test_decoder;
+
+    function resize_terminal (term) {
+      var geometry = current_geometry();
+      term.on_resize(geometry.cols, geometry.rows);
+    }
 
     wssh.set_encoding = function (new_encoding) {
       try {
@@ -88,6 +84,34 @@ jQuery(function($){
     wssh.reset_encoding = function () {
       encoding = msg.encoding;
       console.log('Reset encoding to ' + msg.encoding);
+    };
+
+    wssh.resize_terminal = function (raw_cols, raw_rows) {
+      // for console use
+      var cols = parseInt(raw_cols, 10),
+          rows = parseInt(raw_rows, 10),
+          valid_args = false;
+
+      if (cols > 0 && rows > 0)  {
+        var geometry = current_geometry();
+        if (cols <= geometry.cols && rows <= geometry.rows) {
+          valid_args = true;
+        }
+      }
+
+      if (!valid_args) {
+        console.log('Invalid arguments: ' + raw_cols + ',' + raw_rows);
+      } else {
+        term.on_resize(cols, rows);
+      }
+    };
+
+    term.on_resize = function (cols, rows) {
+      if (cols !== this.geometry[0] || rows !== this.geometry[1]) {
+        console.log('Resizing terminal size to: ' + cols + ',' + rows);
+        this.resize(cols, rows);
+        sock.send(JSON.stringify({'resize': [cols, rows]}));
+      }
     };
 
     term.on('data', function(data) {
@@ -110,7 +134,7 @@ jQuery(function($){
         // console.log(text);
         term.write(text);
         if (!term.resized) {
-          resize_term(term, sock);
+          resize_terminal(term);
           term.resized = true;
         }
       };
@@ -125,12 +149,14 @@ jQuery(function($){
     sock.onclose = function(e) {
       console.log(e);
       term.destroy();
-      wssh.term = undefined;
-      wssh.sock = undefined;
       $('.container').show();
       status.text(e.reason);
       btn.prop('disabled', false);
     };
+
+    $(window).resize(function(){
+      resize_terminal(term);
+    });
   }
 
 
@@ -165,14 +191,5 @@ jQuery(function($){
           contentType: false,
           processData: false
       });
-
   });
-
-
-  $(window).resize(function(){
-    if (wssh.term && wssh.sock) {
-      resize_term(wssh.term, wssh.sock);
-    }
-  });
-
 });
