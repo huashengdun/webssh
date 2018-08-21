@@ -7,8 +7,30 @@ jQuery(function($){
 
   var status = $('#status'),
       btn = $('.btn-primary'),
-      style = {};
+      style = {},
+      names = ['hostname', 'port', 'username', 'password'];
 
+
+  function store_items(names, data) {
+    var i, name;
+
+    for (i = 0; i < names.length; i++) {
+      name = names[i];
+      window.localStorage.setItem(name, data.get(name));
+    }
+  }
+
+  function restore_items(names) {
+    var i, name, value;
+
+    for (i=0; i < names.length; i++) {
+      name = names[i];
+      value = window.localStorage.getItem(name) || '';
+      $('#'+name).val(value);
+    }
+  }
+
+  restore_items(names);
 
   function parse_xterm_style() {
     var text = $('.xterm-helpers style').text();
@@ -235,6 +257,8 @@ jQuery(function($){
         status.text('Key size exceeds the maximum value.');
         return;
       }
+
+      store_items(names, data);
 
       status.text('');
       btn.prop('disabled', true);
