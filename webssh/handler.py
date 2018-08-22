@@ -28,6 +28,7 @@ except ImportError:
 
 
 DELAY = 3
+KEY_MAX_SIZE = 16384
 
 
 def parse_encoding(data):
@@ -69,9 +70,16 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
     def get_privatekey(self):
         try:
             data = self.request.files.get('privatekey')[0]['body']
-        except TypeError:
+        except TypeError:  # no privatekey provided
             return
-        return to_str(data)
+
+        if len(data) < KEY_MAX_SIZE:
+            try:
+                return to_str(data)
+            except UnicodeDecodeError:
+                pass
+
+        raise ValueError('Not a valid private key.')
 
     @classmethod
     def get_specific_pkey(cls, pkeycls, privatekey, password):
@@ -96,8 +104,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             or cls.get_specific_pkey(paramiko.Ed25519Key, privatekey,
                                      password)
         if not pkey:
-            raise ValueError('Not a valid private key file or '
-                             'wrong password for decrypting the private key.')
+            raise ValueError('Not a valid private key or wrong password '
+                             'for decrypting the key.')
         return pkey
 
     def get_hostname(self):

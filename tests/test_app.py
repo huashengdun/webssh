@@ -161,8 +161,7 @@ class TestApp(AsyncHTTPTestCase):
         response = yield client.fetch(url)
         self.assertEqual(response.code, 200)
 
-        privatekey = read_file(os.path.join(base_dir, 'tests', 'user_rsa_key'))
-        privatekey = privatekey[:100] + 'bad' + privatekey[100:]
+        privatekey = 'h' * 1024
         files = [('privatekey', 'user_rsa_key', privatekey)]
         content_type, body = encode_multipart_formdata(self.body_dict.items(),
                                                        files)
@@ -172,9 +171,54 @@ class TestApp(AsyncHTTPTestCase):
         response = yield client.fetch(url, method='POST', headers=headers,
                                       body=body)
         data = json.loads(to_str(response.body))
-        self.assertIsNotNone(data['status'])
         self.assertIsNone(data['id'])
         self.assertIsNone(data['encoding'])
+        self.assertEqual(data['status'], 'Not a valid private key or wrong password for decrypting the key.') # noqa
+
+    @tornado.testing.gen_test
+    def test_app_auth_with_pubkey_exceeds_key_max_size(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        privatekey = 'h' * (handler.KEY_MAX_SIZE * 2)
+        files = [('privatekey', 'user_rsa_key', privatekey)]
+        content_type, body = encode_multipart_formdata(self.body_dict.items(),
+                                                       files)
+        headers = {
+            'Content-Type': content_type, 'content-length': str(len(body))
+        }
+        response = yield client.fetch(url, method='POST', headers=headers,
+                                      body=body)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertEqual(data['status'], 'Not a valid private key.')
+
+    @tornado.testing.gen_test
+    def test_app_auth_with_pubkey_cannot_be_decoded(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        privatekey = 'h' * 1024
+        files = [('privatekey', 'user_rsa_key', privatekey)]
+        content_type, body = encode_multipart_formdata(self.body_dict.items(),
+                                                       files)
+        body = body.encode('utf-8')
+        # added some gbk bytes to the privatekey, make it cannot be decoded
+        body = body[:-100] + b'\xb4\xed\xce\xf3' + body[-100:]
+        headers = {
+            'Content-Type': content_type, 'content-length': str(len(body))
+        }
+        response = yield client.fetch(url, method='POST', headers=headers,
+                                      body=body)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertEqual(data['status'], 'Not a valid private key.')
 
     @tornado.testing.gen_test
     def test_app_post_form_with_large_body_size(self):
