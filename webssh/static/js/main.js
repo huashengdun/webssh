@@ -8,6 +8,7 @@ jQuery(function($){
   var status = $('#status'),
       btn = $('.btn-primary'),
       style = {},
+      connected = false,
       key_max_size = 16384,
       form_id = '#connect',
       names = ['hostname', 'port', 'username', 'password'],
@@ -208,6 +209,7 @@ jQuery(function($){
       $('.container').hide();
       term.open(terminal, true);
       term.toggleFullscreen(true);
+      connected = true;
     };
 
     sock.onmessage = function(msg) {
@@ -241,6 +243,7 @@ jQuery(function($){
       reset_wssh();
       $('.container').show();
       status.text(e.reason);
+      connected = false;
     };
 
     $(window).resize(function(){
@@ -252,6 +255,11 @@ jQuery(function($){
 
 
   function connect() {
+    if (connected) {
+      console.log('This client was already connected.');
+      return;
+    }
+
     var form = document.querySelector(form_id),
         url = form.action,
         data = new FormData(form),
