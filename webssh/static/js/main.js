@@ -8,7 +8,10 @@ jQuery(function($){
   var status = $('#status'),
       btn = $('.btn-primary'),
       style = {},
-      names = ['hostname', 'port', 'username', 'password'];
+      key_max_size = 16384,
+      form_id = '#connect',
+      names = ['hostname', 'port', 'username', 'password'],
+      hostname_tester = /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)/;
 
 
   function store_items(names, data) {
@@ -66,7 +69,7 @@ jQuery(function($){
     var name;
 
     for (name in wssh) {
-      if (wssh.hasOwnProperty(name)) {
+      if (wssh.hasOwnProperty(name) && name !== 'connect') {
         delete wssh[name];
       }
     }
@@ -188,7 +191,6 @@ jQuery(function($){
       }
     };
 
-
     term.on_resize = function (cols, rows) {
       if (cols !== this.geometry[0] || rows !== this.geometry[1]) {
         console.log('Resizing terminal to geometry: ' + format_geometry(cols, rows));
@@ -249,53 +251,56 @@ jQuery(function($){
   }
 
 
-  $('form#connect').submit(function(event) {
+  function connect() {
+    var form = document.querySelector(form_id),
+        url = form.action,
+        data = new FormData(form),
+        hostname = data.get('hostname'),
+        port = data.get('port'),
+        username = data.get('username');
+
+    if (!hostname || !port || !username) {
+      status.text('Fields hostname, port and username are all required.');
+      return;
+    }
+
+    if (!hostname_tester.test(hostname)) {
+      status.text('Invalid hostname: ' + hostname);
+      return;
+    }
+
+    if (port <= 0 || port > 63335) {
+      status.text('Invalid port: ' + port);
+      return;
+    }
+
+    var pk = data.get('privatekey');
+    if (pk && pk.size > key_max_size) {
+      status.text('Invalid private key: ' + pk.name);
+      return;
+    }
+
+    store_items(names, data);
+
+    status.text('');
+    btn.prop('disabled', true);
+
+    $.ajax({
+        url: url,
+        type: 'post',
+        data: data,
+        complete: callback,
+        cache: false,
+        contentType: false,
+        processData: false
+    });
+  }
+
+  wssh.connect = connect;
+
+  $(form_id).submit(function(event) {
       event.preventDefault();
-
-      var form = $(this),
-          url = form.attr('action'),
-          type = form.attr('method'),
-          data = new FormData(this),
-          hostname = data.get('hostname'),
-          port = data.get('port'),
-          username = data.get('username'),
-          key_max_size = 16384,
-          hostname_tester = /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)/;
-
-      if (!hostname || !port || !username) {
-        status.text('Fields hostname, port and username are all required.');
-        return;
-      }
-
-      if (!hostname_tester.test(hostname)) {
-        status.text('Not a valid hostname ' + hostname);
-        return;
-      }
-
-      if (port <= 0 || port > 63335) {
-        status.text('Not a valid port ' + port);
-        return;
-      }
-
-      var pk = data.get('privatekey');
-      if (pk && pk.size > key_max_size) {
-        status.text('Key size exceeds the maximum value.');
-        return;
-      }
-
-      store_items(names, data);
-
-      status.text('');
-      btn.prop('disabled', true);
-
-      $.ajax({
-          url: url,
-          type: type,
-          data: data,
-          complete: callback,
-          cache: false,
-          contentType: false,
-          processData: false
-      });
+      connect();
   });
+
 });
