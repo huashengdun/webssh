@@ -12,11 +12,14 @@ jQuery(function($){
 
 
   function store_items(names, data) {
-    var i, name;
+    var i, name, value;
 
     for (i = 0; i < names.length; i++) {
       name = names[i];
-      window.localStorage.setItem(name, data.get(name));
+      value = data.get(name);
+      if (value){
+        window.localStorage.setItem(name, value);
+      }
     }
   }
 
@@ -25,8 +28,10 @@ jQuery(function($){
 
     for (i=0; i < names.length; i++) {
       name = names[i];
-      value = window.localStorage.getItem(name) || '';
-      $('#'+name).val(value);
+      value = window.localStorage.getItem(name);
+      if (value) {
+        $('#'+name).val(value);
+      }
     }
   }
 
@@ -52,25 +57,34 @@ jQuery(function($){
   }
 
 
-  wssh.window_geometry = function() {
-    // for console use
-    var geometry = current_geometry();
-    console.log('Current window geometry: ' + JSON.stringify(geometry));
-  };
-
-
   function format_geometry(cols, rows) {
     return JSON.stringify({'cols': cols, 'rows': rows});
   }
 
 
-  function callback(msg) {
-    // console.log(msg);
+  function reset_wssh() {
+    var name;
+
+    for (name in wssh) {
+      if (wssh.hasOwnProperty(name)) {
+        delete wssh[name];
+      }
+    }
+  }
+
+
+  function callback(resp) {
+    btn.prop('disabled', false);
+
+    if (resp.status !== 200) {
+      console.log(resp);
+      status.text('Response code: ' + resp.status);
+      return;
+    }
+
+    var msg = resp.responseJSON;
     if (msg.status) {
       status.text(msg.status);
-      setTimeout(function(){
-        btn.prop('disabled', false);
-      }, 3000);
       return;
     }
 
@@ -95,6 +109,12 @@ jQuery(function($){
       term.on_resize(geometry.cols, geometry.rows);
     }
 
+    wssh.window_geometry = function() {
+      // for console use
+      var geometry = current_geometry();
+      console.log('Current window geometry: ' + JSON.stringify(geometry));
+    };
+
     wssh.websocket_send = function (data) {
       // for console use
       if (!sock) {
@@ -118,6 +138,7 @@ jQuery(function($){
     wssh.set_encoding = function (new_encoding) {
       // for console use
       if (new_encoding === undefined) {
+        console.log('An encoding is required');
         return;
       }
 
@@ -136,8 +157,12 @@ jQuery(function($){
 
     wssh.reset_encoding = function () {
       // for console use
-      encoding = msg.encoding;
-      console.log('Reset encoding to ' + msg.encoding);
+      if (encoding === msg.encoding) {
+        console.log('Already reset to ' + msg.encoding);
+      } else {
+        encoding = msg.encoding;
+        console.log('Reset encoding to ' + msg.encoding);
+      }
     };
 
     wssh.resize_terminal = function (cols, rows) {
@@ -211,9 +236,9 @@ jQuery(function($){
       term.destroy();
       term = undefined;
       sock = undefined;
+      reset_wssh();
       $('.container').show();
       status.text(e.reason);
-      btn.prop('disabled', false);
     };
 
     $(window).resize(function(){
@@ -267,7 +292,7 @@ jQuery(function($){
           url: url,
           type: type,
           data: data,
-          success: callback,
+          complete: callback,
           cache: false,
           contentType: false,
           processData: false
