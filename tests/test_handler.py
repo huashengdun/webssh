@@ -79,21 +79,24 @@ class TestIndexHandler(unittest.TestCase):
         fname = 'test_ed25519.key'
         cls = paramiko.Ed25519Key
         key = read_file(os.path.join(base_dir, 'tests', fname))
-        pkey = IndexHandler.get_pkey_obj(key, None)
+        pkey = IndexHandler.get_pkey_obj(key, None, fname)
         self.assertIsInstance(pkey, cls)
-        pkey = IndexHandler.get_pkey_obj(key, 'iginored')
+        pkey = IndexHandler.get_pkey_obj(key, 'iginored', fname)
         self.assertIsInstance(pkey, cls)
-        with self.assertRaises(ValueError):
-            pkey = IndexHandler.get_pkey_obj('x'+key, None)
+        with self.assertRaises(ValueError) as exc:
+            pkey = IndexHandler.get_pkey_obj('x'+key, None, fname)
+            self.assertIn('Invalid private key', str(exc))
 
     def test_get_pkey_obj_with_encrypted_key(self):
         fname = 'test_ed25519_password.key'
         password = 'abc123'
         cls = paramiko.Ed25519Key
         key = read_file(os.path.join(base_dir, 'tests', fname))
-        pkey = IndexHandler.get_pkey_obj(key, password)
+        pkey = IndexHandler.get_pkey_obj(key, password, fname)
         self.assertIsInstance(pkey, cls)
-        with self.assertRaises(ValueError):
-            pkey = IndexHandler.get_pkey_obj(key, 'wrongpass')
-        with self.assertRaises(ValueError):
-            pkey = IndexHandler.get_pkey_obj('x'+key, password)
+        with self.assertRaises(ValueError) as exc:
+            pkey = IndexHandler.get_pkey_obj(key, 'wrongpass', fname)
+            self.assertIn('Wrong password', str(exc))
+        with self.assertRaises(ValueError) as exc:
+            pkey = IndexHandler.get_pkey_obj('x'+key, password, fname)
+            self.assertIn('Invalid private key', str(exc))

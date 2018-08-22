@@ -64,31 +64,31 @@ class TestApp(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         body = 'hostname=&port=&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'"status": "The hostname field is required"', response.body) # noqa
+        self.assertIn(b'The hostname field is required', response.body)
 
         body = 'hostname=127.0.0.1&port=&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'"status": "The port field is required"', response.body)
+        self.assertIn(b'The port field is required', response.body)
 
         body = 'hostname=127.0.0&port=22&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'"status": "Invalid hostname', response.body)
+        self.assertIn(b'Invalid hostname', response.body)
 
         body = 'hostname=http://www.googe.com&port=22&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'"status": "Invalid hostname', response.body)
+        self.assertIn(b'Invalid hostname', response.body)
 
         body = 'hostname=127.0.0.1&port=port&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'"status": "Invalid port', response.body)
+        self.assertIn(b'Invalid port', response.body)
 
         body = 'hostname=127.0.0.1&port=70000&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'"status": "Invalid port', response.body)
+        self.assertIn(b'Invalid port', response.body)
 
         body = 'hostname=127.0.0.1&port=7000&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'"status": "The username field is required"', response.body) # noqa
+        self.assertIn(b'The username field is required', response.body) # noqa
 
     def test_app_with_wrong_credentials(self):
         response = self.fetch('/')
@@ -173,7 +173,7 @@ class TestApp(AsyncHTTPTestCase):
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['id'])
         self.assertIsNone(data['encoding'])
-        self.assertEqual(data['status'], 'Not a valid private key or wrong password for decrypting the key.') # noqa
+        self.assertTrue(data['status'].startswith('Invalid private key'))
 
     @tornado.testing.gen_test
     def test_app_auth_with_pubkey_exceeds_key_max_size(self):
@@ -194,7 +194,7 @@ class TestApp(AsyncHTTPTestCase):
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['id'])
         self.assertIsNone(data['encoding'])
-        self.assertEqual(data['status'], 'Not a valid private key.')
+        self.assertTrue(data['status'].startswith('Invalid private key'))
 
     @tornado.testing.gen_test
     def test_app_auth_with_pubkey_cannot_be_decoded(self):
@@ -218,7 +218,7 @@ class TestApp(AsyncHTTPTestCase):
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['id'])
         self.assertIsNone(data['encoding'])
-        self.assertEqual(data['status'], 'Not a valid private key.')
+        self.assertTrue(data['status'].startswith('Invalid private key'))
 
     @tornado.testing.gen_test
     def test_app_post_form_with_large_body_size(self):

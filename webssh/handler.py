@@ -68,18 +68,19 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.host_keys_settings = host_keys_settings
 
     def get_privatekey(self):
-        try:
-            data = self.request.files.get('privatekey')[0]['body']
-        except TypeError:  # no privatekey provided
+        lst = self.request.files.get('privatekey')
+        if not lst:  # no privatekey provided
             return
 
+        self.filename = lst[0]['filename']
+        data = lst[0]['body']
         if len(data) < KEY_MAX_SIZE:
             try:
                 return to_str(data)
-            except UnicodeDecodeError:
+            except (UnicodeDecodeError, ValueError, SyntaxError):
                 pass
 
-        raise ValueError('Not a valid private key.')
+        raise ValueError('Invalid private key: {}'.format(self.filename))
 
     @classmethod
     def get_specific_pkey(cls, pkeycls, privatekey, password):
@@ -95,24 +96,30 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             return pkey
 
     @classmethod
-    def get_pkey_obj(cls, privatekey, password):
-        password = to_bytes(password)
+    def get_pkey_obj(cls, privatekey, password, filename):
+        bpass = to_bytes(password)
 
-        pkey = cls.get_specific_pkey(paramiko.RSAKey, privatekey, password)\
-            or cls.get_specific_pkey(paramiko.DSSKey, privatekey, password)\
-            or cls.get_specific_pkey(paramiko.ECDSAKey, privatekey, password)\
-            or cls.get_specific_pkey(paramiko.Ed25519Key, privatekey,
-                                     password)
+        pkey = cls.get_specific_pkey(paramiko.RSAKey, privatekey, bpass)\
+            or cls.get_specific_pkey(paramiko.DSSKey, privatekey, bpass)\
+            or cls.get_specific_pkey(paramiko.ECDSAKey, privatekey, bpass)\
+            or cls.get_specific_pkey(paramiko.Ed25519Key, privatekey, bpass)
+
         if not pkey:
-            raise ValueError('Not a valid private key or wrong password '
-                             'for decrypting the key.')
+            if not password:
+                error = 'Invalid private key: {}'.format(filename)
+            else:
+                error = (
+                    'Wrong password {!r} for decrypting the private key.'
+                ) .format(password)
+            raise ValueError(error)
+
         return pkey
 
     def get_hostname(self):
         value = self.get_value('hostname')
         if not (is_valid_hostname(value) | is_valid_ipv4_address(value) |
                 is_valid_ipv6_address(value)):
-            raise ValueError('Invalid hostname {}'.format(value))
+            raise ValueError('Invalid hostname: {}.'.format(value))
         return value
 
     def get_port(self):
@@ -125,12 +132,12 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             if is_valid_port(port):
                 return port
 
-        raise ValueError('Invalid port {}'.format(value))
+        raise ValueError('Invalid port: {}.'.format(value))
 
     def get_value(self, name):
         value = self.get_argument(name)
         if not value:
-            raise ValueError('The {} field is required'.format(name))
+            raise ValueError('The {} field is required.'.format(name))
         return value
 
     def get_args(self):
@@ -139,7 +146,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         username = self.get_value('username')
         password = self.get_argument('password')
         privatekey = self.get_privatekey()
-        pkey = self.get_pkey_obj(privatekey, password) if privatekey else None
+        pkey = self.get_pkey_obj(privatekey, password, self.filename) \
+            if privatekey else None
         args = (hostname, port, username, password, pkey)
         logging.debug(args)
         return args
