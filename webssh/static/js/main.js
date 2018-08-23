@@ -123,7 +123,7 @@ jQuery(function($){
         decoder = new window.TextDecoder(new_encoding);
         encoding = new_encoding;
         console.log('Set encoding to ' + encoding);
-      } catch(TypeError) {
+      } catch(RangeError) {
         console.log('Unknown encoding ' + new_encoding);
       }
     }
