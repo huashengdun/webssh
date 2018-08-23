@@ -213,7 +213,7 @@ jQuery(function($){
     sock.onmessage = function(msg) {
       var reader = new window.FileReader();
 
-      reader.onloadend = function(){
+      reader.onload = function(){
         var text = decoder.decode(reader.result);
         // console.log(text);
         if (term) {
@@ -225,11 +225,15 @@ jQuery(function($){
         }
       };
 
+      reader.onerror = function(e) {
+        console.error(e);
+      };
+
       reader.readAsArrayBuffer(msg.data);
     };
 
     sock.onerror = function(e) {
-      console.log(e);
+      console.error(e);
     };
 
     sock.onclose = function(e) {
