@@ -96,22 +96,41 @@ jQuery(function($){
         join = (ws_url[ws_url.length-1] === '/' ? '' : '/'),
         url = ws_url + join + 'ws?id=' + msg.id,
         sock = new window.WebSocket(url),
-        encoding = msg.encoding,
+        encoding, decoder,
         terminal = document.getElementById('#terminal'),
         term = new window.Terminal({
           cursorBlink: true,
         });
 
     console.log(url);
-    console.log('The deault encoding of your server is ' + encoding);
+    console.log('The deault encoding of your server is ' + msg.encoding);
     // wssh.sock = sock;
     // wssh.term = term;
-    var test_decoder;
 
     function resize_terminal (term) {
       var geometry = current_geometry();
       term.on_resize(geometry.cols, geometry.rows);
     }
+
+    function set_encoding (new_encoding) {
+      // for console use
+      if (new_encoding === undefined) {
+        console.log('An encoding is required');
+        return;
+      }
+
+      try {
+        decoder = new window.TextDecoder(new_encoding);
+        encoding = new_encoding;
+        console.log('Set encoding to ' + encoding);
+      } catch(TypeError) {
+        console.log('Unknown encoding ' + new_encoding);
+      }
+    }
+
+    wssh.set_encoding = set_encoding;
+    set_encoding(msg.encoding);
+
 
     wssh.window_geometry = function() {
       // for console use
@@ -139,33 +158,12 @@ jQuery(function($){
       }
     };
 
-    wssh.set_encoding = function (new_encoding) {
-      // for console use
-      if (new_encoding === undefined) {
-        console.log('An encoding is required');
-        return;
-      }
-
-      try {
-        test_decoder = new window.TextDecoder(new_encoding);
-      } catch(TypeError) {
-        console.log('Unknown encoding ' + new_encoding);
-      } finally {
-        if (test_decoder !== undefined) {
-          test_decoder = undefined;
-          encoding = new_encoding;
-          console.log('Set encoding to ' + encoding);
-        }
-      }
-    };
-
     wssh.reset_encoding = function () {
       // for console use
       if (encoding === msg.encoding) {
         console.log('Already reset to ' + msg.encoding);
       } else {
-        encoding = msg.encoding;
-        console.log('Reset encoding to ' + msg.encoding);
+        set_encoding(msg.encoding);
       }
     };
 
@@ -216,7 +214,6 @@ jQuery(function($){
       var reader = new window.FileReader();
 
       reader.onloadend = function(){
-        var decoder = new window.TextDecoder(encoding);
         var text = decoder.decode(reader.result);
         // console.log(text);
         if (term) {
