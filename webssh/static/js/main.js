@@ -73,12 +73,12 @@ jQuery(function($){
       decoder = new window.TextDecoder('utf-8', {'fatal': true});
     }
 
-    reader.onload = function () {
+    reader.onload = function() {
       var text;
       try {
         text = decoder.decode(reader.result);
       } catch (TypeError) {
-        console.error('Decoding error happened.');
+        console.log('Decoding error happened.');
       } finally {
         if (callback) {
           callback(text);
@@ -161,7 +161,7 @@ jQuery(function($){
         decoder = new window.TextDecoder(new_encoding);
         encoding = new_encoding;
         console.log('Set encoding to ' + encoding);
-      } catch(RangeError) {
+      } catch (RangeError) {
         console.log('Unknown encoding ' + new_encoding);
       }
     }
@@ -288,6 +288,23 @@ jQuery(function($){
         port = data.get('port'),
         username = data.get('username');
 
+    function ajax_post() {
+      store_items(names, data);
+
+      status.text('');
+      btn.prop('disabled', true);
+
+      $.ajax({
+          url: url,
+          type: 'post',
+          data: data,
+          complete: callback,
+          cache: false,
+          contentType: false,
+          processData: false
+      });
+    }
+
     if (!hostname || !port || !username) {
       status.text('Fields hostname, port and username are all required.');
       return;
@@ -304,25 +321,21 @@ jQuery(function($){
     }
 
     var pk = data.get('privatekey');
-    if (pk && pk.size > key_max_size) {
-      status.text('Invalid private key: ' + pk.name);
-      return;
+    if (pk) {
+      if (pk.size > key_max_size) {
+        status.text('Invalid private key: ' + pk.name);
+      } else {
+        read_file_as_text(pk, function(text) {
+          if (text === undefined) {
+            status.text('Invalid private key: ' + pk.name);
+          } else {
+            ajax_post();
+          }
+        });
+      }
+    } else {
+      ajax_post();
     }
-
-    store_items(names, data);
-
-    status.text('');
-    btn.prop('disabled', true);
-
-    $.ajax({
-        url: url,
-        type: 'post',
-        data: data,
-        complete: callback,
-        cache: false,
-        contentType: false,
-        processData: false
-    });
   }
 
   wssh.connect = connect;
