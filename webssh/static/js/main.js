@@ -107,12 +107,12 @@ jQuery(function($){
     // wssh.sock = sock;
     // wssh.term = term;
 
-    function resize_terminal (term) {
+    function resize_terminal(term) {
       var geometry = current_geometry();
       term.on_resize(geometry.cols, geometry.rows);
     }
 
-    function set_encoding (new_encoding) {
+    function set_encoding(new_encoding) {
       // for console use
       if (new_encoding === undefined) {
         console.log('An encoding is required');
@@ -138,7 +138,7 @@ jQuery(function($){
       console.log('Current window geometry: ' + JSON.stringify(geometry));
     };
 
-    wssh.websocket_send = function (data) {
+    wssh.websocket_send = function(data) {
       // for console use
       if (!sock) {
         console.log('Websocket was already closed');
@@ -158,7 +158,7 @@ jQuery(function($){
       }
     };
 
-    wssh.reset_encoding = function () {
+    wssh.reset_encoding = function() {
       // for console use
       if (encoding === msg.encoding) {
         console.log('Already reset to ' + msg.encoding);
@@ -167,7 +167,7 @@ jQuery(function($){
       }
     };
 
-    wssh.resize_terminal = function (cols, rows) {
+    wssh.resize_terminal = function(cols, rows) {
       // for console use
       if (term === undefined) {
         console.log('Terminal was already destroryed');
@@ -190,7 +190,7 @@ jQuery(function($){
       }
     };
 
-    term.on_resize = function (cols, rows) {
+    term.on_resize = function(cols, rows) {
       if (cols !== this.geometry[0] || rows !== this.geometry[1]) {
         console.log('Resizing terminal to geometry: ' + format_geometry(cols, rows));
         this.resize(cols, rows);
@@ -213,7 +213,7 @@ jQuery(function($){
     sock.onmessage = function(msg) {
       var reader = new window.FileReader();
 
-      reader.onload = function(){
+      reader.onload = function() {
         var text = decoder.decode(reader.result);
         // console.log(text);
         if (term) {
@@ -307,7 +307,7 @@ jQuery(function($){
 
   wssh.connect = connect;
 
-  $(form_id).submit(function(event) {
+  $(form_id).submit(function(event){
       event.preventDefault();
       connect();
   });
