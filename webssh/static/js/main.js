@@ -66,6 +66,34 @@ jQuery(function($){
   }
 
 
+  function read_file_as_text(file, callback, decoder) {
+    var reader = new window.FileReader();
+
+    if (decoder === undefined) {
+      decoder = new window.TextDecoder('utf-8', {'fatal': true});
+    }
+
+    reader.onload = function () {
+      var text;
+      try {
+        text = decoder.decode(reader.result);
+      } catch (TypeError) {
+        console.error('Decoding error happened.');
+      } finally {
+        if (callback) {
+          callback(text);
+        }
+      }
+    };
+
+    reader.onerror = function (e) {
+      console.error(e);
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+
   function reset_wssh() {
     var name;
 
@@ -110,6 +138,16 @@ jQuery(function($){
     function resize_terminal(term) {
       var geometry = current_geometry();
       term.on_resize(geometry.cols, geometry.rows);
+    }
+
+    function term_write(text) {
+      if (term) {
+        term.write(text);
+        if (!term.resized) {
+          resize_terminal(term);
+          term.resized = true;
+        }
+      }
     }
 
     function set_encoding(new_encoding) {
@@ -211,25 +249,7 @@ jQuery(function($){
     };
 
     sock.onmessage = function(msg) {
-      var reader = new window.FileReader();
-
-      reader.onload = function() {
-        var text = decoder.decode(reader.result);
-        // console.log(text);
-        if (term) {
-          term.write(text);
-          if (!term.resized) {
-            resize_terminal(term);
-            term.resized = true;
-          }
-        }
-      };
-
-      reader.onerror = function(e) {
-        console.error(e);
-      };
-
-      reader.readAsArrayBuffer(msg.data);
+      read_file_as_text(msg.data, term_write, decoder);
     };
 
     sock.onerror = function(e) {
