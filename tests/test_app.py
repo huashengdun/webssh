@@ -1,5 +1,4 @@
 import json
-import os.path
 import random
 import threading
 import tornado.websocket
@@ -10,9 +9,9 @@ from tornado.testing import AsyncHTTPTestCase
 from tornado.httpclient import HTTPError
 from tornado.options import options
 from tests.sshserver import run_ssh_server, banner
-from tests.utils import encode_multipart_formdata, read_file
+from tests.utils import encode_multipart_formdata, read_file, make_tests_data_path  # noqa
 from webssh.main import make_app, make_handlers
-from webssh.settings import get_app_settings, max_body_size, base_dir
+from webssh.settings import get_app_settings, max_body_size
 from webssh.utils import to_str
 
 
@@ -133,7 +132,7 @@ class TestApp(AsyncHTTPTestCase):
         response = yield client.fetch(url)
         self.assertEqual(response.code, 200)
 
-        privatekey = read_file(os.path.join(base_dir, 'tests', 'user_rsa_key'))
+        privatekey = read_file(make_tests_data_path('user_rsa_key'))
         files = [('privatekey', 'user_rsa_key', privatekey)]
         content_type, body = encode_multipart_formdata(self.body_dict.items(),
                                                        files)

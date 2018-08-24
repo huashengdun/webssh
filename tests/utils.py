@@ -1,5 +1,7 @@
 import mimetypes
+import os.path
 from uuid import uuid4
+from webssh.settings import base_dir
 
 
 def encode_multipart_formdata(fields, files):
@@ -40,3 +42,7 @@ def get_content_type(filename):
 
 def read_file(path, encoding='utf-8'):
     return open(path, 'rb').read().decode(encoding)
+
+
+def make_tests_data_path(filename):
+    return os.path.join(base_dir, 'tests', 'data', filename)

@@ -1,11 +1,9 @@
 import unittest
-import os.path
 import paramiko
 
 from tornado.httputil import HTTPServerRequest
-from tests.utils import read_file
+from tests.utils import read_file, make_tests_data_path
 from webssh.handler import MixinHandler, IndexHandler, parse_encoding
-from webssh.settings import base_dir
 
 
 class TestHandler(unittest.TestCase):
@@ -53,7 +51,7 @@ class TestIndexHandler(unittest.TestCase):
 
         fname = 'test_rsa.key'
         cls = paramiko.RSAKey
-        key = read_file(os.path.join(base_dir, 'tests', fname))
+        key = read_file(make_tests_data_path(fname))
         pkey = IndexHandler.get_specific_pkey(cls, key, None)
         self.assertIsInstance(pkey, cls)
         pkey = IndexHandler.get_specific_pkey(cls, key, 'iginored')
@@ -66,7 +64,7 @@ class TestIndexHandler(unittest.TestCase):
         cls = paramiko.RSAKey
         password = 'television'
 
-        key = read_file(os.path.join(base_dir, 'tests', fname))
+        key = read_file(make_tests_data_path(fname))
         pkey = IndexHandler.get_specific_pkey(cls, key, password)
         self.assertIsInstance(pkey, cls)
         pkey = IndexHandler.get_specific_pkey(cls, 'x'+key, None)
@@ -78,7 +76,7 @@ class TestIndexHandler(unittest.TestCase):
     def test_get_pkey_obj_with_plain_key(self):
         fname = 'test_ed25519.key'
         cls = paramiko.Ed25519Key
-        key = read_file(os.path.join(base_dir, 'tests', fname))
+        key = read_file(make_tests_data_path(fname))
         pkey = IndexHandler.get_pkey_obj(key, None, fname)
         self.assertIsInstance(pkey, cls)
         pkey = IndexHandler.get_pkey_obj(key, 'iginored', fname)
@@ -91,7 +89,7 @@ class TestIndexHandler(unittest.TestCase):
         fname = 'test_ed25519_password.key'
         password = 'abc123'
         cls = paramiko.Ed25519Key
-        key = read_file(os.path.join(base_dir, 'tests', fname))
+        key = read_file(make_tests_data_path(fname))
         pkey = IndexHandler.get_pkey_obj(key, password, fname)
         self.assertIsInstance(pkey, cls)
         with self.assertRaises(ValueError) as exc:
