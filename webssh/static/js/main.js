@@ -8,7 +8,11 @@ jQuery(function($){
   var status = $('#status'),
       btn = $('.btn-primary'),
       style = {},
-      connected = false,
+      DISCONNECTED = 0,
+      CONNECTING = 1,
+      CONNECTED = 2,
+      state = DISCONNECTED,
+      messages = {1: 'This client is connecting ...', 2: 'This client is already connnected.'},
       key_max_size = 16384,
       form_id = '#connect',
       names = ['hostname', 'port', 'username', 'password'],
@@ -111,6 +115,7 @@ jQuery(function($){
     if (resp.status !== 200) {
       console.log(resp);
       status.text('Response code: ' + resp.status);
+      state = DISCONNECTED;
       return;
     }
 
@@ -118,6 +123,7 @@ jQuery(function($){
     if (msg.status) {
       console.log(msg);
       status.text(msg.status);
+      state = DISCONNECTED;
       return;
     }
 
@@ -246,7 +252,7 @@ jQuery(function($){
       $('.container').hide();
       term.open(terminal, true);
       term.toggleFullscreen(true);
-      connected = true;
+      state = CONNECTED;
     };
 
     sock.onmessage = function(msg) {
@@ -265,7 +271,7 @@ jQuery(function($){
       reset_wssh();
       $('.container').show();
       status.text(e.reason);
-      connected = false;
+      state = DISCONNECTED;
     };
 
     $(window).resize(function(){
@@ -277,8 +283,8 @@ jQuery(function($){
 
 
   function connect_without_options() {
-    if (connected) {
-      console.log('This client was already connected.');
+    if (state !== DISCONNECTED) {
+      console.log(messages[state]);
       return;
     }
 
@@ -304,6 +310,8 @@ jQuery(function($){
           contentType: false,
           processData: false
       });
+
+      state = CONNECTING;
     }
 
     if (!hostname || !port || !username) {
@@ -341,8 +349,8 @@ jQuery(function($){
 
 
   function connect_with_options(opts) {
-    if (connected) {
-      console.log('This client was already connected.');
+    if (state !== DISCONNECTED) {
+      console.log(messages[state]);
       return;
     }
 
@@ -390,6 +398,8 @@ jQuery(function($){
         data: data,
         complete: ajax_complete_callback
     });
+
+    state = CONNECTING;
   }
 
   wssh.connect = function(opts) {
