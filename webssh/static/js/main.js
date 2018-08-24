@@ -8,6 +8,8 @@ jQuery(function($){
   var status = $('#status'),
       btn = $('.btn-primary'),
       style = {},
+      title_text = 'WebSSH',
+      title_element = document.querySelector('title'),
       DISCONNECTED = 0,
       CONNECTING = 1,
       CONNECTED = 2,
@@ -253,6 +255,7 @@ jQuery(function($){
       term.open(terminal, true);
       term.toggleFullscreen(true);
       state = CONNECTED;
+      title_element.text = title_text;
     };
 
     sock.onmessage = function(msg) {
@@ -272,6 +275,8 @@ jQuery(function($){
       $('.container').show();
       status.text(e.reason);
       state = DISCONNECTED;
+      title_text = 'WebSSH';
+      title_element.text = title_text;
     };
 
     $(window).resize(function(){
@@ -312,6 +317,7 @@ jQuery(function($){
       });
 
       state = CONNECTING;
+      title_text = username + '@' + hostname + ':'  + port;
     }
 
     if (!hostname || !port || !username) {
@@ -400,6 +406,7 @@ jQuery(function($){
     });
 
     state = CONNECTING;
+    title_text = username + '@' + hostname + ':'  + port;
   }
 
   wssh.connect = function(opts) {
