@@ -105,7 +105,7 @@ jQuery(function($){
   }
 
 
-  function callback(resp) {
+  function ajax_complete_callback(resp) {
     btn.prop('disabled', false);
 
     if (resp.status !== 200) {
@@ -116,6 +116,7 @@ jQuery(function($){
 
     var msg = resp.responseJSON;
     if (msg.status) {
+      console.log(msg);
       status.text(msg.status);
       return;
     }
@@ -275,7 +276,7 @@ jQuery(function($){
   }
 
 
-  function connect() {
+  function connect_without_options() {
     if (connected) {
       console.log('This client was already connected.');
       return;
@@ -298,7 +299,7 @@ jQuery(function($){
           url: url,
           type: 'post',
           data: data,
-          complete: callback,
+          complete: ajax_complete_callback,
           cache: false,
           contentType: false,
           processData: false
@@ -323,11 +324,11 @@ jQuery(function($){
     var pk = data.get('privatekey');
     if (pk) {
       if (pk.size > key_max_size) {
-        status.text('Invalid private key: ' + pk.name);
+        console.log('Invalid private key: ' + pk.name);
       } else {
         read_file_as_text(pk, function(text) {
           if (text === undefined) {
-            status.text('Invalid private key: ' + pk.name);
+            console.log('Invalid private key: ' + pk.name);
           } else {
             ajax_post();
           }
@@ -338,11 +339,71 @@ jQuery(function($){
     }
   }
 
-  wssh.connect = connect;
+
+  function connect_with_options(opts) {
+    if (connected) {
+      console.log('This client was already connected.');
+      return;
+    }
+
+    var form = document.querySelector(form_id),
+        xsrf = form.querySelector('input[name="_xsrf"]').value,
+        url = opts.url || form.action,
+        hostname = opts.hostname || '',
+        port = opts.port || '',
+        username = opts.username || '',
+        password = opts.password || '',
+        privatekey = opts.privatekey || '',
+        data = {
+          '_xsrf': xsrf,
+          'username': username,
+          'hostname': hostname,
+          'port': port,
+          'password': password,
+          'privatekey': privatekey
+        };
+
+
+    if (!hostname || !port || !username) {
+      console.log('Fields hostname, port and username are all required.');
+      return;
+    }
+
+    if (!hostname_tester.test(hostname)) {
+      console.log('Invalid hostname: ' + hostname);
+      return;
+    }
+
+    if (port <= 0 || port > 63335) {
+      console.log('Invalid port: ' + port);
+      return;
+    }
+
+    if (privatekey && privatekey.length > key_max_size) {
+      console.log('Invalid private key: ' + privatekey);
+      return;
+    }
+
+    $.ajax({
+        url: url,
+        type: 'post',
+        data: data,
+        complete: ajax_complete_callback
+    });
+  }
+
+  wssh.connect = function(opts) {
+    if (opts === undefined) {
+      connect_without_options();
+    } else {
+      connect_with_options(opts);
+    }
+  };
+
 
   $(form_id).submit(function(event){
       event.preventDefault();
-      connect();
+      connect_without_options();
   });
 
 });

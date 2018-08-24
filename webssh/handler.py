@@ -66,21 +66,23 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.loop = loop
         self.policy = policy
         self.host_keys_settings = host_keys_settings
+        self.filename = None
 
     def get_privatekey(self):
-        lst = self.request.files.get('privatekey')
-        if not lst:  # no privatekey provided
-            return
-
-        self.filename = lst[0]['filename']
-        data = lst[0]['body']
-        if len(data) < KEY_MAX_SIZE:
+        lst = self.request.files.get('privatekey')  # multipart form
+        if not lst:
             try:
-                return to_str(data)
-            except (UnicodeDecodeError, ValueError, SyntaxError):
+                return self.get_argument('privatekey')  # urlencoded form
+            except tornado.web.MissingArgumentError:
                 pass
-
-        raise ValueError('Invalid private key: {}'.format(self.filename))
+        else:
+            self.filename = lst[0]['filename']
+            data = lst[0]['body']
+            if len(data) > KEY_MAX_SIZE:
+                raise ValueError(
+                        'Invalid private key: {}'.format(self.filename)
+                    )
+            return self.decode_argument(data, name=self.filename)
 
     @classmethod
     def get_specific_pkey(cls, pkeycls, privatekey, password):
@@ -119,7 +121,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         value = self.get_value('hostname')
         if not (is_valid_hostname(value) | is_valid_ipv4_address(value) |
                 is_valid_ipv6_address(value)):
-            raise ValueError('Invalid hostname: {}.'.format(value))
+            raise ValueError('Invalid hostname: {}'.format(value))
         return value
 
     def get_port(self):
@@ -132,7 +134,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             if is_valid_port(port):
                 return port
 
-        raise ValueError('Invalid port: {}.'.format(value))
+        raise ValueError('Invalid port: {}'.format(value))
 
     def get_value(self, name):
         value = self.get_argument(name)

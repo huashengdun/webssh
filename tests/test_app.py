@@ -213,12 +213,13 @@ class TestApp(AsyncHTTPTestCase):
         headers = {
             'Content-Type': content_type, 'content-length': str(len(body))
         }
+
         response = yield client.fetch(url, method='POST', headers=headers,
                                       body=body)
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['id'])
         self.assertIsNone(data['encoding'])
-        self.assertTrue(data['status'].startswith('Invalid private key'))
+        self.assertIn('Bad Request (Invalid unicode', data['status'])
 
     @tornado.testing.gen_test
     def test_app_post_form_with_large_body_size(self):
