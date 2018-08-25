@@ -66,6 +66,23 @@ class TestApp(AsyncHTTPTestCase):
     def test_app_with_invalid_form(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
+
+        body = 'port=7000&username=admin&password'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertIn(b'Missing argument hostname', response.body)
+
+        body = 'hostname=127.0.0.1&username=admin&password'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertIn(b'Missing argument port', response.body)
+
+        body = 'hostname=127.0.0.1&port=7000&password'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertIn(b'Missing argument username', response.body)
+
+        body = 'hostname=127.0.0.1&port=7000&username=admin'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertIn(b'Missing argument password', response.body)
+
         body = 'hostname=&port=&username=&password'
         response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'The hostname field is required', response.body)
@@ -73,6 +90,10 @@ class TestApp(AsyncHTTPTestCase):
         body = 'hostname=127.0.0.1&port=&username=&password'
         response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'The port field is required', response.body)
+
+        body = 'hostname=127.0.0.1&port=7000&username=&password'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertIn(b'The username field is required', response.body)
 
         body = 'hostname=127.0.0&port=22&username=&password'
         response = self.fetch('/', method='POST', body=body)
@@ -89,10 +110,6 @@ class TestApp(AsyncHTTPTestCase):
         body = 'hostname=127.0.0.1&port=70000&username=&password'
         response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'Invalid port', response.body)
-
-        body = 'hostname=127.0.0.1&port=7000&username=&password'
-        response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'The username field is required', response.body) # noqa
 
     def test_app_with_wrong_credentials(self):
         response = self.fetch('/')
@@ -149,6 +166,66 @@ class TestApp(AsyncHTTPTestCase):
         msg = yield ws.read_message()
         self.assertEqual(to_str(msg, data['encoding']), banner)
         ws.close()
+
+    @tornado.testing.gen_test
+    def test_app_with_correct_credentials_but_without_id_argument(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        response = yield client.fetch(url, method='POST', body=self.body)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
+
+        url = url.replace('http', 'ws')
+        ws_url = url + 'ws'
+        ws = yield tornado.websocket.websocket_connect(ws_url)
+        msg = yield ws.read_message()
+        self.assertIsNone(msg)
+        self.assertIn('Missing argument id', ws.close_reason)
+
+    @tornado.testing.gen_test
+    def test_app_with_correct_credentials_but_epmpty_id(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        response = yield client.fetch(url, method='POST', body=self.body)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
+
+        url = url.replace('http', 'ws')
+        ws_url = url + 'ws?id='
+        ws = yield tornado.websocket.websocket_connect(ws_url)
+        msg = yield ws.read_message()
+        self.assertIsNone(msg)
+        self.assertIn('field is required', ws.close_reason)
+
+    @tornado.testing.gen_test
+    def test_app_with_correct_credentials_but_wrong_id(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        response = yield client.fetch(url, method='POST', body=self.body)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
+
+        url = url.replace('http', 'ws')
+        ws_url = url + 'ws?id=1' + data['id']
+        ws = yield tornado.websocket.websocket_connect(ws_url)
+        msg = yield ws.read_message()
+        self.assertIsNone(msg)
+        self.assertIn('Websocket authentication failed', ws.close_reason)
 
     @tornado.testing.gen_test
     def test_app_with_correct_credentials_user_bar(self):
