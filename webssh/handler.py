@@ -40,9 +40,6 @@ def parse_encoding(data):
 
 class MixinHandler(object):
 
-    arguments_required = {}  # agruments must be deliverd
-    empty_allowed = {}       # emtpy value alllowed
-
     def get_value(self, name):
         is_required = name in self.arguments_required
 
@@ -52,7 +49,7 @@ class MixinHandler(object):
             if is_required:
                 raise
         else:
-            if not value and is_required and name not in self.empty_allowed:
+            if not value and is_required:
                 raise ValueError('The {} field is required.'.format(name))
             return value
 
@@ -79,7 +76,6 @@ class MixinHandler(object):
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     arguments_required = {'hostname', 'port', 'username', 'password'}
-    empty_allowed = {'password'}
 
     def initialize(self, loop, policy, host_keys_settings):
         self.loop = loop
@@ -152,11 +148,17 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         raise ValueError('Invalid port: {}'.format(value))
 
+    def get_password(self):
+        try:
+            return self.get_value('password')
+        except ValueError:
+            return ''
+
     def get_args(self):
         hostname = self.get_hostname()
         port = self.get_port()
         username = self.get_value('username')
-        password = self.get_value('password')
+        password = self.get_password()
         privatekey = self.get_privatekey()
         pkey = self.get_pkey_obj(privatekey, password, self.filename) \
             if privatekey else None
