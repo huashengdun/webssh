@@ -233,7 +233,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         try:
             worker = yield future
-        except Exception as exc:
+        except ValueError as exc:
             status = str(exc)
         else:
             worker_id = worker.id

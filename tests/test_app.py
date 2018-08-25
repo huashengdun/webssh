@@ -69,18 +69,22 @@ class TestApp(AsyncHTTPTestCase):
 
         body = 'port=7000&username=admin&password'
         response = self.fetch('/', method='POST', body=body)
+        self.assertEqual(response.code, 400)
         self.assertIn(b'Missing argument hostname', response.body)
 
         body = 'hostname=127.0.0.1&username=admin&password'
+        self.assertEqual(response.code, 400)
         response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'Missing argument port', response.body)
 
         body = 'hostname=127.0.0.1&port=7000&password'
+        self.assertEqual(response.code, 400)
         response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'Missing argument username', response.body)
 
         body = 'hostname=127.0.0.1&port=7000&username=admin'
         response = self.fetch('/', method='POST', body=body)
+        self.assertEqual(response.code, 400)
         self.assertIn(b'Missing argument password', response.body)
 
         body = 'hostname=&port=&username=&password'
@@ -370,7 +374,7 @@ class TestApp(AsyncHTTPTestCase):
         self.assertTrue(data['status'].startswith('Invalid private key'))
 
     @tornado.testing.gen_test
-    def test_app_auth_with_pubkey_cannot_be_decoded(self):
+    def test_app_auth_with_pubkey_cannot_be_decoded_by_multipart_form(self):
         url = self.get_url('/')
         client = self.get_http_client()
         response = yield client.fetch(url)
@@ -386,16 +390,25 @@ class TestApp(AsyncHTTPTestCase):
         headers = {
             'Content-Type': content_type, 'content-length': str(len(body))
         }
-
-        response = yield client.fetch(url, method='POST', headers=headers,
-                                      body=body)
-        data = json.loads(to_str(response.body))
-        self.assertIsNone(data['id'])
-        self.assertIsNone(data['encoding'])
-        self.assertIn('Bad Request (Invalid unicode', data['status'])
+        with self.assertRaises(HTTPError) as exc:
+            yield client.fetch(url, method='POST', headers=headers, body=body)
+            self.assertIn('Bad Request (Invalid unicode', exc.msg)
 
     @tornado.testing.gen_test
-    def test_app_post_form_with_large_body_size(self):
+    def test_app_auth_with_pubkey_cannot_be_decoded_by_urlencoded_form(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        privatekey = b'h' * 1024 + b'\xb4\xed\xce\xf3'
+        body = self.body.encode() + b'&privatekey=' + privatekey
+        with self.assertRaises(HTTPError) as exc:
+            yield client.fetch(url, method='POST', body=body)
+            self.assertIn('Bad Request (Invalid unicode', exc.msg)
+
+    @tornado.testing.gen_test
+    def test_app_post_form_with_large_body_size_by_multipart_form(self):
         url = self.get_url('/')
         client = self.get_http_client()
         response = yield client.fetch(url)
@@ -409,5 +422,19 @@ class TestApp(AsyncHTTPTestCase):
             'Content-Type': content_type, 'content-length': str(len(body))
         }
 
-        with self.assertRaises(HTTPError):
+        with self.assertRaises(HTTPError) as exc:
             yield client.fetch(url, method='POST', headers=headers, body=body)
+            self.assertIsNone(exc.msg)
+
+    @tornado.testing.gen_test
+    def test_app_post_form_with_large_body_size_by_urlencoded_form(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        privatekey = 'h' * (2 * max_body_size)
+        body = self.body + '&privatekey=' + privatekey
+        with self.assertRaises(HTTPError) as exc:
+            yield client.fetch(url, method='POST', body=body)
+            self.assertIsNone(exc.msg)
