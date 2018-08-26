@@ -37,11 +37,13 @@ class TestApp(AsyncHTTPTestCase):
 
     def get_app(self):
         loop = self.io_loop
-        options.debug = True
+        options.debug = False
         options.policy = random.choice(['warning', 'autoadd'])
         options.hostFile = ''
         options.sysHostFile = ''
-        app = make_app(make_handlers(loop, options), get_app_settings(options))
+        settings = get_app_settings(options)
+        settings.update(xsrf_cookies=False)
+        app = make_app(make_handlers(loop, options), settings)
         return app
 
     @classmethod
@@ -63,7 +65,7 @@ class TestApp(AsyncHTTPTestCase):
         options.update(max_body_size=max_body_size)
         return options
 
-    def test_app_with_invalid_form(self):
+    def test_app_with_invalid_form_for_missing_argument(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
 
@@ -82,44 +84,67 @@ class TestApp(AsyncHTTPTestCase):
         response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'Missing argument username', response.body)
 
-        body = 'hostname=127.0.0.1&port=7000&username=admin'
-        response = self.fetch('/', method='POST', body=body)
-        self.assertEqual(response.code, 400)
-        self.assertIn(b'Missing argument password', response.body)
-
         body = 'hostname=&port=&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'The hostname field is required', response.body)
+        self.assertEqual(response.code, 400)
+        self.assertIn(b'Missing argument hostname', response.body)
 
         body = 'hostname=127.0.0.1&port=&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'The port field is required', response.body)
+        self.assertEqual(response.code, 400)
+        self.assertIn(b'Missing argument port', response.body)
 
         body = 'hostname=127.0.0.1&port=7000&username=&password'
         response = self.fetch('/', method='POST', body=body)
-        self.assertIn(b'The username field is required', response.body)
+        self.assertEqual(response.code, 400)
+        self.assertIn(b'Missing argument username', response.body)
 
+    def test_app_with_invalid_form_for_invalid_value(self):
         body = 'hostname=127.0.0&port=22&username=&password'
         response = self.fetch('/', method='POST', body=body)
         self.assertIn(b'Invalid hostname', response.body)
 
         body = 'hostname=http://www.googe.com&port=22&username=&password'
         response = self.fetch('/', method='POST', body=body)
+        self.assertEqual(response.code, 400)
         self.assertIn(b'Invalid hostname', response.body)
 
         body = 'hostname=127.0.0.1&port=port&username=&password'
         response = self.fetch('/', method='POST', body=body)
+        self.assertEqual(response.code, 400)
         self.assertIn(b'Invalid port', response.body)
 
         body = 'hostname=127.0.0.1&port=70000&username=&password'
         response = self.fetch('/', method='POST', body=body)
+        self.assertEqual(response.code, 400)
         self.assertIn(b'Invalid port', response.body)
+
+    def test_app_with_wrong_hostname_ip(self):
+        body = 'hostname=127.0.0.1&port=7000&username=admin'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertEqual(response.code, 200)
+        self.assertIn(b'Unable to connect to', response.body)
+
+    def test_app_with_wrong_hostname_domain(self):
+        body = 'hostname=xxxxxxxxxxxx&port=7000&username=admin'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertEqual(response.code, 200)
+        self.assertIn(b'Unable to connect to', response.body)
+
+    def test_app_with_wrong_port(self):
+        body = 'hostname=127.0.0.1&port=7000&username=admin'
+        response = self.fetch('/', method='POST', body=body)
+        self.assertEqual(response.code, 200)
+        self.assertIn(b'Unable to connect to', response.body)
 
     def test_app_with_wrong_credentials(self):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
         response = self.fetch('/', method='POST', body=self.body + 's')
-        self.assertIn(b'Authentication failed.', response.body)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['encoding'])
+        self.assertIsNone(data['id'])
+        self.assertIn('Authentication failed.', data['status'])
 
     def test_app_with_correct_credentials(self):
         response = self.fetch('/')
@@ -192,7 +217,7 @@ class TestApp(AsyncHTTPTestCase):
         self.assertIn('Missing argument id', ws.close_reason)
 
     @tornado.testing.gen_test
-    def test_app_with_correct_credentials_but_epmpty_id(self):
+    def test_app_with_correct_credentials_but_empty_id(self):
         url = self.get_url('/')
         client = self.get_http_client()
         response = yield client.fetch(url)
@@ -209,7 +234,7 @@ class TestApp(AsyncHTTPTestCase):
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
         self.assertIsNone(msg)
-        self.assertIn('field is required', ws.close_reason)
+        self.assertIn('Missing argument id', ws.close_reason)
 
     @tornado.testing.gen_test
     def test_app_with_correct_credentials_but_wrong_id(self):
@@ -345,12 +370,10 @@ class TestApp(AsyncHTTPTestCase):
         headers = {
             'Content-Type': content_type, 'content-length': str(len(body))
         }
-        response = yield client.fetch(url, method='POST', headers=headers,
-                                      body=body)
-        data = json.loads(to_str(response.body))
-        self.assertIsNone(data['id'])
-        self.assertIsNone(data['encoding'])
-        self.assertTrue(data['status'].startswith('Invalid private key'))
+        with self.assertRaises(HTTPError) as ctx:
+            yield client.fetch(url, method='POST', headers=headers, body=body)
+        self.assertEqual(ctx.exception.code, 400)
+        self.assertIn('Invalid private key', ctx.exception.message)
 
     @tornado.testing.gen_test
     def test_app_auth_with_pubkey_exceeds_key_max_size(self):
@@ -366,12 +389,10 @@ class TestApp(AsyncHTTPTestCase):
         headers = {
             'Content-Type': content_type, 'content-length': str(len(body))
         }
-        response = yield client.fetch(url, method='POST', headers=headers,
-                                      body=body)
-        data = json.loads(to_str(response.body))
-        self.assertIsNone(data['id'])
-        self.assertIsNone(data['encoding'])
-        self.assertTrue(data['status'].startswith('Invalid private key'))
+        with self.assertRaises(HTTPError) as ctx:
+            yield client.fetch(url, method='POST', headers=headers, body=body)
+        self.assertEqual(ctx.exception.code, 400)
+        self.assertIn('Invalid private key', ctx.exception.message)
 
     @tornado.testing.gen_test
     def test_app_auth_with_pubkey_cannot_be_decoded_by_multipart_form(self):
@@ -390,22 +411,10 @@ class TestApp(AsyncHTTPTestCase):
         headers = {
             'Content-Type': content_type, 'content-length': str(len(body))
         }
-        with self.assertRaises(HTTPError) as exc:
+        with self.assertRaises(HTTPError) as ctx:
             yield client.fetch(url, method='POST', headers=headers, body=body)
-            self.assertIn('Bad Request (Invalid unicode', exc.msg)
-
-    @tornado.testing.gen_test
-    def test_app_auth_with_pubkey_cannot_be_decoded_by_urlencoded_form(self):
-        url = self.get_url('/')
-        client = self.get_http_client()
-        response = yield client.fetch(url)
-        self.assertEqual(response.code, 200)
-
-        privatekey = b'h' * 1024 + b'\xb4\xed\xce\xf3'
-        body = self.body.encode() + b'&privatekey=' + privatekey
-        with self.assertRaises(HTTPError) as exc:
-            yield client.fetch(url, method='POST', body=body)
-            self.assertIn('Bad Request (Invalid unicode', exc.msg)
+        self.assertEqual(ctx.exception.code, 400)
+        self.assertIn('Invalid unicode', ctx.exception.message)
 
     @tornado.testing.gen_test
     def test_app_post_form_with_large_body_size_by_multipart_form(self):
@@ -422,9 +431,10 @@ class TestApp(AsyncHTTPTestCase):
             'Content-Type': content_type, 'content-length': str(len(body))
         }
 
-        with self.assertRaises(HTTPError) as exc:
+        with self.assertRaises(HTTPError) as ctx:
             yield client.fetch(url, method='POST', headers=headers, body=body)
-            self.assertIsNone(exc.msg)
+        self.assertEqual(ctx.exception.code, 400)
+        self.assertIn('Bad Request', ctx.exception.message)
 
     @tornado.testing.gen_test
     def test_app_post_form_with_large_body_size_by_urlencoded_form(self):
@@ -435,6 +445,7 @@ class TestApp(AsyncHTTPTestCase):
 
         privatekey = 'h' * (2 * max_body_size)
         body = self.body + '&privatekey=' + privatekey
-        with self.assertRaises(HTTPError) as exc:
+        with self.assertRaises(HTTPError) as ctx:
             yield client.fetch(url, method='POST', body=body)
-            self.assertIsNone(exc.msg)
+        self.assertEqual(ctx.exception.code, 400)
+        self.assertIn('Bad Request', ctx.exception.message)

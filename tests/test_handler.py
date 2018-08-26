@@ -3,7 +3,9 @@ import paramiko
 
 from tornado.httputil import HTTPServerRequest
 from tests.utils import read_file, make_tests_data_path
-from webssh.handler import MixinHandler, IndexHandler, parse_encoding
+from webssh.handler import (
+    MixinHandler, IndexHandler, parse_encoding, InvalidException
+)
 
 
 class TestHandler(unittest.TestCase):
@@ -70,7 +72,7 @@ class TestIndexHandler(unittest.TestCase):
         pkey = IndexHandler.get_specific_pkey(cls, 'x'+key, None)
         self.assertIsNone(pkey)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(paramiko.PasswordRequiredException):
             pkey = IndexHandler.get_specific_pkey(cls, key, None)
 
     def test_get_pkey_obj_with_plain_key(self):
@@ -81,7 +83,7 @@ class TestIndexHandler(unittest.TestCase):
         self.assertIsInstance(pkey, cls)
         pkey = IndexHandler.get_pkey_obj(key, 'iginored', fname)
         self.assertIsInstance(pkey, cls)
-        with self.assertRaises(ValueError) as exc:
+        with self.assertRaises(InvalidException) as exc:
             pkey = IndexHandler.get_pkey_obj('x'+key, None, fname)
             self.assertIn('Invalid private key', str(exc))
 
@@ -92,9 +94,9 @@ class TestIndexHandler(unittest.TestCase):
         key = read_file(make_tests_data_path(fname))
         pkey = IndexHandler.get_pkey_obj(key, password, fname)
         self.assertIsInstance(pkey, cls)
-        with self.assertRaises(ValueError) as exc:
+        with self.assertRaises(InvalidException) as exc:
             pkey = IndexHandler.get_pkey_obj(key, 'wrongpass', fname)
             self.assertIn('Wrong password', str(exc))
-        with self.assertRaises(ValueError) as exc:
+        with self.assertRaises(InvalidException) as exc:
             pkey = IndexHandler.get_pkey_obj('x'+key, password, fname)
             self.assertIn('Invalid private key', str(exc))

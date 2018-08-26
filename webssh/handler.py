@@ -38,20 +38,25 @@ def parse_encoding(data):
             return s.strip('"').split('.')[-1]
 
 
+class InvalidException(Exception):
+    pass
+
+
 class MixinHandler(object):
 
-    def get_value(self, name):
-        is_required = name in self.arguments_required
+    def write_error(self, status_code, **kwargs):
+        exc_info = kwargs.get('exc_info')
+        if exc_info and len(exc_info) > 1:
+            info = str(exc_info[1])
+            if info:
+                self._reason = info.split(':', 1)[-1].strip()
+        super(MixinHandler, self).write_error(status_code, **kwargs)
 
-        try:
-            value = self.get_argument(name)
-        except tornado.web.MissingArgumentError:
-            if is_required:
-                raise
-        else:
-            if not value and is_required:
-                raise ValueError('The {} field is required.'.format(name))
-            return value
+    def get_value(self, name):
+        value = self.get_argument(name)
+        if not value:
+            raise tornado.web.MissingArgumentError(name)
+        return value
 
     def get_real_client_addr(self):
         ip = self.request.headers.get('X-Real-Ip')
@@ -75,8 +80,6 @@ class MixinHandler(object):
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
-    arguments_required = {'hostname', 'port', 'username', 'password'}
-
     def initialize(self, loop, policy, host_keys_settings):
         self.loop = loop
         self.policy = policy
@@ -86,14 +89,14 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
     def get_privatekey(self):
         lst = self.request.files.get('privatekey')  # multipart form
         if not lst:
-            return self.get_value('privatekey')  # urlencoded form
+            return self.get_argument('privatekey', u'')  # urlencoded form
         else:
             self.filename = lst[0]['filename']
             data = lst[0]['body']
             if len(data) > KEY_MAX_SIZE:
-                raise ValueError(
-                        'Invalid private key: {}'.format(self.filename)
-                    )
+                raise InvalidException(
+                    'Invalid private key: {}'.format(self.filename)
+                )
             return self.decode_argument(data, name=self.filename)
 
     @classmethod
@@ -103,7 +106,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             pkey = pkeycls.from_private_key(io.StringIO(privatekey),
                                             password=password)
         except paramiko.PasswordRequiredException:
-            raise ValueError('Need password to decrypt the private key.')
+            raise
         except paramiko.SSHException:
             pass
         else:
@@ -125,7 +128,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                 error = (
                     'Wrong password {!r} for decrypting the private key.'
                 ) .format(password)
-            raise ValueError(error)
+            raise InvalidException(error)
 
         return pkey
 
@@ -133,7 +136,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         value = self.get_value('hostname')
         if not (is_valid_hostname(value) | is_valid_ipv4_address(value) |
                 is_valid_ipv6_address(value)):
-            raise ValueError('Invalid hostname: {}'.format(value))
+            raise InvalidException('Invalid hostname: {}'.format(value))
         return value
 
     def get_port(self):
@@ -146,19 +149,13 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             if is_valid_port(port):
                 return port
 
-        raise ValueError('Invalid port: {}'.format(value))
-
-    def get_password(self):
-        try:
-            return self.get_value('password')
-        except ValueError:
-            return ''
+        raise InvalidException('Invalid port: {}'.format(value))
 
     def get_args(self):
         hostname = self.get_hostname()
         port = self.get_port()
         username = self.get_value('username')
-        password = self.get_password()
+        password = self.get_argument('password', u'')
         privatekey = self.get_privatekey()
         pkey = self.get_pkey_obj(privatekey, password, self.filename) \
             if privatekey else None
@@ -188,7 +185,11 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         ssh._host_keys_filename = self.host_keys_settings['host_keys_filename']
         ssh.set_missing_host_key_policy(self.policy)
 
-        args = self.get_args()
+        try:
+            args = self.get_args()
+        except InvalidException as exc:
+            raise tornado.web.HTTPError(400, str(exc))
+
         dst_addr = (args[0], args[1])
         logging.info('Connecting to {}:{}'.format(*dst_addr))
 
@@ -197,6 +198,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:
+            raise ValueError('Bad authentication type.')
+        except paramiko.AuthenticationException:
             raise ValueError('Authentication failed.')
         except paramiko.BadHostKeyException:
             raise ValueError('Bad host key.')
@@ -233,7 +236,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         try:
             worker = yield future
-        except ValueError as exc:
+        except (ValueError, paramiko.SSHException) as exc:
             status = str(exc)
         else:
             worker_id = worker.id
@@ -245,8 +248,6 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
 
 class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
-
-    arguments_required = {'id'}
 
     def initialize(self, loop):
         self.loop = loop
@@ -260,8 +261,9 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         logging.info('Connected from {}:{}'.format(*self.src_addr))
         try:
             worker_id = self.get_value('id')
-        except (tornado.web.MissingArgumentError, ValueError) as exc:
-            self.close(reason=str(exc))
+        except tornado.web.MissingArgumentError as exc:
+            self.close(reason=exc.log_message)
+            raise
         else:
             worker = workers.get(worker_id)
             if worker and worker.src_addr[0] == self.src_addr[0]:
