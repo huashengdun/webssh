@@ -94,11 +94,11 @@ class Worker(object):
 
     def close(self, reason=None):
         logging.info(
-            'Closing worker {} with reason {}'.format(self.id, reason)
+                'Closing worker {} with reason: {}'.format(self.id, reason)
         )
         if self.handler:
             self.loop.remove_handler(self.fd)
-            self.handler.close()
+            self.handler.close(reason=reason)
         self.chan.close()
         self.ssh.close()
         logging.info('Connection to {}:{} lost'.format(*self.dst_addr))
