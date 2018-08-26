@@ -72,11 +72,13 @@ class Server(paramiko.ServerInterface):
 
     def check_auth_publickey(self, username, key):
         print('Auth attempt with username: {!r} & key: {!r}'.format(username, u(hexlify(key.get_fingerprint())))) # noqa
-        if (username == 'robey') and (key == self.good_pub_key):
+        if (username in ['robey', 'keyonly']) and (key == self.good_pub_key):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
     def get_allowed_auths(self, username):
+        if username == 'keyonly':
+            return 'publickey'
         return 'password,publickey'
 
     def check_channel_exec_request(self, channel, command):

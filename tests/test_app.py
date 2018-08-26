@@ -28,14 +28,14 @@ class TestApp(AsyncHTTPTestCase):
     running = [True]
     sshserver_port = 2200
     body = 'hostname=127.0.0.1&port={}&username=robey&password=foo'.format(sshserver_port) # noqa
-    body_dict = {
-        'hostname': '127.0.0.1',
-        'port': str(sshserver_port),
-        'username': 'robey',
-        'password': ''
-    }
 
     def get_app(self):
+        self.body_dict = {
+            'hostname': '127.0.0.1',
+            'port': str(self.sshserver_port),
+            'username': 'robey',
+            'password': ''
+        }
         loop = self.io_loop
         options.debug = False
         options.policy = random.choice(['warning', 'autoadd'])
@@ -449,3 +449,19 @@ class TestApp(AsyncHTTPTestCase):
             yield client.fetch(url, method='POST', body=body)
         self.assertEqual(ctx.exception.code, 400)
         self.assertIn('Bad Request', ctx.exception.message)
+
+    @tornado.testing.gen_test
+    def test_app_with_user_keyonly_for_bad_authentication_type(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        response = yield client.fetch(url)
+        self.assertEqual(response.code, 200)
+
+        self.body_dict.update(username='keyonly', password='foo')
+        body = urlencode(self.body_dict)
+        response = yield client.fetch(url, method='POST', body=body)
+        self.assertEqual(response.code, 200)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertIn('Bad authentication type', data['status'])
