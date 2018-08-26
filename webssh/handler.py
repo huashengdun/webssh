@@ -52,10 +52,10 @@ class MixinHandler(object):
                 self._reason = info.split(':', 1)[-1].strip()
         super(MixinHandler, self).write_error(status_code, **kwargs)
 
-    def get_value(self, name):
+    def get_value(self, name, formater='Missing value {}'):
         value = self.get_argument(name)
         if not value:
-            raise InvalidException('Missing value {}'.format(name))
+            raise InvalidException(formater.format(name))
         return value
 
     def get_real_client_addr(self):
@@ -249,6 +249,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
 class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
 
+    formater = 'Bad Request (Missing value {})'
+
     def initialize(self, loop):
         self.loop = loop
         self.worker_ref = None
@@ -260,10 +262,9 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         self.src_addr = self.get_client_addr()
         logging.info('Connected from {}:{}'.format(*self.src_addr))
         try:
-            worker_id = self.get_value('id')
+            worker_id = self.get_value('id', formater=self.formater)
         except (tornado.web.MissingArgumentError, InvalidException) as exc:
-            self.close(reason=str(exc))
-            raise
+            self.close(reason=str(exc).split(':', 1)[-1].strip())
         else:
             worker = workers.get(worker_id)
             if worker and worker.src_addr[0] == self.src_addr[0]:
@@ -299,9 +300,16 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
             worker.on_write()
 
     def on_close(self):
-        logging.info('Disconnected from {}:{}'.format(*self.src_addr))
+        if self.close_reason:
+            logging.info(
+                'Disconnecting to {}:{} with reason: {reason}'.format(
+                    *self.src_addr, reason=self.close_reason
+                )
+            )
+        else:
+            self.close_reason = 'client disconnected'
+            logging.info('Disconnected from {}:{}'.format(*self.src_addr))
+
         worker = self.worker_ref() if self.worker_ref else None
         if worker:
-            if self.close_reason is None:
-                self.close_reason = 'client disconnected'
             worker.close(reason=self.close_reason)
