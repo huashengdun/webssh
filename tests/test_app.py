@@ -87,17 +87,17 @@ class TestApp(AsyncHTTPTestCase):
         body = 'hostname=&port=&username=&password'
         response = self.fetch('/', method='POST', body=body)
         self.assertEqual(response.code, 400)
-        self.assertIn(b'Missing argument hostname', response.body)
+        self.assertIn(b'Missing value hostname', response.body)
 
         body = 'hostname=127.0.0.1&port=&username=&password'
         response = self.fetch('/', method='POST', body=body)
         self.assertEqual(response.code, 400)
-        self.assertIn(b'Missing argument port', response.body)
+        self.assertIn(b'Missing value port', response.body)
 
         body = 'hostname=127.0.0.1&port=7000&username=&password'
         response = self.fetch('/', method='POST', body=body)
         self.assertEqual(response.code, 400)
-        self.assertIn(b'Missing argument username', response.body)
+        self.assertIn(b'Missing value username', response.body)
 
     def test_app_with_invalid_form_for_invalid_value(self):
         body = 'hostname=127.0.0&port=22&username=&password'
@@ -234,7 +234,7 @@ class TestApp(AsyncHTTPTestCase):
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
         self.assertIsNone(msg)
-        self.assertIn('Missing argument id', ws.close_reason)
+        self.assertIn('Missing value id', ws.close_reason)
 
     @tornado.testing.gen_test
     def test_app_with_correct_credentials_but_wrong_id(self):

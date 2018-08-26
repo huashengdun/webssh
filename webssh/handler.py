@@ -55,7 +55,7 @@ class MixinHandler(object):
     def get_value(self, name):
         value = self.get_argument(name)
         if not value:
-            raise tornado.web.MissingArgumentError(name)
+            raise InvalidException('Missing value {}'.format(name))
         return value
 
     def get_real_client_addr(self):
@@ -261,8 +261,8 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         logging.info('Connected from {}:{}'.format(*self.src_addr))
         try:
             worker_id = self.get_value('id')
-        except tornado.web.MissingArgumentError as exc:
-            self.close(reason=exc.log_message)
+        except (tornado.web.MissingArgumentError, InvalidException) as exc:
+            self.close(reason=str(exc))
             raise
         else:
             worker = workers.get(worker_id)
