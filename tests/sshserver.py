@@ -51,13 +51,12 @@ class Server(paramiko.ServerInterface):
             b'UWT10hcuO4Ks8=')
     good_pub_key = paramiko.RSAKey(data=decodebytes(data))
 
-    langs = ['en_US.UTF-8', 'zh_CN.GBK']
+    encodings = ['UTF-8', 'GBK']
 
     def __init__(self):
         self.shell_event = threading.Event()
         self.exec_event = threading.Event()
-        self.lang = random.choice(self.langs)
-        self.encoding = self.lang.split('.')[-1]
+        self.encoding = random.choice(self.encodings)
 
     def check_channel_request(self, kind, chanid):
         if kind == 'session':
@@ -82,12 +81,11 @@ class Server(paramiko.ServerInterface):
         return 'password,publickey'
 
     def check_channel_exec_request(self, channel, command):
-        if command != b'locale':
+        if command != b'locale charmap':
             ret = False
         else:
             ret = True
-            result = 'LANG={lang}\nLANGUAGE=\nLC_CTYPE="{lang}"\n'.format(lang=self.lang)  # noqa
-            channel.send(result)
+            channel.send(self.encoding)
             channel.shutdown(1)
         self.exec_event.set()
         return ret

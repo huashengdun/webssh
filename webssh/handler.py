@@ -32,13 +32,6 @@ DELAY = 3
 KEY_MAX_SIZE = 16384
 
 
-def parse_encoding(data):
-    for line in data.split('\n'):
-        s = line.split('=')[-1]
-        if s:
-            return s.strip('"').split('.')[-1]
-
-
 class InvalidValueError(Exception):
     pass
 
@@ -176,12 +169,11 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def get_default_encoding(self, ssh):
         try:
-            _, stdout, _ = ssh.exec_command('locale')
+            _, stdout, _ = ssh.exec_command('locale charmap')
         except paramiko.SSHException:
             result = None
         else:
-            data = stdout.read()
-            result = parse_encoding(to_str(data))
+            result = to_str(stdout.read())
 
         return result if result else 'utf-8'
 
