@@ -94,7 +94,7 @@ class Worker(object):
 
     def close(self, reason=None):
         logging.info(
-                'Closing worker {} with reason: {}'.format(self.id, reason)
+            'Closing worker {} with reason: {}'.format(self.id, reason)
         )
         if self.handler:
             self.loop.remove_handler(self.fd)

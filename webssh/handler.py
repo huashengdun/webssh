@@ -10,11 +10,12 @@ import paramiko
 import tornado.web
 
 from tornado.ioloop import IOLoop
-from webssh.worker import Worker, recycle_worker, workers
+from webssh.settings import swallow_http_errors
 from webssh.utils import (
     is_valid_ipv4_address, is_valid_ipv6_address, is_valid_port,
     is_valid_hostname, to_bytes, to_str, UnicodeType
 )
+from webssh.worker import Worker, recycle_worker, workers
 
 try:
     from concurrent.futures import Future
@@ -38,34 +39,24 @@ def parse_encoding(data):
             return s.strip('"').split('.')[-1]
 
 
-class InvalidException(Exception):
+class InvalidValueError(Exception):
     pass
 
 
 class MixinHandler(object):
 
-    formater = 'Missing value {}'
-
-    def write_error(self, status_code, **kwargs):
-        exc_info = kwargs.get('exc_info')
-        if exc_info and len(exc_info) > 1:
-            info = str(exc_info[1])
-            if info:
-                self._reason = info.split(':', 1)[-1].strip()
-        super(MixinHandler, self).write_error(status_code, **kwargs)
-
     def get_value(self, name):
         value = self.get_argument(name)
         if not value:
-            raise InvalidException(self.formater.format(name))
+            raise InvalidValueError('Missing value {}'.format(name))
         return value
 
     def get_real_client_addr(self):
         ip = self.request.headers.get('X-Real-Ip')
         port = self.request.headers.get('X-Real-Port')
 
-        if ip is None and port is None:  # suppose the server doesn't use nginx
-            return
+        if ip is None and port is None:
+            return  # suppose this app doesn't run after an nginx server
 
         if is_valid_ipv4_address(ip) or is_valid_ipv6_address(ip):
             try:
@@ -87,19 +78,33 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.policy = policy
         self.host_keys_settings = host_keys_settings
         self.filename = None
+        self.result = dict(id=None, status=None, encoding=None)
+
+    def write_error(self, status_code, **kwargs):
+        if self.settings.get('serve_traceback') or status_code == 500 or \
+                not swallow_http_errors:
+            super(MixinHandler, self).write_error(status_code, **kwargs)
+        else:
+            exc_info = kwargs.get('exc_info')
+            if exc_info:
+                self._reason = exc_info[1].log_message
+            self.result.update(status=self._reason)
+            self.set_status(200)
+            self.finish(self.result)
 
     def get_privatekey(self):
-        lst = self.request.files.get('privatekey')  # multipart form
+        name = 'privatekey'
+        lst = self.request.files.get(name)  # multipart form
         if not lst:
-            return self.get_argument('privatekey', u'')  # urlencoded form
+            return self.get_argument(name, u'')  # urlencoded form
         else:
             self.filename = lst[0]['filename']
             data = lst[0]['body']
             if len(data) > KEY_MAX_SIZE:
-                raise InvalidException(
+                raise InvalidValueError(
                     'Invalid private key: {}'.format(self.filename)
                 )
-            return self.decode_argument(data, name=self.filename)
+            return self.decode_argument(data, name=name)
 
     @classmethod
     def get_specific_pkey(cls, pkeycls, privatekey, password):
@@ -130,7 +135,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                 error = (
                     'Wrong password {!r} for decrypting the private key.'
                 ) .format(password)
-            raise InvalidException(error)
+            raise InvalidValueError(error)
 
         return pkey
 
@@ -138,7 +143,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         value = self.get_value('hostname')
         if not (is_valid_hostname(value) | is_valid_ipv4_address(value) |
                 is_valid_ipv6_address(value)):
-            raise InvalidException('Invalid hostname: {}'.format(value))
+            raise InvalidValueError('Invalid hostname: {}'.format(value))
         return value
 
     def get_port(self):
@@ -151,7 +156,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             if is_valid_port(port):
                 return port
 
-        raise InvalidException('Invalid port: {}'.format(value))
+        raise InvalidValueError('Invalid port: {}'.format(value))
 
     def get_args(self):
         hostname = self.get_hostname()
@@ -189,7 +194,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         try:
             args = self.get_args()
-        except InvalidException as exc:
+        except InvalidValueError as exc:
             raise tornado.web.HTTPError(400, str(exc))
 
         dst_addr = (args[0], args[1])
@@ -227,10 +232,6 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     @tornado.gen.coroutine
     def post(self):
-        worker_id = None
-        status = None
-        encoding = None
-
         future = Future()
         t = threading.Thread(target=self.ssh_connect_wrapped, args=(future,))
         t.setDaemon(True)
@@ -239,19 +240,16 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         try:
             worker = yield future
         except (ValueError, paramiko.SSHException) as exc:
-            status = str(exc)
+            self.result.update(status=str(exc))
         else:
-            worker_id = worker.id
-            workers[worker_id] = worker
+            workers[worker.id] = worker
             self.loop.call_later(DELAY, recycle_worker, worker)
-            encoding = worker.encoding
+            self.result.update(id=worker.id, encoding=worker.encoding)
 
-        self.write(dict(id=worker_id, status=status, encoding=encoding))
+        self.write(self.result)
 
 
 class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
-
-    formater = 'Bad Request (Missing value {})'
 
     def initialize(self, loop):
         self.loop = loop
@@ -265,8 +263,8 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         logging.info('Connected from {}:{}'.format(*self.src_addr))
         try:
             worker_id = self.get_value('id')
-        except (tornado.web.MissingArgumentError, InvalidException) as exc:
-            self.close(reason=str(exc).split(':', 1)[-1].strip())
+        except (tornado.web.MissingArgumentError, InvalidValueError) as exc:
+            self.close(reason=str(exc))
         else:
             worker = workers.get(worker_id)
             if worker and worker.src_addr[0] == self.src_addr[0]:
