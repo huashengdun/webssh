@@ -173,7 +173,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         except paramiko.SSHException:
             result = None
         else:
-            result = to_str(stdout.read())
+            result = to_str(stdout.read().strip())
 
         return result if result else 'utf-8'
 

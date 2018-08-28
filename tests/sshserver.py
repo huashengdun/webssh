@@ -51,7 +51,7 @@ class Server(paramiko.ServerInterface):
             b'UWT10hcuO4Ks8=')
     good_pub_key = paramiko.RSAKey(data=decodebytes(data))
 
-    encodings = ['UTF-8', 'GBK']
+    encodings = ['UTF-8', 'GBK', 'UTF-8\r\n', 'GBK\r\n']
 
     def __init__(self):
         self.shell_event = threading.Event()
@@ -146,7 +146,7 @@ def run_ssh_server(port=2200, running=True):
 
         # chan.send('\r\n\r\nWelcome!\r\n\r\n')
         print(server.encoding)
-        chan.send(banner.encode(server.encoding))
+        chan.send(banner.encode(server.encoding.strip()))
         if username == 'bar':
             msg = chan.recv(1024)
             chan.send(msg)
