@@ -74,13 +74,15 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.result = dict(id=None, status=None, encoding=None)
 
     def write_error(self, status_code, **kwargs):
-        if self.settings.get('serve_traceback') or status_code == 500 or \
-                not swallow_http_errors:
+        if not swallow_http_errors:
             super(MixinHandler, self).write_error(status_code, **kwargs)
         else:
-            exc_info = kwargs.get('exc_info')
-            if exc_info:
-                self._reason = exc_info[1].log_message
+            if status_code == 500:
+                self._reason = 'Internal Server Error'
+            else:
+                exc_info = kwargs.get('exc_info')
+                if exc_info:
+                    self._reason = exc_info[1].log_message
             self.result.update(status=self._reason)
             self.set_status(200)
             self.finish(self.result)
