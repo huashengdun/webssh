@@ -40,8 +40,8 @@ Requirements
 Quickstart
 ~~~~~~~~~~
 
-1. Install this app ``pip install webssh``
-2. Start a webserver ``wssh``
+1. Install this app, run command ``pip install webssh``
+2. Start a webserver, run command ``wssh``
 3. Open your browser, navigate to ``127.0.0.1:8888``
 4. Input your data, submit the form.
 
@@ -94,7 +94,7 @@ Use console
     // connect to your ssh server
     wssh.connect(hostname, port, username, password, privatekey);
 
-    // without argument, wssh will use the form data to connect
+    // without an argument, wssh will use the form data to connect
     wssh.connect();
 
     // define a mapping object
