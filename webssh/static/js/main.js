@@ -10,6 +10,7 @@ jQuery(function($){
       style = {},
       title_text = 'WebSSH',
       title_element = document.querySelector('title'),
+      debug = !document.querySelector('#hostname').required,
       DISCONNECTED = 0,
       CONNECTING = 1,
       CONNECTED = 2,
@@ -17,7 +18,7 @@ jQuery(function($){
       messages = {1: 'This client is connecting ...', 2: 'This client is already connnected.'},
       key_max_size = 16384,
       form_id = '#connect',
-      names = ['hostname', 'port', 'username', 'password'],
+      fields = ['hostname', 'port', 'username', 'password'],
       hostname_tester = /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)/;
 
 
@@ -45,7 +46,7 @@ jQuery(function($){
     }
   }
 
-  restore_items(names);
+  restore_items(fields);
 
   function parse_xterm_style() {
     var text = $('.xterm-helpers style').text();
@@ -111,20 +112,24 @@ jQuery(function($){
   }
 
 
+  function log_status(text) {
+    status.text(text);
+    console.log(text);
+  }
+
+
   function ajax_complete_callback(resp) {
     btn.prop('disabled', false);
 
     if (resp.status !== 200) {
-      console.log(resp);
-      status.text('Response code: ' + resp.status);
+      log_status(resp.status + ': ' + resp.statusText);
       state = DISCONNECTED;
       return;
     }
 
     var msg = resp.responseJSON;
     if (msg.status) {
-      console.log(msg);
-      status.text(msg.status);
+      log_status(msg.status);
       state = DISCONNECTED;
       return;
     }
@@ -133,16 +138,20 @@ jQuery(function($){
         join = (ws_url[ws_url.length-1] === '/' ? '' : '/'),
         url = ws_url + join + 'ws?id=' + msg.id,
         sock = new window.WebSocket(url),
-        encoding, decoder,
+        encoding = 'utf-8',
+        decoder = new window.TextDecoder('utf-8'),
         terminal = document.getElementById('#terminal'),
         term = new window.Terminal({
           cursorBlink: true,
         });
 
     console.log(url);
-    console.log('The deault encoding of your server is ' + msg.encoding);
-    // wssh.sock = sock;
-    // wssh.term = term;
+    if (!msg.encoding) {
+      console.log('Unable to detect the default encoding of your server');
+      msg.encoding = encoding;
+    } else {
+      console.log('The deault encoding of your server is ' + msg.encoding);
+    }
 
     function resize_terminal(term) {
       var geometry = current_geometry();
@@ -161,14 +170,14 @@ jQuery(function($){
 
     function set_encoding(new_encoding) {
       // for console use
-      if (new_encoding === undefined) {
+      if (!new_encoding) {
         console.log('An encoding is required');
         return;
       }
 
       try {
         decoder = new window.TextDecoder(new_encoding);
-        encoding = new_encoding;
+        encoding = decoder.encoding;
         console.log('Set encoding to ' + encoding);
       } catch (RangeError) {
         console.log('Unknown encoding ' + new_encoding);
@@ -179,13 +188,13 @@ jQuery(function($){
     set_encoding(msg.encoding);
 
 
-    wssh.window_geometry = function() {
+    wssh.geometry = function() {
       // for console use
       var geometry = current_geometry();
       console.log('Current window geometry: ' + JSON.stringify(geometry));
     };
 
-    wssh.websocket_send = function(data) {
+    wssh.send = function(data) {
       // for console use
       if (!sock) {
         console.log('Websocket was already closed');
@@ -201,6 +210,7 @@ jQuery(function($){
         JSON.parse(data);
         sock.send(data);
       } catch (SyntaxError) {
+        data = data.trim() + '\r';
         sock.send(JSON.stringify({'data': data}));
       }
     };
@@ -214,7 +224,7 @@ jQuery(function($){
       }
     };
 
-    wssh.resize_terminal = function(cols, rows) {
+    wssh.resize = function(cols, rows) {
       // for console use
       if (term === undefined) {
         console.log('Terminal was already destroryed');
@@ -287,21 +297,62 @@ jQuery(function($){
   }
 
 
-  function connect_without_options() {
-    if (state !== DISCONNECTED) {
-      console.log(messages[state]);
-      return;
+  function wrap_object(opts){
+    var obj = {};
+
+    obj.get = function(attr) {
+      return opts[attr] || '';
+    };
+    return obj;
+  }
+
+
+  function validate_form_data(data) {
+    var hostname = data.get('hostname'),
+        port = data.get('port'),
+        username = data.get('username'),
+        pk = data.get('privatekey'),
+        result = {'vaiid': false},
+        msg, size;
+
+    if (!hostname) {
+      msg = 'Need value hostname';
+    } else if (!port) {
+      msg = 'Need value port';
+    } else if (!username) {
+      msg = 'Need value username';
+    } else if (!hostname_tester.test(hostname)) {
+      msg =  'Invalid hostname: ' + hostname;
+    } else if (port <= 0 || port > 63335) {
+      msg = 'Invalid port: ' + port;
+    } else {
+      if (pk) {
+        size = pk.size || pk.length;
+        if (size > key_max_size) {
+          msg = 'Invalid private key: ' + pk.name || pk;
+        }
+      }
     }
 
+    if (!msg || debug) {
+      result.valid = true;
+      msg = username + '@' + hostname + ':'  + port;
+    }
+
+    result.msg = msg;
+    return result;
+  }
+
+
+  function connect_without_options() {
+    // use data from the form
     var form = document.querySelector(form_id),
         url = form.action,
         data = new FormData(form),
-        hostname = data.get('hostname'),
-        port = data.get('port'),
-        username = data.get('username');
+        pk = data.get('privatekey');
 
     function ajax_post() {
-      store_items(names, data);
+      store_items(fields, data);
 
       status.text('');
       btn.prop('disabled', true);
@@ -315,88 +366,43 @@ jQuery(function($){
           contentType: false,
           processData: false
       });
-
-      state = CONNECTING;
-      title_text = username + '@' + hostname + ':'  + port;
     }
 
-    if (!hostname || !port || !username) {
-      status.text('Fields hostname, port and username are all required.');
+    var result = validate_form_data(data);
+    if (!result.valid) {
+      log_status(result.msg);
       return;
     }
 
-    if (!hostname_tester.test(hostname)) {
-      status.text('Invalid hostname: ' + hostname);
-      return;
-    }
-
-    if (port <= 0 || port > 63335) {
-      status.text('Invalid port: ' + port);
-      return;
-    }
-
-    var pk = data.get('privatekey');
-    if (pk && pk.size) {
-      if (pk.size > key_max_size) {
-        console.log('Invalid private key: ' + pk.name);
-      } else {
-        read_file_as_text(pk, function(text) {
-          if (text === undefined) {
-            console.log('Invalid private key: ' + pk.name);
-          } else {
-            ajax_post();
-          }
-        });
-      }
+    if (pk && pk.size && !debug) {
+      read_file_as_text(pk, function(text) {
+        if (text === undefined) {
+            log_status('Invalid private key: ' + pk.name);
+        } else {
+          ajax_post();
+        }
+      });
     } else {
       ajax_post();
     }
+
+    return result.msg;
   }
 
 
-  function connect_with_options(opts) {
-    if (state !== DISCONNECTED) {
-      console.log(messages[state]);
-      return;
-    }
-
+  function connect_with_options(data) {
+    // use data from the arguments
     var form = document.querySelector(form_id),
-        xsrf = form.querySelector('input[name="_xsrf"]').value,
-        url = opts.url || form.action,
-        hostname = opts.hostname || '',
-        port = opts.port || '',
-        username = opts.username || '',
-        password = opts.password || '',
-        privatekey = opts.privatekey || '',
-        data = {
-          '_xsrf': xsrf,
-          'username': username,
-          'hostname': hostname,
-          'port': port,
-          'password': password,
-          'privatekey': privatekey
-        };
+        url = data.url || form.action,
+        _xsrf = form.querySelector('input[name="_xsrf"]');
 
-
-    if (!hostname || !port || !username) {
-      console.log('Fields hostname, port and username are all required.');
+    var result = validate_form_data(wrap_object(data));
+    if (!result.valid) {
+      console.log(result.msg);
       return;
     }
 
-    if (!hostname_tester.test(hostname)) {
-      console.log('Invalid hostname: ' + hostname);
-      return;
-    }
-
-    if (port <= 0 || port > 63335) {
-      console.log('Invalid port: ' + port);
-      return;
-    }
-
-    if (privatekey && privatekey.length > key_max_size) {
-      console.log('Invalid private key: ' + privatekey);
-      return;
-    }
+    data._xsrf = _xsrf.value;
 
     $.ajax({
         url: url,
@@ -405,22 +411,48 @@ jQuery(function($){
         complete: ajax_complete_callback
     });
 
-    state = CONNECTING;
-    title_text = username + '@' + hostname + ':'  + port;
+    return result.msg;
   }
 
-  wssh.connect = function(opts) {
-    if (opts === undefined) {
-      connect_without_options();
-    } else {
-      connect_with_options(opts);
-    }
-  };
 
+  function connect(hostname, port, username, password, privatekey) {
+    // for console use
+    var result, opts;
+
+    if (state !== DISCONNECTED) {
+      console.log(messages[state]);
+      return;
+    }
+
+    if (hostname === undefined) {
+      result = connect_without_options();
+    } else {
+      if (typeof hostname === 'string') {
+        opts = {
+          hostname: hostname,
+          port: port,
+          username: username,
+          password: password,
+          privatekey: privatekey
+        };
+      } else {
+        opts = hostname;
+      }
+
+      result = connect_with_options(opts);
+    }
+
+    if (result) {
+      state = CONNECTING;
+      title_text = result;
+    }
+  }
+
+  wssh.connect = connect;
 
   $(form_id).submit(function(event){
       event.preventDefault();
-      connect_without_options();
+      connect();
   });
 
 });
