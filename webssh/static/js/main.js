@@ -336,7 +336,7 @@ jQuery(function($){
     }
 
     var pk = data.get('privatekey');
-    if (pk) {
+    if (pk && pk.size) {
       if (pk.size > key_max_size) {
         console.log('Invalid private key: ' + pk.name);
       } else {
