@@ -222,7 +222,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             future.set_result(worker)
 
     def get(self):
-        self.render('index.html')
+        debug = self.settings.get('debug', False)
+        if debug and self.get_argument('error', u''):
+            raise ValueError('Uncaught exception')
+        self.render('index.html', debug=debug)
 
     @tornado.gen.coroutine
     def post(self):

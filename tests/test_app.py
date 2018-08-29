@@ -25,7 +25,7 @@ except ImportError:
 handler.DELAY = 0.1
 
 
-class TestApp(AsyncHTTPTestCase):
+class TestAppBasic(AsyncHTTPTestCase):
 
     running = [True]
     sshserver_port = 2200
@@ -63,7 +63,7 @@ class TestApp(AsyncHTTPTestCase):
         print('='*20)
 
     def get_httpserver_options(self):
-        options = super(TestApp, self).get_httpserver_options()
+        options = super(TestAppBasic, self).get_httpserver_options()
         options.update(max_body_size=max_body_size)
         return options
 
@@ -420,3 +420,67 @@ class TestApp(AsyncHTTPTestCase):
         self.assertIsNone(data['id'])
         self.assertIsNone(data['encoding'])
         self.assertIn('Bad authentication type', data['status'])
+
+
+class OtherTestBase(AsyncHTTPTestCase):
+    sshserver_port = 3300
+    headers = {'Cookie': '_xsrf=yummy'}
+    debug = False
+    body = {
+        'hostname': '127.0.0.1',
+        'port': '',
+        'username': 'robey',
+        'password': 'foo',
+        '_xsrf': 'yummy'
+    }
+
+    def get_app(self):
+        self.body.update(port=str(self.sshserver_port))
+        loop = self.io_loop
+        options.debug = self.debug
+        options.policy = random.choice(['warning', 'autoadd'])
+        options.hostFile = ''
+        options.sysHostFile = ''
+        app = make_app(make_handlers(loop, options), get_app_settings(options))
+        return app
+
+    def setUp(self):
+        print('='*20)
+        self.running = True
+        OtherTestBase.sshserver_port += 1
+
+        t = threading.Thread(
+            target=run_ssh_server, args=(self.sshserver_port, self.running)
+        )
+        t.setDaemon(True)
+        t.start()
+        super(OtherTestBase, self).setUp()
+
+    def tearDown(self):
+        self.running = False
+        print('='*20)
+        super(OtherTestBase, self).tearDown()
+
+
+class TestAppInDebug(OtherTestBase):
+
+    debug = True
+
+    def my_assertIn(self, part, whole):
+        if swallow_http_errors:
+            self.assertIn(part, whole)
+        else:
+            self.assertIn(b'Uncaught exception', whole)
+
+    def test_server_error(self):
+        response = self.fetch('/?error=generate', method='GET')
+        self.my_assertIn(b'Internal Server Error', response.body)
+
+    def test_html(self):
+        response = self.fetch('/', method='GET')
+        self.assertNotIn(b'required>', response.body)
+
+
+class TestAppMiscell(OtherTestBase):
+
+    debug = False

@@ -28,17 +28,17 @@
         <div class="row">
           <div class="col">
             <label for="Hostname">Hostname</label>
-            <input class="form-control" type="text" id="hostname" name="hostname" value="" required>
+            <input class="form-control" type="text" id="hostname" name="hostname" value="" {% if not debug %}required{% end %}>
           </div>
           <div class="col">
             <label for="Port">Port</label>
-            <input class="form-control" type="number" id="port" name="port" min=1 max=65535 value="" required>
+            <input class="form-control" type="number" id="port" name="port" value="" {% if not debug %}min=1 max=65535 required{% end %}>
           </div>
         </div>
         <div class="row">
           <div class="col">
             <label for="Username">Username</label>
-            <input class="form-control" type="text" id="username" name="username" value="" required>
+            <input class="form-control" type="text" id="username" name="username" value="" {% if not debug %}required{% end %}>
           </div>
           <div class="col">
             <label for="Username">Private Key</label>
