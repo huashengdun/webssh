@@ -67,11 +67,13 @@ class TestAppBasic(AsyncHTTPTestCase):
         options.update(max_body_size=max_body_size)
         return options
 
-    def my_assertIn(self, part, whole):
+    def assert_response(self, bstr, response):
         if swallow_http_errors:
-            self.assertIn(part, whole)
+            self.assertEqual(response.code, 200)
+            self.assertIn(bstr, response.body)
         else:
-            self.assertIn(b'Bad Request', whole)
+            self.assertEqual(response.code, 400)
+            self.assertIn(b'Bad Request', response.body)
 
     def sync_post(self, body, headers={}, url='/', method='POST'):
         headers.update(self.headers)
@@ -88,44 +90,44 @@ class TestAppBasic(AsyncHTTPTestCase):
 
         body = 'port=7000&username=admin&password&_xsrf=yummy'
         response = self.sync_post(body)
-        self.my_assertIn(b'Missing argument hostname', response.body)
+        self.assert_response(b'Missing argument hostname', response)
 
         body = 'hostname=127.0.0.1&username=admin&password&_xsrf=yummy'
         response = self.sync_post(body)
-        self.my_assertIn(b'Missing argument port', response.body)
+        self.assert_response(b'Missing argument port', response)
 
         body = 'hostname=127.0.0.1&port=7000&password&_xsrf=yummy'
         response = self.sync_post(body)
-        self.my_assertIn(b'Missing argument username', response.body)
+        self.assert_response(b'Missing argument username', response)
 
         body = 'hostname=&port=&username=&password&_xsrf=yummy'
         response = self.sync_post(body)
-        self.my_assertIn(b'Missing value hostname', response.body)
+        self.assert_response(b'Missing value hostname', response)
 
         body = 'hostname=127.0.0.1&port=&username=&password&_xsrf=yummy'
         response = self.sync_post(body)
-        self.my_assertIn(b'Missing value port', response.body)
+        self.assert_response(b'Missing value port', response)
 
         body = 'hostname=127.0.0.1&port=7000&username=&password&_xsrf=yummy'
         response = self.sync_post(body)
-        self.my_assertIn(b'Missing value username', response.body)
+        self.assert_response(b'Missing value username', response)
 
     def test_app_with_invalid_form_for_invalid_value(self):
         body = 'hostname=127.0.0&port=22&username=&password&_xsrf=yummy'
         response = self.sync_post(body)
-        self.my_assertIn(b'Invalid hostname', response.body)
+        self.assert_response(b'Invalid hostname', response)
 
         body = 'hostname=http://www.googe.com&port=22&username=&password&_xsrf=yummy'  # noqa
         response = self.sync_post(body)
-        self.my_assertIn(b'Invalid hostname', response.body)
+        self.assert_response(b'Invalid hostname', response)
 
         body = 'hostname=127.0.0.1&port=port&username=&password&_xsrf=yummy'
         response = self.sync_post(body)
-        self.my_assertIn(b'Invalid port', response.body)
+        self.assert_response(b'Invalid port', response)
 
         body = 'hostname=127.0.0.1&port=70000&username=&password&_xsrf=yummy'
         response = self.sync_post(body)
-        self.my_assertIn(b'Invalid port', response.body)
+        self.assert_response(b'Invalid port', response)
 
     def test_app_with_wrong_hostname_ip(self):
         body = 'hostname=127.0.0.1&port=7000&username=admin&_xsrf=yummy'
@@ -466,15 +468,17 @@ class TestAppInDebug(OtherTestBase):
 
     debug = True
 
-    def my_assertIn(self, part, whole):
+    def assert_response(self, bstr, response):
         if swallow_http_errors:
-            self.assertIn(part, whole)
+            self.assertEqual(response.code, 200)
+            self.assertIn(bstr, response.body)
         else:
-            self.assertIn(b'Uncaught exception', whole)
+            self.assertEqual(response.code, 500)
+            self.assertIn(b'Uncaught exception', response.body)
 
     def test_server_error(self):
         response = self.fetch('/?error=generate', method='GET')
-        self.my_assertIn(b'"status": "Internal Server Error"', response.body)
+        self.assert_response(b'"status": "Internal Server Error"', response)
 
     def test_html(self):
         response = self.fetch('/', method='GET')
