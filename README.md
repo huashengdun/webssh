@@ -8,9 +8,9 @@
 
 ## Introduction
 
-A simple web application to be used as an ssh client to connect to your ssh servers. It is written in Python, base on tornado and paramiko.
+A simple web application to be used as an ssh client to connect to your ssh servers. It is written in Python, base on tornado, paramiko and xterm.js.
 ```
-+---------+     http     +--------+    ssh    +-----------+                         
++---------+     http     +--------+    ssh    +-----------+
 | browser | <==========> | webssh | <=======> | ssh server|
 +---------+   websocket  +--------+    ssh    +-----------+
 ```
@@ -31,21 +31,34 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 ![Terminal](https://github.com/huashengdun/webssh/raw/master/preview/terminal.png)
 
 
-### Requirement
+### Requirements
 
 * Python 2.7/3.4+
 
 
-### Instructions
+### Quickstart
 
+1. Install this app `pip install webssh`
+2. Start a webserver `wssh`
+3. Open your browser, navigate to `127.0.0.1:8888`
+4. Input your data, submit the form.
+
+
+### Installation options
+
+Install from the pypi repository, may not the latest version
 ```
 pip install webssh
-wssh
 ```
 
-### Options
-
+Install from the github repository, always the latest version
 ```
+pip install https://github.com/huashengdun/webssh/archive/master.zip
+```
+
+### Server options
+
+```bash
 # listen address and port
 wssh --address='0.0.0.0' --port=8000
 
@@ -62,6 +75,36 @@ wssh --log-file-prefix=main.log
 wssh --help
 ```
 
+### Use console
+
+
+```javascript
+// set a new encoding for client to use
+wssh.set_encoding(encoding);
+
+// reset encoding to use the default one
+wssh.reset_encoding();
+
+// connect to your ssh server
+wssh.connect(hostname, port, username, password, privatekey);
+
+// without argument, wssh will use the form data to connect
+wssh.connect();
+
+// define a mapping object
+var opts = {
+  hostname: 'hostname',
+  port: 'port',
+  username: 'username',
+  password: 'password',
+  privatekey: 'the private key text'
+};
+wssh.connect(opts);
+
+// send a command to the server
+wssh.send('ls -l');
+```
+
 ### Tests
 
 Use unittest to run all tests
@@ -76,7 +119,7 @@ python -m pytest tests
 
 ### An example of config  for running this app behind an Nginx server
 
-```
+```nginx
 location / {
     proxy_pass http://127.0.0.1:8888;
     proxy_http_version 1.1;
