@@ -474,7 +474,7 @@ class TestAppInDebug(OtherTestBase):
 
     def test_server_error(self):
         response = self.fetch('/?error=generate', method='GET')
-        self.my_assertIn(b'Internal Server Error', response.body)
+        self.my_assertIn(b'"status": "Internal Server Error"', response.body)
 
     def test_html(self):
         response = self.fetch('/', method='GET')
