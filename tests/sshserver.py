@@ -65,7 +65,7 @@ class Server(paramiko.ServerInterface):
 
     def check_auth_password(self, username, password):
         print('Auth attempt with username: {!r} & password: {!r}'.format(username, password)) # noqa
-        if (username in ['robey', 'bar']) and (password == 'foo'):
+        if (username in ['robey', 'bar', 'foo']) and (password == 'foo'):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
@@ -150,6 +150,17 @@ def run_ssh_server(port=2200, running=True):
         if username == 'bar':
             msg = chan.recv(1024)
             chan.send(msg)
+        elif username == 'foo':
+            lst = []
+            while True:
+                msg = chan.recv(32 * 1024)
+                lst.append(msg)
+                if msg.endswith(b'\r\n\r\n'):
+                    break
+            data = b''.join(lst)
+            while data:
+                s = chan.send(data)
+                data = data[s:]
 
         chan.close()
         t.close()

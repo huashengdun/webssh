@@ -487,4 +487,32 @@ class TestAppInDebug(OtherTestBase):
 
 class TestAppMiscell(OtherTestBase):
 
-    debug = False
+    @tornado.testing.gen_test
+    def test_app_for_sending_message_with_large_size(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        body = urlencode(dict(self.body, username='foo'))
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=self.headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
+
+        url = url.replace('http', 'ws')
+        ws_url = url + 'ws?id=' + data['id']
+        ws = yield tornado.websocket.websocket_connect(ws_url)
+        msg = yield ws.read_message()
+        self.assertEqual(to_str(msg, data['encoding']), banner)
+
+        send = 'h' * (64 * 1024) + '\r\n\r\n'
+        yield ws.write_message(json.dumps({'data': send}))
+        lst = []
+        while True:
+            msg = yield ws.read_message()
+            lst.append(msg)
+            if msg.endswith(b'\r\n\r\n'):
+                break
+        recv = b''.join(lst).decode(data['encoding'])
+        self.assertEqual(send, recv)
+        ws.close()

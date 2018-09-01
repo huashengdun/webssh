@@ -6,7 +6,7 @@ from tornado.iostream import _ERRNO_CONNRESET
 from tornado.util import errno_from_exception
 
 
-BUF_SIZE = 1024
+BUF_SIZE = 32 * 1024
 workers = {}
 
 
@@ -46,6 +46,8 @@ class Worker(object):
         if self.mode != mode:
             self.loop.update_handler(self.fd, mode)
             self.mode = mode
+        if mode == IOLoop.WRITE:
+            self.loop.call_later(0.1, self, self.fd, IOLoop.WRITE)
 
     def on_read(self):
         logging.debug('worker {} on read'.format(self.id))
