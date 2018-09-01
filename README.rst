@@ -10,12 +10,6 @@ A simple web application to be used as an ssh client to connect to your
 ssh servers. It is written in Python, base on tornado, paramiko and
 xterm.js.
 
-::
-
-    +---------+     http     +--------+    ssh    +-----------+
-    | browser | <==========> | webssh | <=======> | ssh server|
-    +---------+   websocket  +--------+    ssh    +-----------+
-
 Features
 --------
 
@@ -32,6 +26,15 @@ Preview
 
 |Login| |Terminal|
 
+How it works
+~~~~~~~~~~~~
+
+::
+
+    +---------+     http     +--------+    ssh    +-----------+
+    | browser | <==========> | webssh | <=======> | ssh server|
+    +---------+   websocket  +--------+    ssh    +-----------+
+
 Requirements
 ~~~~~~~~~~~~
 
@@ -44,21 +47,6 @@ Quickstart
 2. Start a webserver, run command ``wssh``
 3. Open your browser, navigate to ``127.0.0.1:8888``
 4. Input your data, submit the form.
-
-Installation options
-~~~~~~~~~~~~~~~~~~~~
-
-Install from the pypi repository, may not the latest version
-
-::
-
-    pip install webssh
-
-Install from the github repository, always the latest version
-
-::
-
-    pip install https://github.com/huashengdun/webssh/archive/master.zip
 
 Server options
 ~~~~~~~~~~~~~~
@@ -85,19 +73,10 @@ Use console
 
 .. code:: javascript
 
-    // set a new encoding for client to use
-    wssh.set_encoding(encoding);
-
-    // reset encoding to use the default one
-    wssh.reset_encoding();
-
     // connect to your ssh server
     wssh.connect(hostname, port, username, password, privatekey);
 
-    // without an argument, wssh will use the form data to connect
-    wssh.connect();
-
-    // define a mapping object
+    // define a object for wssh
     var opts = {
       hostname: 'hostname',
       port: 'port',
@@ -106,6 +85,15 @@ Use console
       privatekey: 'the private key text'
     };
     wssh.connect(opts);
+
+    // without an argument, wssh will use the form data to connect
+    wssh.connect();
+
+    // set a new encoding for client to use
+    wssh.set_encoding(encoding);
+
+    // reset encoding to use the default one
+    wssh.reset_encoding();
 
     // send a command to the server
     wssh.send('ls -l');
