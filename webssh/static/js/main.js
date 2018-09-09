@@ -297,17 +297,38 @@ jQuery(function($){
   }
 
 
-  function wrap_object(opts){
+  function wrap_object(opts) {
     var obj = {};
 
     obj.get = function(attr) {
       return opts[attr] || '';
     };
+
+    obj.set = function(attr, val) {
+      opts[attr] = val;
+    };
+
     return obj;
   }
 
 
+  function normalize_data(data) {
+    var i, attr, val;
+    var attrs = fields.concat('privatekey');
+
+    for (i = 0; i < attrs.length; i++) {
+      attr = attrs[i];
+      val = data.get(attr);
+      if (typeof val === 'string') {
+        data.set(attr, val.trim());
+      }
+    }
+  }
+
+
   function validate_form_data(data) {
+    normalize_data(data);
+
     var hostname = data.get('hostname'),
         port = data.get('port'),
         username = data.get('username'),
