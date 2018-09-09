@@ -90,16 +90,18 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
     def get_privatekey(self):
         name = 'privatekey'
         lst = self.request.files.get(name)  # multipart form
-        if not lst:
-            return self.get_argument(name, u'')  # urlencoded form
-        else:
+        if lst:
             self.filename = lst[0]['filename']
             data = lst[0]['body']
-            if len(data) > KEY_MAX_SIZE:
-                raise InvalidValueError(
-                    'Invalid private key: {}'.format(self.filename)
-                )
-            return self.decode_argument(data, name=name)
+            value = self.decode_argument(data, name=name).strip()
+        else:
+            value = self.get_argument(name, u'')  # urlencoded form
+
+        if len(value) > KEY_MAX_SIZE:
+            raise InvalidValueError(
+                'Invalid private key: {}'.format(self.filename)
+            )
+        return value
 
     @classmethod
     def get_specific_pkey(cls, pkeycls, privatekey, password):
