@@ -76,7 +76,7 @@ Use console
     // connect to your ssh server
     wssh.connect(hostname, port, username, password, privatekey);
 
-    // define a object for wssh
+    // pass an object to wssh.connect
     var opts = {
       hostname: 'hostname',
       port: 'port',
