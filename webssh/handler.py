@@ -118,7 +118,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     @classmethod
     def get_pkey_obj(cls, privatekey, password, filename):
-        bpass = to_bytes(password)
+        bpass = to_bytes(password) if password else None
 
         pkey = cls.get_specific_pkey(paramiko.RSAKey, privatekey, bpass)\
             or cls.get_specific_pkey(paramiko.DSSKey, privatekey, bpass)\

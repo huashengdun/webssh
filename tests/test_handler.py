@@ -83,3 +83,5 @@ class TestIndexHandler(unittest.TestCase):
         with self.assertRaises(InvalidValueError) as exc:
             pkey = IndexHandler.get_pkey_obj('x'+key, password, fname)
             self.assertIn('Invalid private key', str(exc))
+        with self.assertRaises(paramiko.PasswordRequiredException):
+            pkey = IndexHandler.get_pkey_obj(key, '', fname)
