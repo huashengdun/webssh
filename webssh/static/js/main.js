@@ -1,16 +1,16 @@
+/*jslint browser:true */
+
 var jQuery;
 var wssh = {};
 
 
 jQuery(function($){
-  /*jslint browser:true */
-
   var status = $('#status'),
       btn = $('.btn-primary'),
       style = {},
       title_text = 'WebSSH',
       title_element = document.querySelector('title'),
-      debug = !document.querySelector('#hostname').required,
+      debug = document.querySelector('#connect').noValidate,
       DISCONNECTED = 0,
       CONNECTING = 1,
       CONNECTED = 2,
@@ -472,8 +472,8 @@ jQuery(function($){
   wssh.connect = connect;
 
   $(form_id).submit(function(event){
-      event.preventDefault();
-      connect();
+    event.preventDefault();
+    connect();
   });
 
 });

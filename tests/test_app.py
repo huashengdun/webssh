@@ -482,7 +482,7 @@ class TestAppInDebug(OtherTestBase):
 
     def test_html(self):
         response = self.fetch('/', method='GET')
-        self.assertNotIn(b'required>', response.body)
+        self.assertIn(b'novalidate>', response.body)
 
 
 class TestAppMiscell(OtherTestBase):
