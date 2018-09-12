@@ -3,6 +3,21 @@
 var jQuery;
 var wssh = {};
 
+$.fn.serializeObject = function() {  
+  var o = {};  
+  var a = this.serializeArray();  
+  $.each(a, function() {  
+      if (o[this.name]) {  
+          if (!o[this.name].push) {  
+              o[this.name] = [ o[this.name] ];  
+          }  
+          o[this.name].push(this.value || '');  
+      } else {  
+          o[this.name] = this.value || '';  
+      }  
+  });  
+  return o;  
+}
 
 jQuery(function($){
   var status = $('#status'),
@@ -369,11 +384,11 @@ jQuery(function($){
     // use data from the form
     var form = document.querySelector(form_id),
         url = form.action,
-        data = new FormData(form),
-        pk = data.get('privatekey');
+        data = $(form_id).serializeObject(),
+        pk = data['privatekey'];
 
     function ajax_post() {
-      store_items(fields, data);
+      store_items(fields, wrap_object(data));
 
       status.text('');
       btn.prop('disabled', true);
@@ -383,13 +398,11 @@ jQuery(function($){
           type: 'post',
           data: data,
           complete: ajax_complete_callback,
-          cache: false,
-          contentType: false,
-          processData: false
+          cache: false
       });
     }
 
-    var result = validate_form_data(data);
+    var result = validate_form_data(wrap_object(data));
     if (!result.valid) {
       log_status(result.msg);
       return;
