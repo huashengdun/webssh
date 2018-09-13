@@ -4,6 +4,37 @@ var jQuery;
 var wssh = {};
 
 
+(function() {
+  // For FormData without getter and setter
+  var proto = FormData.prototype;
+  proto.data = {};
+
+  if (!proto.get) {
+    proto.get = function (name) {
+      if (!proto.data[name]) {
+        var input = document.querySelector('input[name="' + name + '"]'),
+            value;
+        if (input) {
+          if (input.type === 'file') {
+            value = input.files[0];
+          } else {
+            value = input.value;
+          }
+          proto.data[name] = value;
+        }
+      }
+      return proto.data[name];
+    };
+  }
+
+  if (!proto.set) {
+    proto.set = function (name, value) {
+      proto.data[name] = value;
+    };
+  }
+}());
+
+
 jQuery(function($){
   var status = $('#status'),
       btn = $('.btn-primary'),
@@ -73,7 +104,7 @@ jQuery(function($){
   }
 
 
-  function read_file_as_text(file, callback, decoder) {
+  function read_as_text_with_decoder(file, callback, decoder) {
     var reader = new window.FileReader();
 
     if (decoder === undefined) {
@@ -98,6 +129,36 @@ jQuery(function($){
     };
 
     reader.readAsArrayBuffer(file);
+  }
+
+
+  function read_as_text_with_encoding(file, callback, encoding) {
+    var reader = new window.FileReader();
+
+    if (encoding === undefined) {
+      encoding = 'utf-8';
+    }
+
+    reader.onload = function() {
+      if (callback) {
+        callback(reader.result);
+      }
+    };
+
+    reader.onerror = function (e) {
+      console.error(e);
+    };
+
+    reader.readAsText(file, encoding);
+  }
+
+
+  function read_file_as_text(file, callback, decoder) {
+    if (!window.TextDecoder) {
+      read_as_text_with_encoding(file, callback, decoder);
+    } else {
+      read_as_text_with_decoder(file, callback, decoder);
+    }
   }
 
 
@@ -139,7 +200,7 @@ jQuery(function($){
         url = ws_url + join + 'ws?id=' + msg.id,
         sock = new window.WebSocket(url),
         encoding = 'utf-8',
-        decoder = new window.TextDecoder('utf-8'),
+        decoder = window.TextDecoder ? new window.TextDecoder(encoding) : encoding,
         terminal = document.getElementById('#terminal'),
         term = new window.Terminal({
           cursorBlink: true,
@@ -175,12 +236,18 @@ jQuery(function($){
         return;
       }
 
-      try {
-        decoder = new window.TextDecoder(new_encoding);
-        encoding = decoder.encoding;
+      if (!window.TextDecoder) {
+        decoder = new_encoding;
+        encoding = decoder;
         console.log('Set encoding to ' + encoding);
-      } catch (RangeError) {
-        console.log('Unknown encoding ' + new_encoding);
+      } else {
+        try {
+          decoder = new window.TextDecoder(new_encoding);
+          encoding = decoder.encoding;
+          console.log('Set encoding to ' + encoding);
+        } catch (RangeError) {
+          console.log('Unknown encoding ' + new_encoding);
+        }
       }
     }
 
