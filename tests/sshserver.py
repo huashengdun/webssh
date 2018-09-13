@@ -161,10 +161,10 @@ def run_ssh_server(port=2200, running=True):
             while data:
                 s = chan.send(data)
                 data = data[s:]
-
-        chan.close()
-        t.close()
-        client.close()
+        else:
+            chan.close()
+            t.close()
+            client.close()
 
     try:
         sock.close()
