@@ -432,12 +432,38 @@ jQuery(function($){
   }
 
 
+  function disable_file_inputs(inputs) {
+    var i, input;
+
+    for (i = 0; i < inputs.length; i++) {
+      input = inputs[i];
+      if (input.files.length === 0) {
+        input.setAttribute('disabled', '');
+      }
+    }
+  }
+
+
+  function enable_file_inputs(inputs) {
+    var i;
+
+    for (i = 0; i < inputs.length; i++) {
+      inputs[i].removeAttribute('disabled');
+    }
+  }
+
+
   function connect_without_options() {
     // use data from the form
     var form = document.querySelector(form_id),
+        inputs = form.querySelectorAll('input[type="file"]'),
         url = form.action,
-        data = new FormData(form),
-        pk = data.get('privatekey');
+        data, pk;
+
+    disable_file_inputs(inputs);
+    data = new FormData(form);
+    pk = data.get('privatekey');
+    enable_file_inputs(inputs);
 
     function ajax_post() {
       store_items(fields, data);
