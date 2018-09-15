@@ -20,6 +20,8 @@ Features
 -  Fullscreen terminal supported.
 -  Terminal window resizable.
 -  Auto detect the ssh server's default encoding.
+-  Modern browsers including Chrome, Firefox, Safari, Edge, Opera
+   supported.
 
 Preview
 -------

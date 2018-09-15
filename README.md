@@ -18,6 +18,7 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 * Fullscreen terminal supported.
 * Terminal window resizable.
 * Auto detect the ssh server's default encoding.
+* Modern browsers including Chrome, Firefox, Safari, Edge, Opera supported.
 
 
 ## Preview
