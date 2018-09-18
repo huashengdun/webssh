@@ -41,10 +41,11 @@ def get_content_type(filename):
 
 
 def read_file(path, encoding='utf-8'):
-    data = open(path, 'rb').read()
-    if encoding is None:
-        return data
-    return data.decode(encoding)
+    with open(path, 'rb') as f:
+        data = f.read()
+        if encoding is None:
+            return data
+        return data.decode(encoding)
 
 
 def make_tests_data_path(filename):
