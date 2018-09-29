@@ -387,7 +387,11 @@ jQuery(function($){
       attr = attrs[i];
       val = data.get(attr);
       if (typeof val === 'string') {
-        data.set(attr, val.trim());
+        val = val.trim();
+        if (attr === 'port' && val === '') {
+          val = 22;
+        }
+        data.set(attr, val);
       }
     }
   }
