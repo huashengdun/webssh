@@ -6,12 +6,12 @@ var wssh = {};
 
 (function() {
   // For FormData without getter and setter
-  var proto = FormData.prototype;
-  proto.data = {};
+  var proto = FormData.prototype,
+      data = {};
 
   if (!proto.get) {
     proto.get = function (name) {
-      if (!proto.data[name]) {
+      if (data[name] === undefined) {
         var input = document.querySelector('input[name="' + name + '"]'),
             value;
         if (input) {
@@ -20,16 +20,16 @@ var wssh = {};
           } else {
             value = input.value;
           }
-          proto.data[name] = value;
+          data[name] = value;
         }
       }
-      return proto.data[name];
+      return data[name];
     };
   }
 
   if (!proto.set) {
     proto.set = function (name, value) {
-      proto.data[name] = value;
+      data[name] = value;
     };
   }
 }());
