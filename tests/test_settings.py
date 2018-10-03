@@ -1,3 +1,5 @@
+import io
+import sys
 import os.path
 import unittest
 import paramiko
@@ -8,15 +10,24 @@ from webssh.policy import load_host_keys
 from webssh.settings import (
     get_host_keys_settings, get_policy_setting, base_dir, print_version
 )
+from webssh.utils import UnicodeType
 from webssh._version import __version__
 
 
 class TestSettings(unittest.TestCase):
 
     def test_print_version(self):
-        self.assertNotEqual(print_version(False), 2, msg=__version__)
+        sys_stdout = sys.stdout
+        sys.stdout = io.StringIO() if UnicodeType == str else io.BytesIO()
+
+        self.assertEqual(print_version(False), None)
+        self.assertEqual(sys.stdout.getvalue(), '')
+
         with self.assertRaises(SystemExit):
-            self.assertEqual(print_version(True), 2, msg=__version__)
+            self.assertEqual(print_version(True), None)
+        self.assertEqual(sys.stdout.getvalue(), __version__ + '\n')
+
+        sys.stdout = sys_stdout
 
     def test_get_host_keys_settings(self):
         options.hostFile = ''
