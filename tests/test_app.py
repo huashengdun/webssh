@@ -152,7 +152,7 @@ class TestAppBasic(AsyncHTTPTestCase):
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['encoding'])
         self.assertIsNone(data['id'])
-        self.assertIn('Authentication failed.', data['status'])
+        self.assertIn('Authentication failed', data['status'])
 
     def test_app_with_correct_credentials(self):
         response = self.sync_post(self.body)
