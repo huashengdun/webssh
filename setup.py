@@ -1,15 +1,19 @@
 import codecs
-from setuptools import setup
-from webssh._version import __version__ as version
+import os
 
+from setuptools import setup
 
 with codecs.open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
+__version__ = None
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'webssh',
+                       "_version.py")) as version_file:
+    exec(version_file.read())
 
 setup(
     name='webssh',
-    version=version,
+    version=__version__,
     description='Web based ssh client',
     long_description=long_description,
     author='Shengdun Hua',
