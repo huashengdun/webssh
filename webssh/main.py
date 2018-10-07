@@ -1,6 +1,7 @@
 import logging
 import tornado.web
 import tornado.ioloop
+from tornado.httpserver import HTTPServer
 
 from tornado.options import options
 from webssh.handler import IndexHandler, WsockHandler
@@ -24,11 +25,28 @@ def make_app(handlers, settings):
     return tornado.web.Application(handlers, **settings)
 
 
+def http_server_arguments():
+    http_server_kwargs = {"max_body_size": max_body_size}
+    if options.trusted_downstream and len(options.trusted_downstream) > 0:
+        trusted_downstream = str(options.trusted_downstream).split(",")
+    else:
+        trusted_downstream = []
+
+    if trusted_downstream and len(trusted_downstream) > 0:
+        http_server_kwargs["xheaders"] = True
+        http_server_kwargs["trusted_downstream"] = trusted_downstream
+    return http_server_kwargs
+
+
 def main():
     options.parse_command_line()
+    http_server_kwargs = http_server_arguments()
+
     loop = tornado.ioloop.IOLoop.current()
     app = make_app(make_handlers(loop, options), get_app_settings(options))
-    app.listen(options.port, options.address, max_body_size=max_body_size)
+    server = HTTPServer(app, **http_server_kwargs)
+    server.listen(options.port, options.address)
+
     logging.info('Listening on {}:{}'.format(options.address, options.port))
     loop.start()
 
