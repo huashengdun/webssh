@@ -71,7 +71,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.policy = policy
         self.host_keys_settings = host_keys_settings
         self.ssh_client = self.get_ssh_client()
-        self.filename = None
+        self.privatekey_filename = None
         self.result = dict(id=None, status=None, encoding=None)
 
     def write_error(self, status_code, **kwargs):
@@ -100,7 +100,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         name = 'privatekey'
         lst = self.request.files.get(name)  # multipart form
         if lst:
-            self.filename = lst[0]['filename']
+            self.privatekey_filename = lst[0]['filename']
             data = lst[0]['body']
             value = self.decode_argument(data, name=name).strip()
         else:
@@ -108,7 +108,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         if len(value) > KEY_MAX_SIZE:
             raise InvalidValueError(
-                'Invalid private key: {}'.format(self.filename)
+                'Invalid private key: {}'.format(self.privatekey_filename)
             )
         return value
 
@@ -179,8 +179,11 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         username = self.get_value('username')
         password = self.get_argument('password', u'')
         privatekey = self.get_privatekey()
-        pkey = self.get_pkey_obj(privatekey, password, self.filename) \
-            if privatekey else None
+        if privatekey:
+            pkey = self.get_pkey_obj(privatekey, password,
+                                     self.privatekey_filename)
+        else:
+            pkey = None
         args = (hostname, port, username, password, pkey)
         logging.debug(args)
         return args
