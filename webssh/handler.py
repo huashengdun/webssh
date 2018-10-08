@@ -152,12 +152,14 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             raise InvalidValueError('Invalid hostname: {}'.format(value))
         return value
 
-    def lookup_hostname(self, hostname):
+    def lookup_hostname(self, hostname, port):
         if isinstance(self.policy, paramiko.RejectPolicy):
-            if self.ssh_client._system_host_keys.lookup(hostname) is None:
-                if self.ssh_client._host_keys.lookup(hostname) is None:
+            key = hostname if port == 22 else '[{}]:{}'.format(hostname, port)
+            if self.ssh_client._system_host_keys.lookup(key) is None:
+                if self.ssh_client._host_keys.lookup(key) is None:
                     raise ValueError(
-                        'Connection to {} is not allowed.'.format(hostname)
+                        'Connection to {}:{} is not allowed.'.format(
+                            hostname, port)
                     )
 
     def get_port(self):
@@ -174,8 +176,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def get_args(self):
         hostname = self.get_hostname()
-        self.lookup_hostname(hostname)
         port = self.get_port()
+        self.lookup_hostname(hostname, port)
         username = self.get_value('username')
         password = self.get_argument('password', u'')
         privatekey = self.get_privatekey()

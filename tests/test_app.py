@@ -536,4 +536,5 @@ class TestAppWithRejectPolicy(OtherTestBase):
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['id'])
         self.assertIsNone(data['encoding'])
-        self.assertEqual('Connection to 127.0.0.1 is not allowed.', data['status'])  # noqa
+        message = 'Connection to {}:{} is not allowed.'.format(self.body['hostname'], self.sshserver_port) # noqa
+        self.assertEqual(message, data['status'])
