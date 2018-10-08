@@ -152,16 +152,6 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             raise InvalidValueError('Invalid hostname: {}'.format(value))
         return value
 
-    def lookup_hostname(self, hostname, port):
-        if isinstance(self.policy, paramiko.RejectPolicy):
-            key = hostname if port == 22 else '[{}]:{}'.format(hostname, port)
-            if self.ssh_client._system_host_keys.lookup(key) is None:
-                if self.ssh_client._host_keys.lookup(key) is None:
-                    raise ValueError(
-                        'Connection to {}:{} is not allowed.'.format(
-                            hostname, port)
-                    )
-
     def get_port(self):
         value = self.get_value('port')
         try:
@@ -174,16 +164,28 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         raise InvalidValueError('Invalid port: {}'.format(value))
 
+    def lookup_hostname(self, hostname, port):
+        key = hostname if port == 22 else '[{}]:{}'.format(hostname, port)
+
+        if self.ssh_client._system_host_keys.lookup(key) is None:
+            if self.ssh_client._host_keys.lookup(key) is None:
+                raise ValueError(
+                    'Connection to {}:{} is not allowed.'.format(
+                        hostname, port)
+                )
+
     def get_args(self):
         hostname = self.get_hostname()
         port = self.get_port()
-        self.lookup_hostname(hostname, port)
+        if isinstance(self.policy, paramiko.RejectPolicy):
+            self.lookup_hostname(hostname, port)
         username = self.get_value('username')
         password = self.get_argument('password', u'')
         privatekey = self.get_privatekey()
         if privatekey:
-            pkey = self.get_pkey_obj(privatekey, password,
-                                     self.privatekey_filename)
+            pkey = self.get_pkey_obj(
+                privatekey, password, self.privatekey_filename
+            )
         else:
             pkey = None
         args = (hostname, port, username, password, pkey)
