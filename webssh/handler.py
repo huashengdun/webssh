@@ -70,6 +70,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.loop = loop
         self.policy = policy
         self.host_keys_settings = host_keys_settings
+        self.ssh_client = self.get_ssh_client()
         self.filename = None
         self.result = dict(id=None, status=None, encoding=None)
 
@@ -86,6 +87,14 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             self.result.update(status=self._reason)
             self.set_status(200)
             self.finish(self.result)
+
+    def get_ssh_client(self):
+        ssh = paramiko.SSHClient()
+        ssh._system_host_keys = self.host_keys_settings['system_host_keys']
+        ssh._host_keys = self.host_keys_settings['host_keys']
+        ssh._host_keys_filename = self.host_keys_settings['host_keys_filename']
+        ssh.set_missing_host_key_policy(self.policy)
+        return ssh
 
     def get_privatekey(self):
         name = 'privatekey'
@@ -143,6 +152,14 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             raise InvalidValueError('Invalid hostname: {}'.format(value))
         return value
 
+    def lookup_hostname(self, hostname):
+        if isinstance(self.policy, paramiko.RejectPolicy):
+            if self.ssh_client._system_host_keys.lookup(hostname) is None:
+                if self.ssh_client._host_keys.lookup(hostname) is None:
+                    raise ValueError(
+                        'Connection to {} is not allowed.'.format(hostname)
+                    )
+
     def get_port(self):
         value = self.get_value('port')
         try:
@@ -157,6 +174,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def get_args(self):
         hostname = self.get_hostname()
+        self.lookup_hostname(hostname)
         port = self.get_port()
         username = self.get_value('username')
         password = self.get_argument('password', u'')
@@ -182,11 +200,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return result if result else 'utf-8'
 
     def ssh_connect(self):
-        ssh = paramiko.SSHClient()
-        ssh._system_host_keys = self.host_keys_settings['system_host_keys']
-        ssh._host_keys = self.host_keys_settings['host_keys']
-        ssh._host_keys_filename = self.host_keys_settings['host_keys_filename']
-        ssh.set_missing_host_key_policy(self.policy)
+        ssh = self.ssh_client
 
         try:
             args = self.get_args()

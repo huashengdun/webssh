@@ -428,6 +428,9 @@ class OtherTestBase(AsyncHTTPTestCase):
     sshserver_port = 3300
     headers = {'Cookie': '_xsrf=yummy'}
     debug = False
+    policy = None
+    hostFile = None
+    sysHostFile = None
     body = {
         'hostname': '127.0.0.1',
         'port': '',
@@ -440,9 +443,9 @@ class OtherTestBase(AsyncHTTPTestCase):
         self.body.update(port=str(self.sshserver_port))
         loop = self.io_loop
         options.debug = self.debug
-        options.policy = random.choice(['warning', 'autoadd'])
-        options.hostFile = ''
-        options.sysHostFile = ''
+        options.policy = self.policy if self.policy else random.choice(['warning', 'autoadd'])  # noqa
+        options.hostFile = self.hostFile if self.hostFile else ''
+        options.sysHostFile = self.sysHostFile if self.sysHostFile else ''
         app = make_app(make_handlers(loop, options), get_app_settings(options))
         return app
 
@@ -516,3 +519,21 @@ class TestAppMiscell(OtherTestBase):
         recv = b''.join(lst).decode(data['encoding'])
         self.assertEqual(send, recv)
         ws.close()
+
+
+class TestAppWithRejectPolicy(OtherTestBase):
+
+    policy = 'reject'
+    hostFile = make_tests_data_path('known_hosts_example')
+
+    @tornado.testing.gen_test
+    def test_app_with_hostname_not_in_hostkeys(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        body = urlencode(dict(self.body, username='foo'))
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=self.headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertEqual('Connection to 127.0.0.1 is not allowed.', data['status'])  # noqa
