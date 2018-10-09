@@ -63,6 +63,24 @@ class MixinHandler(object):
         logging.warning('Bad nginx configuration.')
         return False
 
+    def get_client_addr(self):
+        pass
+
+    def custom_log(self, message):
+        logging.info(self._custom_log_message(message))
+
+    def custom_logdebug(self, message):
+        logging.debug(self._custom_log_message(message))
+
+    def custom_log_error(self, message):
+        logging.error(self._custom_log_message(message))
+
+    def _custom_log_message(self, message):
+        remote_addr = self.get_client_addr()
+        if remote_addr:
+            remote_addr = remote_addr[0]
+        return "Client='%s' %s" % (remote_addr, message)
+
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
@@ -189,7 +207,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         else:
             pkey = None
         args = (hostname, port, username, password, pkey)
-        logging.debug(args)
+        self.custom_logdebug(args)
         return args
 
     def get_client_addr(self):
@@ -215,16 +233,19 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             raise tornado.web.HTTPError(400, str(exc))
 
         dst_addr = (args[0], args[1])
-        logging.info('Connecting to {}:{}'.format(*dst_addr))
+        self.custom_log('Connecting to {}:{}'.format(*dst_addr))
 
         try:
             ssh.connect(*args, timeout=6)
+            self.custom_log("Authentication successful for user='{}'.".format(
+                self.get_value('username')))
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:
             raise ValueError('Bad authentication type.')
         except paramiko.AuthenticationException:
-            raise ValueError('Authentication failed.')
+            raise ValueError("Authentication failed for user='{}'.".format(
+                self.get_value('username')))
         except paramiko.BadHostKeyException:
             raise ValueError('Bad host key.')
 
@@ -239,7 +260,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         try:
             worker = self.ssh_connect()
         except Exception as exc:
-            logging.error(traceback.format_exc())
+            self.custom_log_error(str(exc))
+            self.custom_log_error(traceback.format_exc())
             future.set_exception(exc)
         else:
             future.set_result(worker)
@@ -276,11 +298,15 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         self.worker_ref = None
 
     def get_client_addr(self):
-        return self.get_real_client_addr() or self.stream.socket.getpeername()
+        addr = self.get_real_client_addr()
+        if addr:
+            return addr
+        if self.stream and self.stream.socket:
+            return self.stream.socket.getpeername()
 
     def open(self):
         self.src_addr = self.get_client_addr()
-        logging.info('Connected from {}:{}'.format(*self.src_addr))
+        self.custom_log('Connected from {}:{}'.format(*self.src_addr))
         try:
             worker_id = self.get_value('id')
         except (tornado.web.MissingArgumentError, InvalidValueError) as exc:
@@ -297,7 +323,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
                 self.close(reason='Websocket authentication failed.')
 
     def on_message(self, message):
-        logging.debug('{!r} from {}:{}'.format(message, *self.src_addr))
+        self.custom_logdebug('{!r} from {}:{}'.format(message, *self.src_addr))
         worker = self.worker_ref()
         try:
             msg = json.loads(message)
@@ -321,14 +347,14 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         if self.close_reason:
-            logging.info(
-                'Disconnecting to {}:{} with reason: {reason}'.format(
+            self.custom_log(
+                'Disconnecting from {}:{} with reason: {reason}'.format(
                     *self.src_addr, reason=self.close_reason
                 )
             )
         else:
             self.close_reason = 'client disconnected'
-            logging.info('Disconnected from {}:{}'.format(*self.src_addr))
+            self.custom_log('Disconnected from {}:{}'.format(*self.src_addr))
 
         worker = self.worker_ref() if self.worker_ref else None
         if worker:

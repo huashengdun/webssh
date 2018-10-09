@@ -25,6 +25,8 @@ define('sysHostFile', default='', help='System wide host keys file')
 define('wpIntvl', type=int, default=0, help='Websocket ping interval')
 define('version', type=bool, help='Show version information',
        callback=print_version)
+define('trusted_downstream', default=None,
+       help='Comma-separated list of trusted downstream hosts.')
 
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
