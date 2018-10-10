@@ -406,7 +406,7 @@ jQuery(function($){
     if (!hostname) {
       msg = 'Need value hostname';
     } else if (!port) {
-      msg = '';
+      port = 22;
     } else if (!username) {
       msg = 'Need value username';
     } else if (!hostname_tester.test(hostname)) {
