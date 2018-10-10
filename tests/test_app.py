@@ -92,10 +92,6 @@ class TestAppBasic(AsyncHTTPTestCase):
         response = self.sync_post(body)
         self.assert_response(b'Missing argument hostname', response)
 
-        body = 'hostname=127.0.0.1&username=admin&password&_xsrf=yummy'
-        response = self.sync_post(body)
-        self.assert_response(b'Missing argument port', response)
-
         body = 'hostname=127.0.0.1&port=7000&password&_xsrf=yummy'
         response = self.sync_post(body)
         self.assert_response(b'Missing argument username', response)
@@ -103,10 +99,6 @@ class TestAppBasic(AsyncHTTPTestCase):
         body = 'hostname=&port=&username=&password&_xsrf=yummy'
         response = self.sync_post(body)
         self.assert_response(b'Missing value hostname', response)
-
-        body = 'hostname=127.0.0.1&port=&username=&password&_xsrf=yummy'
-        response = self.sync_post(body)
-        self.assert_response(b'Missing value port', response)
 
         body = 'hostname=127.0.0.1&port=7000&username=&password&_xsrf=yummy'
         response = self.sync_post(body)

@@ -387,11 +387,7 @@ jQuery(function($){
       attr = attrs[i];
       val = data.get(attr);
       if (typeof val === 'string') {
-        val = val.trim();
-        if (attr === 'port' && val === '') {
-          val = 22;
-        }
-        data.set(attr, val);
+        data.set(attr, val.trim());
       }
     }
   }
@@ -410,7 +406,7 @@ jQuery(function($){
     if (!hostname) {
       msg = 'Need value hostname';
     } else if (!port) {
-      msg = 'Need value port';
+      msg = '';
     } else if (!username) {
       msg = 'Need value username';
     } else if (!hostname_tester.test(hostname)) {

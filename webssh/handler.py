@@ -30,6 +30,7 @@ except ImportError:
 
 DELAY = 3
 KEY_MAX_SIZE = 16384
+DEFAULT_PORT = 22
 
 
 class InvalidValueError(Exception):
@@ -154,11 +155,14 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return value
 
     def get_port(self):
-        value = self.get_value('port')
+        value = self.get_argument('port', u'')
+        if not value:
+            return DEFAULT_PORT
+
         port = to_int(value)
-        if port and is_valid_port(port):
-            return port
-        raise InvalidValueError('Invalid port: {}'.format(value))
+        if port is None or not is_valid_port(port):
+            raise InvalidValueError('Invalid port: {}'.format(value))
+        return port
 
     def lookup_hostname(self, hostname, port):
         key = hostname if port == 22 else '[{}]:{}'.format(hostname, port)
