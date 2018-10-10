@@ -153,6 +153,28 @@ class TestAppBasic(AsyncHTTPTestCase):
         self.assertIsNotNone(data['id'])
         self.assertIsNotNone(data['encoding'])
 
+    def test_app_with_correct_credentials_but_with_no_port(self):
+        default_port = handler.DEFAULT_PORT
+        handler.DEFAULT_PORT = self.sshserver_port
+
+        # with no port value
+        body = self.body.replace(str(self.sshserver_port), '')
+        response = self.sync_post(body)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
+
+        # with no port argument
+        body = body.replace('port=&', '')
+        response = self.sync_post(body)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['status'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
+
+        handler.DEFAULT_PORT = default_port
+
     @tornado.testing.gen_test
     def test_app_with_correct_credentials_timeout(self):
         url = self.get_url('/')
