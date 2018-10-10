@@ -45,19 +45,22 @@ class MixinHandler(object):
         return value
 
     def get_real_client_addr(self):
-        ip = self.request.headers.get('X-Real-Ip')
-        port = self.request.headers.get('X-Real-Port')
+        ip = self.request.remote_ip
 
-        if ip is None and port is None:
-            return  # suppose this app doesn't run after an nginx server
+        if ip == self.request.headers.get('X-Real-Ip'):
+            port = self.request.headers.get('X-Real-Port')
+        elif ip in self.request.headers.get('X-Forwarded-For', ''):
+            port = self.request.headers.get('X-Forwarded-Port')
+        else:
+            # not running behind an nginx server
+            return
 
-        if is_valid_ipv4_address(ip) or is_valid_ipv6_address(ip):
-            port = to_int(port)
-            if port and is_valid_port(port):
-                return (ip, port)
+        port = to_int(port)
+        if port is None or not is_valid_port(port):
+            # fake port
+            port = 65535
 
-        logging.warning('Bad nginx configuration.')
-        return False
+        return (ip, port)
 
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
@@ -94,13 +97,15 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def get_privatekey(self):
         name = 'privatekey'
-        lst = self.request.files.get(name)  # multipart form
+        lst = self.request.files.get(name)
         if lst:
+            # multipart form
             self.privatekey_filename = lst[0]['filename']
             data = lst[0]['body']
             value = self.decode_argument(data, name=name).strip()
         else:
-            value = self.get_argument(name, u'')  # urlencoded form
+            # urlencoded form
+            value = self.get_argument(name, u'')
 
         if len(value) > KEY_MAX_SIZE:
             raise InvalidValueError(

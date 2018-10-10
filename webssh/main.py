@@ -28,7 +28,8 @@ def main():
     options.parse_command_line()
     loop = tornado.ioloop.IOLoop.current()
     app = make_app(make_handlers(loop, options), get_app_settings(options))
-    app.listen(options.port, options.address, max_body_size=max_body_size)
+    server_settings = dict(xheaders=True, max_body_size=max_body_size)
+    app.listen(options.port, options.address, **server_settings)
     logging.info('Listening on {}:{}'.format(options.address, options.port))
     loop.start()
 

@@ -9,25 +9,43 @@ from webssh.handler import MixinHandler, IndexHandler, InvalidValueError
 class TestMixinHandler(unittest.TestCase):
 
     def test_get_real_client_addr(self):
+        x_forwarded_for = '1.1.1.1'
+        x_forwarded_port = 1111
+        x_real_ip = '2.2.2.2'
+        x_real_port = 2222
+        fake_port = 65535
+
         handler = MixinHandler()
         handler.request = HTTPServerRequest(uri='/')
+        handler.request.remote_ip = x_forwarded_for
+
         self.assertIsNone(handler.get_real_client_addr())
 
-        ip = '127.0.0.1'
-        handler.request.headers.add('X-Real-Ip', ip)
-        self.assertEqual(handler.get_real_client_addr(), False)
+        handler.request.headers.add('X-Forwarded-For', x_forwarded_for)
+        self.assertEqual(handler.get_real_client_addr(),
+                         (x_forwarded_for, fake_port))
 
-        handler.request.headers.add('X-Real-Port', '12345x')
-        self.assertEqual(handler.get_real_client_addr(), False)
+        handler.request.headers.add('X-Forwarded-Port', fake_port + 1)
+        self.assertEqual(handler.get_real_client_addr(),
+                         (x_forwarded_for, fake_port))
 
-        handler.request.headers.update({'X-Real-Port': '12345'})
-        self.assertEqual(handler.get_real_client_addr(), (ip, 12345))
+        handler.request.headers['X-Forwarded-Port'] = x_forwarded_port
+        self.assertEqual(handler.get_real_client_addr(),
+                         (x_forwarded_for, x_forwarded_port))
 
-        handler.request.headers.update({'X-Real-ip': None})
-        self.assertEqual(handler.get_real_client_addr(), False)
+        handler.request.remote_ip = x_real_ip
 
-        handler.request.headers.update({'X-Real-Port': '12345x'})
-        self.assertEqual(handler.get_real_client_addr(), False)
+        handler.request.headers.add('X-Real-Ip', x_real_ip)
+        self.assertEqual(handler.get_real_client_addr(),
+                         (x_real_ip, fake_port))
+
+        handler.request.headers.add('X-Real-Port', fake_port + 1)
+        self.assertEqual(handler.get_real_client_addr(),
+                         (x_real_ip, fake_port))
+
+        handler.request.headers['X-Real-Port'] = x_real_port
+        self.assertEqual(handler.get_real_client_addr(),
+                         (x_real_ip, x_real_port))
 
 
 class TestIndexHandler(unittest.TestCase):
