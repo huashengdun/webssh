@@ -13,7 +13,7 @@ from tornado.ioloop import IOLoop
 from webssh.settings import swallow_http_errors
 from webssh.utils import (
     is_valid_ipv4_address, is_valid_ipv6_address, is_valid_port,
-    is_valid_hostname, to_bytes, to_str, UnicodeType
+    is_valid_hostname, to_bytes, to_str, to_int, UnicodeType
 )
 from webssh.worker import Worker, recycle_worker, workers
 
@@ -52,13 +52,9 @@ class MixinHandler(object):
             return  # suppose this app doesn't run after an nginx server
 
         if is_valid_ipv4_address(ip) or is_valid_ipv6_address(ip):
-            try:
-                port = int(port)
-            except (TypeError, ValueError):
-                pass
-            else:
-                if is_valid_port(port):
-                    return (ip, port)
+            port = to_int(port)
+            if port and is_valid_port(port):
+                return (ip, port)
 
         logging.warning('Bad nginx configuration.')
         return False
@@ -154,14 +150,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def get_port(self):
         value = self.get_value('port')
-        try:
-            port = int(value)
-        except ValueError:
-            pass
-        else:
-            if is_valid_port(port):
-                return port
-
+        port = to_int(value)
+        if port and is_valid_port(port):
+            return port
         raise InvalidValueError('Invalid port: {}'.format(value))
 
     def lookup_hostname(self, hostname, port):

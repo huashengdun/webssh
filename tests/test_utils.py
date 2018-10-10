@@ -1,7 +1,9 @@
 import unittest
 
-from webssh.utils import (is_valid_ipv4_address, is_valid_ipv6_address,
-                          is_valid_port, is_valid_hostname, to_str, to_bytes)
+from webssh.utils import (
+    is_valid_ipv4_address, is_valid_ipv6_address, is_valid_port,
+    is_valid_hostname, to_str, to_bytes, to_int
+)
 
 
 class TestUitls(unittest.TestCase):
@@ -17,6 +19,12 @@ class TestUitls(unittest.TestCase):
         u = u'hello'
         self.assertEqual(to_bytes(b), b)
         self.assertEqual(to_bytes(u), b)
+
+    def test_to_int(self):
+        self.assertEqual(to_int(''), None)
+        self.assertEqual(to_int(None), None)
+        self.assertEqual(to_int('22'), 22)
+        self.assertEqual(to_int(' 22 '), 22)
 
     def test_is_valid_ipv4_address(self):
         self.assertFalse(is_valid_ipv4_address('127.0.0'))

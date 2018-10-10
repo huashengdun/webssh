@@ -23,6 +23,13 @@ def to_bytes(ustr, encoding='utf-8'):
     return ustr
 
 
+def to_int(string):
+    try:
+        return int(string)
+    except (TypeError, ValueError):
+        pass
+
+
 def is_valid_ipv4_address(ipstr):
     ipstr = to_str(ipstr)
     try:
