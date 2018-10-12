@@ -186,6 +186,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             pkey = self.get_pkey_obj(
                 privatekey, password, self.privatekey_filename
             )
+            password = None
         else:
             pkey = None
         args = (hostname, port, username, password, pkey)
