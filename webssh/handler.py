@@ -39,6 +39,9 @@ class InvalidValueError(Exception):
 
 class MixinHandler(object):
 
+    def set_default_headers(self):
+        self.set_header('Server', 'TornadoServer')
+
     def get_value(self, name):
         value = self.get_argument(name)
         if not value:
@@ -85,7 +88,6 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                     self._reason = reason
             self.result.update(status=self._reason)
             self.set_status(200)
-            self.set_header('Server', 'TornadoServer')
             self.finish(self.result)
 
     def get_ssh_client(self):
