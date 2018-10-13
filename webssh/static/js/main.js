@@ -189,7 +189,7 @@ jQuery(function($){
     }
 
     var msg = resp.responseJSON;
-    if (msg.status) {
+    if (!msg.id) {
       log_status(msg.status);
       state = DISCONNECTED;
       return;
