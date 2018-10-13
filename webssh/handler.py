@@ -48,6 +48,10 @@ class MixinHandler(object):
             raise InvalidValueError('Missing value {}'.format(name))
         return value
 
+    def get_client_addr(self):
+        return self.get_real_client_addr() or self.request.connection.context.\
+                address
+
     def get_real_client_addr(self):
         ip = self.request.remote_ip
 
@@ -194,10 +198,6 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         logging.debug(args)
         return args
 
-    def get_client_addr(self):
-        return self.get_real_client_addr() or self.request.connection.stream.\
-            socket.getpeername()
-
     def get_default_encoding(self, ssh):
         try:
             _, stdout, _ = ssh.exec_command('locale charmap')
@@ -276,9 +276,6 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def initialize(self, loop):
         self.loop = loop
         self.worker_ref = None
-
-    def get_client_addr(self):
-        return self.get_real_client_addr() or self.stream.socket.getpeername()
 
     def open(self):
         self.src_addr = self.get_client_addr()
