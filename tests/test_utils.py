@@ -1,8 +1,8 @@
 import unittest
 
 from webssh.utils import (
-    is_valid_ipv4_address, is_valid_ipv6_address, is_valid_port,
-    is_valid_hostname, to_str, to_bytes, to_int
+    is_valid_ip_address, is_valid_port, is_valid_hostname,
+    to_str, to_bytes, to_int
 )
 
 
@@ -26,17 +26,15 @@ class TestUitls(unittest.TestCase):
         self.assertEqual(to_int('22'), 22)
         self.assertEqual(to_int(' 22 '), 22)
 
-    def test_is_valid_ipv4_address(self):
-        self.assertFalse(is_valid_ipv4_address('127.0.0'))
-        self.assertFalse(is_valid_ipv4_address(b'127.0.0'))
-        self.assertTrue(is_valid_ipv4_address('127.0.0.1'))
-        self.assertTrue(is_valid_ipv4_address(b'127.0.0.1'))
-
-    def test_is_valid_ipv6_address(self):
-        self.assertFalse(is_valid_ipv6_address('abc'))
-        self.assertFalse(is_valid_ipv6_address(b'abc'))
-        self.assertTrue(is_valid_ipv6_address('::1'))
-        self.assertTrue(is_valid_ipv6_address(b'::1'))
+    def test_is_valid_ip_address(self):
+        self.assertFalse(is_valid_ip_address('127.0.0'))
+        self.assertFalse(is_valid_ip_address(b'127.0.0'))
+        self.assertTrue(is_valid_ip_address('127.0.0.1'))
+        self.assertTrue(is_valid_ip_address(b'127.0.0.1'))
+        self.assertFalse(is_valid_ip_address('abc'))
+        self.assertFalse(is_valid_ip_address(b'abc'))
+        self.assertTrue(is_valid_ip_address('::1'))
+        self.assertTrue(is_valid_ip_address(b'::1'))
 
     def test_is_valid_port(self):
         self.assertTrue(is_valid_port(80))

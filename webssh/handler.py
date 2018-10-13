@@ -12,8 +12,8 @@ import tornado.web
 from tornado.ioloop import IOLoop
 from webssh.settings import swallow_http_errors
 from webssh.utils import (
-    is_valid_ipv4_address, is_valid_ipv6_address, is_valid_port,
-    is_valid_hostname, to_bytes, to_str, to_int, UnicodeType
+    is_valid_ip_address, is_valid_port, is_valid_hostname,
+    to_bytes, to_str, to_int, UnicodeType
 )
 from webssh.worker import Worker, recycle_worker, workers
 
@@ -149,8 +149,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def get_hostname(self):
         value = self.get_value('hostname')
-        if not (is_valid_hostname(value) | is_valid_ipv4_address(value) |
-                is_valid_ipv6_address(value)):
+        if not (is_valid_hostname(value) | is_valid_ip_address(value)):
             raise InvalidValueError('Invalid hostname: {}'.format(value))
         return value
 

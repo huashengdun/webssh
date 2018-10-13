@@ -30,20 +30,11 @@ def to_int(string):
         pass
 
 
-def is_valid_ipv4_address(ipstr):
+def is_valid_ip_address(ipstr):
     ipstr = to_str(ipstr)
     try:
-        ipaddress.IPv4Address(ipstr)
-    except ipaddress.AddressValueError:
-        return False
-    return True
-
-
-def is_valid_ipv6_address(ipstr):
-    ipstr = to_str(ipstr)
-    try:
-        ipaddress.IPv6Address(ipstr)
-    except ipaddress.AddressValueError:
+        ipaddress.ip_address(ipstr)
+    except ValueError:
         return False
     return True
 
