@@ -21,7 +21,7 @@ define('port', type=int, default=8888,  help='Listen port')
 define('sslAddress', default='0.0.0.0', help='SSL listen address')
 define('sslPort', type=int, default=4433,  help='SSL listen port')
 define('certfile', default='', help='SSL certificate file')
-define('keyfile', default='', help='SSL key file')
+define('keyfile', default='', help='SSL private key file')
 define('debug', type=bool, default=False, help='Debug mode')
 define('policy', default='warning',
        help='Missing host key policy, reject|autoadd|warning')
