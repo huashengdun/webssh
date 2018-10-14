@@ -1,4 +1,5 @@
 import io
+import ssl
 import sys
 import os.path
 import unittest
@@ -8,7 +9,8 @@ import tornado.options as options
 from tests.utils import make_tests_data_path
 from webssh.policy import load_host_keys
 from webssh.settings import (
-    get_host_keys_settings, get_policy_setting, base_dir, print_version
+    get_host_keys_settings, get_policy_setting, base_dir, print_version,
+    get_ssl_context
 )
 from webssh.utils import UnicodeType
 from webssh._version import __version__
@@ -78,3 +80,43 @@ class TestSettings(unittest.TestCase):
             )
         else:
             self.assertIsInstance(instance, paramiko.client.RejectPolicy)
+
+    def test_get_ssl_context(self):
+        options.certfile = ''
+        options.keyfile = ''
+        ssl_ctx = get_ssl_context(options)
+        self.assertIsNone(ssl_ctx)
+
+        options.certfile = 'provided'
+        options.keyfile = ''
+        with self.assertRaises(ValueError) as ctx:
+            ssl_ctx = get_ssl_context(options)
+        self.assertEqual('keyfile is not provided', str(ctx.exception))
+
+        options.certfile = ''
+        options.keyfile = 'provided'
+        with self.assertRaises(ValueError) as ctx:
+            ssl_ctx = get_ssl_context(options)
+        self.assertEqual('certfile is not provided', str(ctx.exception))
+
+        options.certfile = 'FileDoesNotExist'
+        options.keyfile = make_tests_data_path('cert.key')
+        with self.assertRaises(ValueError) as ctx:
+            ssl_ctx = get_ssl_context(options)
+        self.assertIn('does not exist', str(ctx.exception))
+
+        options.certfile = make_tests_data_path('cert.key')
+        options.keyfile = 'FileDoesNotExist'
+        with self.assertRaises(ValueError) as ctx:
+            ssl_ctx = get_ssl_context(options)
+        self.assertIn('does not exist', str(ctx.exception))
+
+        options.certfile = make_tests_data_path('cert.key')
+        options.keyfile = make_tests_data_path('cert.key')
+        with self.assertRaises(ssl.SSLError) as ctx:
+            ssl_ctx = get_ssl_context(options)
+
+        options.certfile = make_tests_data_path('cert.crt')
+        options.keyfile = make_tests_data_path('cert.key')
+        ssl_ctx = get_ssl_context(options)
+        self.assertIsNotNone(ssl_ctx)
