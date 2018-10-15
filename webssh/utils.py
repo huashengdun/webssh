@@ -30,10 +30,13 @@ def to_int(string):
         pass
 
 
+def to_ip_address(ipstr):
+    return ipaddress.ip_address(to_str(ipstr))
+
+
 def is_valid_ip_address(ipstr):
-    ipstr = to_str(ipstr)
     try:
-        ipaddress.ip_address(ipstr)
+        to_ip_address(ipstr)
     except ValueError:
         return False
     return True
