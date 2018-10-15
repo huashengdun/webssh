@@ -6,7 +6,7 @@ from tornado.options import options
 from webssh.handler import IndexHandler, WsockHandler
 from webssh.settings import (
     get_app_settings,  get_host_keys_settings, get_policy_setting,
-    get_ssl_context, max_body_size, xheaders
+    get_ssl_context, get_server_settings
 )
 
 
@@ -31,12 +31,12 @@ def main():
     loop = tornado.ioloop.IOLoop.current()
     app = make_app(make_handlers(loop, options), get_app_settings(options))
     ssl_ctx = get_ssl_context(options)
-    kwargs = dict(xheaders=xheaders, max_body_size=max_body_size)
-    app.listen(options.port, options.address, **kwargs)
+    server_settings = get_server_settings(options)
+    app.listen(options.port, options.address, **server_settings)
     logging.info('Listening on {}:{}'.format(options.address, options.port))
     if ssl_ctx:
-        kwargs.update(ssl_options=ssl_ctx)
-        app.listen(options.sslPort, options.sslAddress, **kwargs)
+        server_settings.update(ssl_options=ssl_ctx)
+        app.listen(options.sslPort, options.sslAddress, **server_settings)
         logging.info('Listening on ssl {}:{}'.format(options.sslAddress,
                                                      options.sslPort))
     loop.start()

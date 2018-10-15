@@ -13,7 +13,7 @@ from tornado.ioloop import IOLoop
 from webssh.settings import swallow_http_errors
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname,
-    to_bytes, to_str, to_int, UnicodeType
+    to_bytes, to_str, to_int, to_ip_address, UnicodeType
 )
 from webssh.worker import Worker, recycle_worker, workers
 
@@ -38,6 +38,28 @@ class InvalidValueError(Exception):
 
 
 class MixinHandler(object):
+
+    def prepare(self):
+        if self.is_forbidden():
+            raise tornado.web.HTTPError(403)
+
+    def is_forbidden(self):
+        """
+        Following requests are forbidden:
+        * requests not come from trusted_downstream (if set).
+        * non-https requests from a public network.
+        """
+        context = self.request.connection.context
+        ip = context.address[0]
+        lst = context.trusted_downstream
+
+        if lst and ip not in lst:
+            return True
+
+        if context._orig_protocol == 'http':
+            ipaddr = to_ip_address(ip)
+            if ipaddr.is_global:
+                return True
 
     def set_default_headers(self):
         self.set_header('Server', 'TornadoServer')

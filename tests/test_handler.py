@@ -1,12 +1,56 @@
 import unittest
 import paramiko
 
+from tornado.httpclient import HTTPRequest
 from tornado.httputil import HTTPServerRequest
+from tornado.web import HTTPError
 from tests.utils import read_file, make_tests_data_path
 from webssh.handler import MixinHandler, IndexHandler, InvalidValueError
 
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
+
 
 class TestMixinHandler(unittest.TestCase):
+
+    def test_is_forbidden(self):
+        handler = MixinHandler()
+        request = HTTPRequest('http://example.com/')
+        handler.request = request
+
+        context = Mock(
+            address=('8.8.8.8', 8888),
+            trusted_downstream=['127.0.0.1'],
+            _orig_protocol='http'
+        )
+        request.connection = Mock(context=context)
+        self.assertTrue(handler.is_forbidden())
+
+        context = Mock(
+            address=('8.8.8.8', 8888),
+            trusted_downstream=[],
+            _orig_protocol='http'
+        )
+        request.connection = Mock(context=context)
+        self.assertTrue(handler.is_forbidden())
+
+        context = Mock(
+            address=('192.168.1.1', 8888),
+            trusted_downstream=[],
+            _orig_protocol='http'
+        )
+        request.connection = Mock(context=context)
+        self.assertIsNone(handler.is_forbidden())
+
+        context = Mock(
+            address=('8.8.8.8', 8888),
+            trusted_downstream=[],
+            _orig_protocol='https'
+        )
+        request.connection = Mock(context=context)
+        self.assertIsNone(handler.is_forbidden())
 
     def test_get_real_client_addr(self):
         x_forwarded_for = '1.1.1.1'

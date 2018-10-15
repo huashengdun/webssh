@@ -51,6 +51,15 @@ def get_app_settings(options):
     return settings
 
 
+def get_server_settings(options):
+    settings = dict(
+        xheaders=xheaders,
+        max_body_size=max_body_size,
+        trusted_downstream=get_trusted_downstream(options)
+    )
+    return settings
+
+
 def get_host_keys_settings(options):
     if not options.hostFile:
         host_keys_filename = os.path.join(base_dir, 'known_hosts')
