@@ -32,8 +32,8 @@ class TestSettings(unittest.TestCase):
         sys.stdout = sys_stdout
 
     def test_get_host_keys_settings(self):
-        options.hostFile = ''
-        options.sysHostFile = ''
+        options.hostfile = ''
+        options.syshostfile = ''
         dic = get_host_keys_settings(options)
 
         filename = os.path.join(base_dir, 'known_hosts')
@@ -44,33 +44,33 @@ class TestSettings(unittest.TestCase):
             load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
         )
 
-        options.hostFile = make_tests_data_path('known_hosts_example')
-        options.sysHostFile = make_tests_data_path('known_hosts_example2')
+        options.hostfile = make_tests_data_path('known_hosts_example')
+        options.syshostfile = make_tests_data_path('known_hosts_example2')
         dic2 = get_host_keys_settings(options)
-        self.assertEqual(dic2['host_keys'], load_host_keys(options.hostFile))
-        self.assertEqual(dic2['host_keys_filename'], options.hostFile)
+        self.assertEqual(dic2['host_keys'], load_host_keys(options.hostfile))
+        self.assertEqual(dic2['host_keys_filename'], options.hostfile)
         self.assertEqual(dic2['system_host_keys'],
-                         load_host_keys(options.sysHostFile))
+                         load_host_keys(options.syshostfile))
 
     def test_get_policy_setting(self):
         options.policy = 'warning'
-        options.hostFile = ''
-        options.sysHostFile = ''
+        options.hostfile = ''
+        options.syshostfile = ''
         settings = get_host_keys_settings(options)
         instance = get_policy_setting(options, settings)
         self.assertIsInstance(instance, paramiko.client.WarningPolicy)
 
         options.policy = 'autoadd'
-        options.hostFile = ''
-        options.sysHostFile = ''
+        options.hostfile = ''
+        options.syshostfile = ''
         settings = get_host_keys_settings(options)
         instance = get_policy_setting(options, settings)
         self.assertIsInstance(instance, paramiko.client.AutoAddPolicy)
         os.unlink(settings['host_keys_filename'])
 
         options.policy = 'reject'
-        options.hostFile = ''
-        options.sysHostFile = ''
+        options.hostfile = ''
+        options.syshostfile = ''
         settings = get_host_keys_settings(options)
         try:
             instance = get_policy_setting(options, settings)
@@ -122,18 +122,18 @@ class TestSettings(unittest.TestCase):
         self.assertIsNotNone(ssl_ctx)
 
     def test_get_trusted_downstream(self):
-        options.proxies = ''
-        proxies = set()
-        self.assertEqual(get_trusted_downstream(options), proxies)
+        options.tdstream = ''
+        tdstream = set()
+        self.assertEqual(get_trusted_downstream(options), tdstream)
 
-        options.proxies = '1.1.1.1, 2.2.2.2'
-        proxies = set(['1.1.1.1', '2.2.2.2'])
-        self.assertEqual(get_trusted_downstream(options), proxies)
+        options.tdstream = '1.1.1.1, 2.2.2.2'
+        tdstream = set(['1.1.1.1', '2.2.2.2'])
+        self.assertEqual(get_trusted_downstream(options), tdstream)
 
-        options.proxies = '1.1.1.1, 2.2.2.2, 2.2.2.2'
-        proxies = set(['1.1.1.1', '2.2.2.2'])
-        self.assertEqual(get_trusted_downstream(options), proxies)
+        options.tdstream = '1.1.1.1, 2.2.2.2, 2.2.2.2'
+        tdstream = set(['1.1.1.1', '2.2.2.2'])
+        self.assertEqual(get_trusted_downstream(options), tdstream)
 
-        options.proxies = '1.1.1.1, 2.2.2.'
+        options.tdstream = '1.1.1.1, 2.2.2.'
         with self.assertRaises(ValueError):
-            get_trusted_downstream(options), proxies
+            get_trusted_downstream(options), tdstream

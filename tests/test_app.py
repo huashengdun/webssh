@@ -43,9 +43,9 @@ class TestAppBasic(AsyncHTTPTestCase):
         loop = self.io_loop
         options.debug = False
         options.policy = random.choice(['warning', 'autoadd'])
-        options.hostFile = ''
-        options.sysHostFile = ''
-        options.proxies = ''
+        options.hostfile = ''
+        options.syshostfile = ''
+        options.tdstream = ''
         app = make_app(make_handlers(loop, options), get_app_settings(options))
         return app
 
@@ -442,9 +442,9 @@ class OtherTestBase(AsyncHTTPTestCase):
     headers = {'Cookie': '_xsrf=yummy'}
     debug = False
     policy = None
-    hostFile = ''
-    sysHostFile = ''
-    proxies = ''
+    hostfile = ''
+    syshostfile = ''
+    tdstream = ''
     body = {
         'hostname': '127.0.0.1',
         'port': '',
@@ -458,9 +458,9 @@ class OtherTestBase(AsyncHTTPTestCase):
         loop = self.io_loop
         options.debug = self.debug
         options.policy = self.policy if self.policy else random.choice(['warning', 'autoadd'])  # noqa
-        options.hostFile = self.hostFile
-        options.sysHostFile = self.sysHostFile
-        options.proxies = self.proxies
+        options.hostfile = self.hostfile
+        options.syshostfile = self.syshostfile
+        options.tdstream = self.tdstream
         app = make_app(make_handlers(loop, options), get_app_settings(options))
         return app
 
@@ -542,7 +542,7 @@ class TestAppMiscell(OtherTestBase):
 class TestAppWithRejectPolicy(OtherTestBase):
 
     policy = 'reject'
-    hostFile = make_tests_data_path('known_hosts_example')
+    hostfile = make_tests_data_path('known_hosts_example')
 
     @tornado.testing.gen_test
     def test_app_with_hostname_not_in_hostkeys(self):

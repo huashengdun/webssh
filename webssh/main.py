@@ -36,9 +36,9 @@ def main():
     logging.info('Listening on {}:{}'.format(options.address, options.port))
     if ssl_ctx:
         server_settings.update(ssl_options=ssl_ctx)
-        app.listen(options.sslPort, options.sslAddress, **server_settings)
-        logging.info('Listening on ssl {}:{}'.format(options.sslAddress,
-                                                     options.sslPort))
+        app.listen(options.sslport, options.ssladdress, **server_settings)
+        logging.info('Listening on ssl {}:{}'.format(options.ssladdress,
+                                                     options.sslport))
     loop.start()
 
 
