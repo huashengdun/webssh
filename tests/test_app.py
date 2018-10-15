@@ -12,7 +12,7 @@ from tests.sshserver import run_ssh_server, banner
 from tests.utils import encode_multipart_formdata, read_file, make_tests_data_path  # noqa
 from webssh.main import make_app, make_handlers
 from webssh.settings import (
-    get_app_settings, max_body_size, swallow_http_errors
+    get_app_settings, get_server_settings, max_body_size, swallow_http_errors
 )
 from webssh.utils import to_str
 
@@ -45,6 +45,7 @@ class TestAppBasic(AsyncHTTPTestCase):
         options.policy = random.choice(['warning', 'autoadd'])
         options.hostFile = ''
         options.sysHostFile = ''
+        options.proxies = ''
         app = make_app(make_handlers(loop, options), get_app_settings(options))
         return app
 
@@ -63,9 +64,7 @@ class TestAppBasic(AsyncHTTPTestCase):
         print('='*20)
 
     def get_httpserver_options(self):
-        options = super(TestAppBasic, self).get_httpserver_options()
-        options.update(max_body_size=max_body_size)
-        return options
+        return get_server_settings(options)
 
     def assert_response(self, bstr, response):
         if swallow_http_errors:
@@ -443,8 +442,9 @@ class OtherTestBase(AsyncHTTPTestCase):
     headers = {'Cookie': '_xsrf=yummy'}
     debug = False
     policy = None
-    hostFile = None
-    sysHostFile = None
+    hostFile = ''
+    sysHostFile = ''
+    proxies = ''
     body = {
         'hostname': '127.0.0.1',
         'port': '',
@@ -458,10 +458,14 @@ class OtherTestBase(AsyncHTTPTestCase):
         loop = self.io_loop
         options.debug = self.debug
         options.policy = self.policy if self.policy else random.choice(['warning', 'autoadd'])  # noqa
-        options.hostFile = self.hostFile if self.hostFile else ''
-        options.sysHostFile = self.sysHostFile if self.sysHostFile else ''
+        options.hostFile = self.hostFile
+        options.sysHostFile = self.sysHostFile
+        options.proxies = self.proxies
         app = make_app(make_handlers(loop, options), get_app_settings(options))
         return app
+
+    def get_httpserver_options(self):
+        return get_server_settings(options)
 
     def setUp(self):
         print('='*20)
