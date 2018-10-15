@@ -58,7 +58,7 @@ class MixinHandler(object):
 
         if context._orig_protocol == 'http':
             ipaddr = to_ip_address(ip)
-            if ipaddr.is_global:
+            if not ipaddr.is_private:
                 return True
 
     def set_default_headers(self):
