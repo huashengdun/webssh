@@ -10,7 +10,7 @@ from tests.utils import make_tests_data_path
 from webssh.policy import load_host_keys
 from webssh.settings import (
     get_host_keys_settings, get_policy_setting, base_dir, print_version,
-    get_ssl_context
+    get_ssl_context, get_trusted_downstream
 )
 from webssh.utils import UnicodeType
 from webssh._version import __version__
@@ -120,3 +120,20 @@ class TestSettings(unittest.TestCase):
         options.keyfile = make_tests_data_path('cert.key')
         ssl_ctx = get_ssl_context(options)
         self.assertIsNotNone(ssl_ctx)
+
+    def test_get_trusted_downstream(self):
+        options.proxies = ''
+        proxies = set()
+        self.assertEqual(get_trusted_downstream(options), proxies)
+
+        options.proxies = '1.1.1.1, 2.2.2.2'
+        proxies = set(['1.1.1.1', '2.2.2.2'])
+        self.assertEqual(get_trusted_downstream(options), proxies)
+
+        options.proxies = '1.1.1.1, 2.2.2.2, 2.2.2.2'
+        proxies = set(['1.1.1.1', '2.2.2.2'])
+        self.assertEqual(get_trusted_downstream(options), proxies)
+
+        options.proxies = '1.1.1.1, 2.2.2.'
+        with self.assertRaises(ValueError):
+            get_trusted_downstream(options), proxies

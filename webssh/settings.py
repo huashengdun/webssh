@@ -7,6 +7,7 @@ from tornado.options import define
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
 )
+from webssh.utils import to_ip_address
 from webssh._version import __version__
 
 
@@ -27,6 +28,7 @@ define('policy', default='warning',
        help='Missing host key policy, reject|autoadd|warning')
 define('hostFile', default='', help='User defined host keys file')
 define('sysHostFile', default='', help='System wide host keys file')
+define('proxies', default='', help='trusted downstream, separated by comma')
 define('wpIntvl', type=int, default=0, help='Websocket ping interval')
 define('version', type=bool, help='Show version information',
        callback=print_version)
@@ -92,3 +94,13 @@ def get_ssl_context(options):
         ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         ssl_ctx.load_cert_chain(options.certfile, options.keyfile)
         return ssl_ctx
+
+
+def get_trusted_downstream(options):
+    proxies = set()
+    for ip in options.proxies.split(','):
+        ip = ip.strip()
+        if ip:
+            to_ip_address(ip)
+            proxies.add(ip)
+    return proxies
