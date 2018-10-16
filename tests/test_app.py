@@ -561,3 +561,47 @@ class TestAppWithRejectPolicy(OtherTestBase):
         self.assertIsNone(data['encoding'])
         message = 'Connection to {}:{} is not allowed.'.format(self.body['hostname'], self.sshserver_port) # noqa
         self.assertEqual(message, data['status'])
+
+
+class TestAppWithTrustedStream(OtherTestBase):
+    tdstream = '127.0.0.2'
+
+    def test_with_forbidden_get_request(self):
+        response = self.fetch('/', method='GET')
+        self.assertEqual(response.code, 403)
+        self.assertIn(b'403: Forbidden', response.body)
+
+    def test_with_forbidden_post_request(self):
+        response = self.fetch('/', method='POST', body=urlencode(self.body),
+                              headers=self.headers)
+        self.assertEqual(response.code, 200)
+        self.assertIn(b'"status": "Forbidden"', response.body)
+
+    def test_with_forbidden_put_request(self):
+        response = self.fetch('/', method='PUT', body=urlencode(self.body),
+                              headers=self.headers)
+        self.assertEqual(response.code, 403)
+        self.assertIn(b'403: Forbidden', response.body)
+
+
+class TestAppNotFoundHandler(OtherTestBase):
+
+    def test_with_not_found_get_request(self):
+        response = self.fetch('/pathnotfound', method='GET')
+        self.assertEqual(response.code, 404)
+        self.assertEqual(response.headers['Server'], 'TornadoServer')
+        self.assertIn(b'404: Not Found', response.body)
+
+    def test_with_not_found_post_request(self):
+        response = self.fetch('/pathnotfound', method='POST',
+                              body=urlencode(self.body), headers=self.headers)
+        self.assertEqual(response.code, 404)
+        self.assertEqual(response.headers['Server'], 'TornadoServer')
+        self.assertIn(b'404: Not Found', response.body)
+
+    def test_with_not_found_put_request(self):
+        response = self.fetch('/pathnotfound', method='PUT',
+                              body=urlencode(self.body), headers=self.headers)
+        self.assertEqual(response.code, 404)
+        self.assertEqual(response.headers['Server'], 'TornadoServer')
+        self.assertIn(b'404: Not Found', response.body)

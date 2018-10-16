@@ -54,7 +54,7 @@ class MixinHandler(object):
         lst = context.trusted_downstream
 
         if lst and ip not in lst:
-            logging.info(
+            logging.warning(
                 'IP {!r} not found in trusted downstream {!r}'.format(ip, lst)
             )
             return True
@@ -62,7 +62,7 @@ class MixinHandler(object):
         if context._orig_protocol == 'http':
             ipaddr = to_ip_address(ip)
             if not ipaddr.is_private:
-                logging.info('Public non-https request is forbidden.')
+                logging.warning('Public non-https request is forbidden.')
                 return True
 
     def set_default_headers(self):
