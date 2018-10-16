@@ -3,7 +3,7 @@ import tornado.web
 import tornado.ioloop
 
 from tornado.options import options
-from webssh.handler import IndexHandler, WsockHandler
+from webssh.handler import IndexHandler, WsockHandler, NotFoundHandler
 from webssh.settings import (
     get_app_settings,  get_host_keys_settings, get_policy_setting,
     get_ssl_context, get_server_settings
@@ -23,6 +23,7 @@ def make_handlers(loop, options):
 
 
 def make_app(handlers, settings):
+    settings.update(default_handler_class=NotFoundHandler)
     return tornado.web.Application(handlers, **settings)
 
 

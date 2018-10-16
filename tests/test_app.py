@@ -497,8 +497,13 @@ class TestAppInDebug(OtherTestBase):
             self.assertEqual(response.code, 500)
             self.assertIn(b'Uncaught exception', response.body)
 
-    def test_server_error(self):
-        response = self.fetch('/?error=generate', method='GET')
+    def test_server_error_for_post_method(self):
+        response = self.fetch(
+            '/',
+            method='POST',
+            body=urlencode(dict(self.body, error='raise')),
+            headers=self.headers
+        )
         self.assert_response(b'"status": "Internal Server Error"', response)
 
     def test_html(self):

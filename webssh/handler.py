@@ -54,11 +54,15 @@ class MixinHandler(object):
         lst = context.trusted_downstream
 
         if lst and ip not in lst:
+            logging.info(
+                'IP {!r} not found in trusted downstream {!r}'.format(ip, lst)
+            )
             return True
 
         if context._orig_protocol == 'http':
             ipaddr = to_ip_address(ip)
             if not ipaddr.is_private:
+                logging.info('Public non-https request is forbidden.')
                 return True
 
     def set_default_headers(self):
@@ -93,6 +97,16 @@ class MixinHandler(object):
         return (ip, port)
 
 
+class NotFoundHandler(MixinHandler, tornado.web.ErrorHandler):
+
+    def initialize(self):
+        pass
+
+    def prepare(self):
+        super(NotFoundHandler, self).prepare()
+        raise tornado.web.HTTPError(404)
+
+
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def initialize(self, loop, policy, host_keys_settings):
@@ -101,11 +115,12 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.host_keys_settings = host_keys_settings
         self.ssh_client = self.get_ssh_client()
         self.privatekey_filename = None
+        self.debug = self.settings.get('debug', False)
         self.result = dict(id=None, status=None, encoding=None)
 
     def write_error(self, status_code, **kwargs):
-        if not swallow_http_errors:
-            super(MixinHandler, self).write_error(status_code, **kwargs)
+        if self.request.method != 'POST' or not swallow_http_errors:
+            super(IndexHandler, self).write_error(status_code, **kwargs)
         else:
             exc_info = kwargs.get('exc_info')
             if exc_info:
@@ -269,13 +284,14 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             future.set_result(worker)
 
     def get(self):
-        debug = self.settings.get('debug', False)
-        if debug and self.get_argument('error', u''):
-            raise ValueError('Uncaught exception')
-        self.render('index.html', debug=debug)
+        self.render('index.html', debug=self.debug)
 
     @tornado.gen.coroutine
     def post(self):
+        if self.debug and self.get_argument('error', u''):
+            # for testing purpose only
+            raise ValueError('Uncaught exception')
+
         future = Future()
         t = threading.Thread(target=self.ssh_connect_wrapped, args=(future,))
         t.setDaemon(True)
