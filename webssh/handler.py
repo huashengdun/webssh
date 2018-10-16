@@ -39,6 +39,10 @@ class InvalidValueError(Exception):
 
 class MixinHandler(object):
 
+    custom_headers = {
+        'Server': 'TornadoServer'
+    }
+
     def prepare(self):
         if self.is_forbidden():
             raise tornado.web.HTTPError(403)
@@ -66,7 +70,8 @@ class MixinHandler(object):
                 return True
 
     def set_default_headers(self):
-        self.set_header('Server', 'TornadoServer')
+        for header in self.custom_headers.items():
+            self.set_header(*header)
 
     def get_value(self, name):
         value = self.get_argument(name)

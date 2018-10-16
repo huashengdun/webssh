@@ -586,22 +586,30 @@ class TestAppWithTrustedStream(OtherTestBase):
 
 class TestAppNotFoundHandler(OtherTestBase):
 
+    custom_headers = handler.MixinHandler.custom_headers
+
     def test_with_not_found_get_request(self):
         response = self.fetch('/pathnotfound', method='GET')
         self.assertEqual(response.code, 404)
-        self.assertEqual(response.headers['Server'], 'TornadoServer')
+        self.assertEqual(
+            response.headers['Server'], self.custom_headers['Server']
+        )
         self.assertIn(b'404: Not Found', response.body)
 
     def test_with_not_found_post_request(self):
         response = self.fetch('/pathnotfound', method='POST',
                               body=urlencode(self.body), headers=self.headers)
         self.assertEqual(response.code, 404)
-        self.assertEqual(response.headers['Server'], 'TornadoServer')
+        self.assertEqual(
+            response.headers['Server'], self.custom_headers['Server']
+        )
         self.assertIn(b'404: Not Found', response.body)
 
     def test_with_not_found_put_request(self):
         response = self.fetch('/pathnotfound', method='PUT',
                               body=urlencode(self.body), headers=self.headers)
         self.assertEqual(response.code, 404)
-        self.assertEqual(response.headers['Server'], 'TornadoServer')
+        self.assertEqual(
+            response.headers['Server'], self.custom_headers['Server']
+        )
         self.assertIn(b'404: Not Found', response.body)
