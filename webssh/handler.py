@@ -288,6 +288,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         else:
             future.set_result(worker)
 
+    def head(self):
+        pass
+
     def get(self):
         self.render('index.html', debug=self.debug)
 

@@ -613,3 +613,18 @@ class TestAppNotFoundHandler(OtherTestBase):
             response.headers['Server'], self.custom_headers['Server']
         )
         self.assertIn(b'404: Not Found', response.body)
+
+
+class TestAppHeadRequest(OtherTestBase):
+
+    def test_with_index_path(self):
+        response = self.fetch('/', method='HEAD')
+        self.assertEqual(response.code, 200)
+
+    def test_with_ws_path(self):
+        response = self.fetch('/ws', method='HEAD')
+        self.assertEqual(response.code, 405)
+
+    def test_with_not_found_path(self):
+        response = self.fetch('/notfound', method='HEAD')
+        self.assertEqual(response.code, 404)
