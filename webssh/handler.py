@@ -45,9 +45,8 @@ class MixinHandler(object):
 
     def initialize(self):
         if self.is_forbidden():
-            self.request.connection.stream.write(
-                b'%s 403 Forbidden\r\n\r\n' % to_bytes(self.request.version)
-            )
+            result = '{} 403 Forbidden\r\n\r\n'.format(self.request.version)
+            self.request.connection.stream.write(to_bytes(result))
             self.request.connection.close()
             raise ValueError('Accesss denied')
 
