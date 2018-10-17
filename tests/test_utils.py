@@ -1,8 +1,9 @@
 import unittest
 
 from webssh.utils import (
-    is_valid_ip_address, is_valid_port, is_valid_hostname,
-    to_str, to_bytes, to_int
+    is_valid_ip_address, is_valid_port, is_valid_hostname, to_str, to_bytes,
+    to_int, on_public_network_interface, on_public_network_interfaces,
+    get_ips_by_name
 )
 
 
@@ -51,3 +52,25 @@ class TestUitls(unittest.TestCase):
         self.assertFalse(is_valid_hostname('https://www.google.com'))
         self.assertFalse(is_valid_hostname('127.0.0.1'))
         self.assertFalse(is_valid_hostname('::1'))
+
+    def test_get_ips_by_name(self):
+        self.assertTrue(get_ips_by_name(''), {'0.0.0.0', '::'})
+        self.assertTrue(get_ips_by_name('localhost'), {'127.0.0.1'})
+        self.assertTrue(get_ips_by_name('192.68.1.1'), {'192.168.1.1'})
+        self.assertTrue(get_ips_by_name('2.2.2.2'), {'2.2.2.2'})
+
+    def test_on_public_network_interface(self):
+        self.assertTrue(on_public_network_interface('0.0.0.0'))
+        self.assertTrue(on_public_network_interface('::'))
+        self.assertTrue(on_public_network_interface('0:0:0:0:0:0:0:0'))
+        self.assertTrue(on_public_network_interface('2.2.2.2'))
+        self.assertTrue(on_public_network_interface('2:2:2:2:2:2:2:2'))
+        self.assertIsNone(on_public_network_interface('127.0.0.1'))
+
+    def test_on_public_network_interfaces(self):
+        self.assertTrue(
+            on_public_network_interfaces(['0.0.0.0', '127.0.0.1'])
+        )
+        self.assertIsNone(
+            on_public_network_interfaces(['192.168.1.1', '127.0.0.1'])
+        )

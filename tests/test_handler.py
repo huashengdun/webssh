@@ -3,7 +3,6 @@ import paramiko
 
 from tornado.httpclient import HTTPRequest
 from tornado.httputil import HTTPServerRequest
-from tornado.web import HTTPError
 from tests.utils import read_file, make_tests_data_path
 from webssh.handler import MixinHandler, IndexHandler, InvalidValueError
 
@@ -17,6 +16,8 @@ class TestMixinHandler(unittest.TestCase):
 
     def test_is_forbidden(self):
         handler = MixinHandler()
+        handler.is_open_to_public = True
+        handler.forbid_public_http = True
         request = HTTPRequest('http://example.com/')
         handler.request = request
 

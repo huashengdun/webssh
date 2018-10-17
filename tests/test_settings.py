@@ -7,10 +7,11 @@ import paramiko
 import tornado.options as options
 
 from tests.utils import make_tests_data_path
+from webssh import settings
 from webssh.policy import load_host_keys
 from webssh.settings import (
     get_host_keys_settings, get_policy_setting, base_dir, print_version,
-    get_ssl_context, get_trusted_downstream
+    get_ssl_context, get_trusted_downstream, detect_is_open_to_public,
 )
 from webssh.utils import UnicodeType
 from webssh._version import __version__
@@ -137,3 +138,29 @@ class TestSettings(unittest.TestCase):
         options.tdstream = '1.1.1.1, 2.2.2.'
         with self.assertRaises(ValueError):
             get_trusted_downstream(options), tdstream
+
+    def test_detect_is_open_to_public(self):
+        options.fbidhttp = True
+        options.address = 'localhost'
+        detect_is_open_to_public(options)
+        self.assertFalse(settings.is_open_to_public)
+
+        options.address = '127.0.0.1'
+        detect_is_open_to_public(options)
+        self.assertFalse(settings.is_open_to_public)
+
+        options.address = '192.168.1.1'
+        detect_is_open_to_public(options)
+        self.assertFalse(settings.is_open_to_public)
+
+        options.address = ''
+        detect_is_open_to_public(options)
+        self.assertTrue(settings.is_open_to_public)
+
+        options.address = '0.0.0.0'
+        detect_is_open_to_public(options)
+        self.assertTrue(settings.is_open_to_public)
+
+        options.address = '::'
+        detect_is_open_to_public(options)
+        self.assertTrue(settings.is_open_to_public)

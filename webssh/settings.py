@@ -7,7 +7,9 @@ from tornado.options import define
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
 )
-from webssh.utils import to_ip_address
+from webssh.utils import (
+    to_ip_address, get_ips_by_name, on_public_network_interfaces
+)
 from webssh._version import __version__
 
 
@@ -29,6 +31,7 @@ define('policy', default='warning',
 define('hostfile', default='', help='User defined host keys file')
 define('syshostfile', default='', help='System wide host keys file')
 define('tdstream', default='', help='trusted downstream, separated by comma')
+define('fbidhttp', type=bool, default=True, help='forbid public http request')
 define('wpintvl', type=int, default=0, help='Websocket ping interval')
 define('version', type=bool, help='Show version information',
        callback=print_version)
@@ -38,6 +41,7 @@ base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 max_body_size = 1 * 1024 * 1024
 swallow_http_errors = True
 xheaders = True
+is_open_to_public = False
 
 
 def get_app_settings(options):
@@ -113,3 +117,12 @@ def get_trusted_downstream(options):
             to_ip_address(ip)
             tdstream.add(ip)
     return tdstream
+
+
+def detect_is_open_to_public(options):
+    global is_open_to_public
+    if on_public_network_interfaces(get_ips_by_name(options.address)):
+        is_open_to_public = True
+        logging.info('Forbid public http: {}'.format(options.fbidhttp))
+    else:
+        is_open_to_public = False
