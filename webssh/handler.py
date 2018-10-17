@@ -43,9 +43,13 @@ class MixinHandler(object):
         'Server': 'TornadoServer'
     }
 
-    def prepare(self):
+    def initialize(self):
         if self.is_forbidden():
-            raise tornado.web.HTTPError(403)
+            self.request.connection.stream.write(
+                b'%s 403 Forbidden\r\n\r\n' % to_bytes(self.request.version)
+            )
+            self.request.connection.close()
+            raise ValueError('Accesss denied')
 
     def is_forbidden(self):
         """
@@ -105,10 +109,9 @@ class MixinHandler(object):
 class NotFoundHandler(MixinHandler, tornado.web.ErrorHandler):
 
     def initialize(self):
-        pass
+        super(NotFoundHandler, self).initialize()
 
     def prepare(self):
-        super(NotFoundHandler, self).prepare()
         raise tornado.web.HTTPError(404)
 
 
@@ -122,6 +125,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.privatekey_filename = None
         self.debug = self.settings.get('debug', False)
         self.result = dict(id=None, status=None, encoding=None)
+        super(IndexHandler, self).initialize()
 
     def write_error(self, status_code, **kwargs):
         if self.request.method != 'POST' or not swallow_http_errors:
@@ -322,6 +326,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def initialize(self, loop):
         self.loop = loop
         self.worker_ref = None
+        super(WsockHandler, self).initialize()
 
     def open(self):
         self.src_addr = self.get_client_addr()

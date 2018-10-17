@@ -569,19 +569,19 @@ class TestAppWithTrustedStream(OtherTestBase):
     def test_with_forbidden_get_request(self):
         response = self.fetch('/', method='GET')
         self.assertEqual(response.code, 403)
-        self.assertIn(b'403: Forbidden', response.body)
+        self.assertIn('Forbidden', response.error.message)
 
     def test_with_forbidden_post_request(self):
         response = self.fetch('/', method='POST', body=urlencode(self.body),
                               headers=self.headers)
-        self.assertEqual(response.code, 200)
-        self.assertIn(b'"status": "Forbidden"', response.body)
+        self.assertEqual(response.code, 403)
+        self.assertIn('Forbidden', response.error.message)
 
     def test_with_forbidden_put_request(self):
         response = self.fetch('/', method='PUT', body=urlencode(self.body),
                               headers=self.headers)
         self.assertEqual(response.code, 403)
-        self.assertIn(b'403: Forbidden', response.body)
+        self.assertIn('Forbidden', response.error.message)
 
 
 class TestAppNotFoundHandler(OtherTestBase):
