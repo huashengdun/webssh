@@ -10,6 +10,7 @@ import paramiko
 import tornado.web
 
 from tornado.ioloop import IOLoop
+from tornado.options import options
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname,
     to_bytes, to_str, to_int, to_ip_address, UnicodeType
@@ -32,8 +33,6 @@ KEY_MAX_SIZE = 16384
 DEFAULT_PORT = 22
 
 swallow_http_errors = True
-is_open_to_public = None
-forbid_public_http = None
 
 
 class InvalidValueError(Exception):
@@ -69,12 +68,11 @@ class MixinHandler(object):
             )
             return True
 
-        if is_open_to_public and forbid_public_http:
-            if context._orig_protocol == 'http':
-                ipaddr = to_ip_address(ip)
-                if not ipaddr.is_private:
-                    logging.warning('Public non-https request is forbidden.')
-                    return True
+        if options.fbidhttp and context._orig_protocol == 'http':
+            ipaddr = to_ip_address(ip)
+            if not ipaddr.is_private:
+                logging.warning('Public non-https request is forbidden.')
+                return True
 
     def set_default_headers(self):
         for header in self.custom_headers.items():

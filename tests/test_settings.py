@@ -1,5 +1,4 @@
 import io
-import random
 import ssl
 import sys
 import os.path
@@ -8,7 +7,6 @@ import paramiko
 import tornado.options as options
 
 from tests.utils import make_tests_data_path
-from webssh import handler
 from webssh.policy import load_host_keys
 from webssh.settings import (
     get_host_keys_settings, get_policy_setting, base_dir, print_version,
@@ -141,39 +139,22 @@ class TestSettings(unittest.TestCase):
             get_trusted_downstream(options), tdstream
 
     def test_detect_is_open_to_public(self):
-        options.fbidhttp = random.choice([True, False])
-        options.address = 'localhost'
+        options.fbidhttp = True
+        options.address = '127.0.0.1'
         detect_is_open_to_public(options)
-        self.assertFalse(handler.is_open_to_public)
-        self.assertEqual(handler.forbid_public_http, options.fbidhttp)
+        self.assertFalse(options.fbidhttp)
 
-        options.fbidhttp = random.choice([True, False])
         options.fbidhttp = False
         options.address = '127.0.0.1'
         detect_is_open_to_public(options)
-        self.assertFalse(handler.is_open_to_public)
-        self.assertEqual(handler.forbid_public_http, options.fbidhttp)
+        self.assertFalse(options.fbidhttp)
 
-        options.fbidhttp = random.choice([True, False])
-        options.address = '192.168.1.1'
-        detect_is_open_to_public(options)
-        self.assertFalse(handler.is_open_to_public)
-        self.assertEqual(handler.forbid_public_http, options.fbidhttp)
-
-        options.fbidhttp = random.choice([True, False])
-        options.address = ''
-        detect_is_open_to_public(options)
-        self.assertTrue(handler.is_open_to_public)
-        self.assertEqual(handler.forbid_public_http, options.fbidhttp)
-
-        options.fbidhttp = random.choice([True, False])
+        options.fbidhttp = False
         options.address = '0.0.0.0'
         detect_is_open_to_public(options)
-        self.assertTrue(handler.is_open_to_public)
-        self.assertEqual(handler.forbid_public_http, options.fbidhttp)
+        self.assertFalse(options.fbidhttp)
 
-        options.fbidhttp = random.choice([True, False])
-        options.address = '::'
+        options.fbidhttp = True
+        options.address = '0.0.0.0'
         detect_is_open_to_public(options)
-        self.assertTrue(handler.is_open_to_public)
-        self.assertEqual(handler.forbid_public_http, options.fbidhttp)
+        self.assertTrue(options.fbidhttp)
