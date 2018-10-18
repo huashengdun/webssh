@@ -411,7 +411,7 @@ jQuery(function($){
       msg = 'Need value username';
     } else if (!hostname_tester.test(hostname)) {
       msg =  'Invalid hostname: ' + hostname;
-    } else if (port <= 0 || port > 63335) {
+    } else if (port <= 0 || port > 65535) {
       msg = 'Invalid port: ' + port;
     } else {
       if (pk) {
