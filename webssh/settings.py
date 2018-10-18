@@ -4,6 +4,7 @@ import ssl
 import sys
 
 from tornado.options import define
+from webssh import handler
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
 )
@@ -39,9 +40,7 @@ define('version', type=bool, help='Show version information',
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 max_body_size = 1 * 1024 * 1024
-swallow_http_errors = True
 xheaders = True
-is_open_to_public = False
 
 
 def get_app_settings(options):
@@ -120,9 +119,10 @@ def get_trusted_downstream(options):
 
 
 def detect_is_open_to_public(options):
-    global is_open_to_public
+    handler.forbid_public_http = options.fbidhttp
+
     if on_public_network_interfaces(get_ips_by_name(options.address)):
-        is_open_to_public = True
+        handler.is_open_to_public = True
         logging.info('Forbid public http: {}'.format(options.fbidhttp))
     else:
-        is_open_to_public = False
+        handler.is_open_to_public = False

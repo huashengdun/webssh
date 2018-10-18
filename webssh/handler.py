@@ -10,8 +10,6 @@ import paramiko
 import tornado.web
 
 from tornado.ioloop import IOLoop
-from tornado.options import options
-from webssh import settings
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname,
     to_bytes, to_str, to_int, to_ip_address, UnicodeType
@@ -33,6 +31,10 @@ DELAY = 3
 KEY_MAX_SIZE = 16384
 DEFAULT_PORT = 22
 
+swallow_http_errors = True
+is_open_to_public = None
+forbid_public_http = None
+
 
 class InvalidValueError(Exception):
     pass
@@ -40,20 +42,11 @@ class InvalidValueError(Exception):
 
 class MixinHandler(object):
 
-    is_open_to_public = None
-    forbid_public_http = None
-
     custom_headers = {
         'Server': 'TornadoServer'
     }
 
     def initialize(self):
-        if self.is_open_to_public is None:
-            MixinHandler.is_open_to_public = settings.is_open_to_public
-
-        if self.forbid_public_http is None:
-            MixinHandler.forbid_public_http = options.fbidhttp
-
         if self.is_forbidden():
             result = '{} 403 Forbidden\r\n\r\n'.format(self.request.version)
             self.request.connection.stream.write(to_bytes(result))
@@ -76,7 +69,7 @@ class MixinHandler(object):
             )
             return True
 
-        if self.is_open_to_public and self.forbid_public_http:
+        if is_open_to_public and forbid_public_http:
             if context._orig_protocol == 'http':
                 ipaddr = to_ip_address(ip)
                 if not ipaddr.is_private:
@@ -138,7 +131,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         super(IndexHandler, self).initialize()
 
     def write_error(self, status_code, **kwargs):
-        if self.request.method != 'POST' or not settings.swallow_http_errors:
+        if self.request.method != 'POST' or not swallow_http_errors:
             super(IndexHandler, self).write_error(status_code, **kwargs)
         else:
             exc_info = kwargs.get('exc_info')

@@ -3,16 +3,16 @@ import random
 import threading
 import tornado.websocket
 import tornado.gen
-import webssh.handler as handler
 
 from tornado.testing import AsyncHTTPTestCase
 from tornado.httpclient import HTTPError
 from tornado.options import options
 from tests.sshserver import run_ssh_server, banner
 from tests.utils import encode_multipart_formdata, read_file, make_tests_data_path  # noqa
+from webssh import handler
 from webssh.main import make_app, make_handlers
 from webssh.settings import (
-    get_app_settings, get_server_settings, max_body_size, swallow_http_errors
+    get_app_settings, get_server_settings, max_body_size
 )
 from webssh.utils import to_str
 
@@ -23,6 +23,7 @@ except ImportError:
 
 
 handler.DELAY = 0.1
+swallow_http_errors = handler.swallow_http_errors
 
 
 class TestAppBasic(AsyncHTTPTestCase):

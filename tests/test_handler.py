@@ -1,5 +1,6 @@
 import unittest
 import paramiko
+import webssh.handler
 
 from tornado.httpclient import HTTPRequest
 from tornado.httputil import HTTPServerRequest
@@ -16,8 +17,8 @@ class TestMixinHandler(unittest.TestCase):
 
     def test_is_forbidden(self):
         handler = MixinHandler()
-        handler.is_open_to_public = True
-        handler.forbid_public_http = True
+        webssh.handler.is_open_to_public = True
+        webssh.handler.forbid_public_http = True
         request = HTTPRequest('http://example.com/')
         handler.request = request
 
