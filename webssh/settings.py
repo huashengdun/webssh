@@ -30,8 +30,10 @@ define('policy', default='warning',
        help='Missing host key policy, reject|autoadd|warning')
 define('hostfile', default='', help='User defined host keys file')
 define('syshostfile', default='', help='System wide host keys file')
-define('tdstream', default='', help='trusted downstream, separated by comma')
-define('fbidhttp', type=bool, default=True, help='forbid public http request')
+define('tdstream', default='', help='Trusted downstream, separated by comma')
+define('fbidhttp', type=bool, default=True,
+       help='Forbid public plain http incoming requests')
+define('xheaders', type=bool, default=True, help='Support xheaders')
 define('wpintvl', type=int, default=0, help='Websocket ping interval')
 define('version', type=bool, help='Show version information',
        callback=print_version)
@@ -39,7 +41,6 @@ define('version', type=bool, help='Show version information',
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 max_body_size = 1 * 1024 * 1024
-xheaders = True
 
 
 def get_app_settings(options):
@@ -55,7 +56,7 @@ def get_app_settings(options):
 
 def get_server_settings(options):
     settings = dict(
-        xheaders=xheaders,
+        xheaders=options.xheaders,
         max_body_size=max_body_size,
         trusted_downstream=get_trusted_downstream(options)
     )
@@ -121,4 +122,4 @@ def detect_is_open_to_public(options):
     result = on_public_network_interfaces(get_ips_by_name(options.address))
     if not result and options.fbidhttp:
         options.fbidhttp = False
-    logging.info('Forbid public http: {}'.format(options.fbidhttp))
+    logging.info('Forbid public plain http: {}'.format(options.fbidhttp))

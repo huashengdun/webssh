@@ -1,7 +1,6 @@
 import unittest
 import paramiko
 
-from tornado.httpclient import HTTPRequest
 from tornado.httputil import HTTPServerRequest
 from tornado.options import options
 from tests.utils import read_file, make_tests_data_path
@@ -17,41 +16,54 @@ class TestMixinHandler(unittest.TestCase):
 
     def test_is_forbidden(self):
         handler = MixinHandler()
-        request = HTTPRequest('http://example.com/')
-        handler.request = request
         options.fbidhttp = True
 
-        context = Mock(
+        handler.context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=['127.0.0.1'],
             _orig_protocol='http'
         )
-        request.connection = Mock(context=context)
         self.assertTrue(handler.is_forbidden())
 
-        context = Mock(
+        handler.context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=[],
             _orig_protocol='http'
         )
-        request.connection = Mock(context=context)
         self.assertTrue(handler.is_forbidden())
 
-        context = Mock(
+        handler.context = Mock(
             address=('192.168.1.1', 8888),
             trusted_downstream=[],
             _orig_protocol='http'
         )
-        request.connection = Mock(context=context)
         self.assertIsNone(handler.is_forbidden())
 
-        context = Mock(
+        handler.context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=[],
             _orig_protocol='https'
         )
-        request.connection = Mock(context=context)
         self.assertIsNone(handler.is_forbidden())
+
+    def test_get_client_addr(self):
+        handler = MixinHandler()
+        client_addr = ('8.8.8.8', 8888)
+        context_addr = ('127.0.0.1', 1234)
+        options.xheaders = True
+
+        handler.context = Mock(address=context_addr)
+        handler.get_real_client_addr = lambda: None
+        self.assertEqual(handler.get_client_addr(), context_addr)
+
+        handler.context = Mock(address=context_addr)
+        handler.get_real_client_addr = lambda: client_addr
+        self.assertEqual(handler.get_client_addr(), client_addr)
+
+        options.xheaders = False
+        handler.context = Mock(address=context_addr)
+        handler.get_real_client_addr = lambda: client_addr
+        self.assertEqual(handler.get_client_addr(), context_addr)
 
     def test_get_real_client_addr(self):
         x_forwarded_for = '1.1.1.1'

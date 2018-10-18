@@ -46,19 +46,21 @@ class MixinHandler(object):
     }
 
     def initialize(self):
+        conn = self.request.connection
+        self.context = conn.context
         if self.is_forbidden():
             result = '{} 403 Forbidden\r\n\r\n'.format(self.request.version)
-            self.request.connection.stream.write(to_bytes(result))
-            self.request.connection.close()
+            conn.stream.write(to_bytes(result))
+            conn.close()
             raise ValueError('Accesss denied')
 
     def is_forbidden(self):
         """
         Following requests are forbidden:
         * requests not come from trusted_downstream (if set).
-        * non-https requests from a public network.
+        * plain http requests from a public network.
         """
-        context = self.request.connection.context
+        context = self.context
         ip = context.address[0]
         lst = context.trusted_downstream
 
@@ -71,7 +73,7 @@ class MixinHandler(object):
         if options.fbidhttp and context._orig_protocol == 'http':
             ipaddr = to_ip_address(ip)
             if not ipaddr.is_private:
-                logging.warning('Public non-https request is forbidden.')
+                logging.warning('Public plain http request is forbidden.')
                 return True
 
     def set_default_headers(self):
@@ -85,8 +87,10 @@ class MixinHandler(object):
         return value
 
     def get_client_addr(self):
-        return self.get_real_client_addr() or self.request.connection.context.\
-                address
+        if options.xheaders:
+            return self.get_real_client_addr() or self.context.address
+        else:
+            return self.context.address
 
     def get_real_client_addr(self):
         ip = self.request.remote_ip
