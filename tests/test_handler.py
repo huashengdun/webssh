@@ -18,33 +18,33 @@ class TestMixinHandler(unittest.TestCase):
         handler = MixinHandler()
         options.fbidhttp = True
 
-        handler.context = Mock(
+        context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=['127.0.0.1'],
             _orig_protocol='http'
         )
-        self.assertTrue(handler.is_forbidden())
+        self.assertTrue(handler.is_forbidden(context))
 
-        handler.context = Mock(
+        context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=[],
             _orig_protocol='http'
         )
-        self.assertTrue(handler.is_forbidden())
+        self.assertTrue(handler.is_forbidden(context))
 
-        handler.context = Mock(
+        context = Mock(
             address=('192.168.1.1', 8888),
             trusted_downstream=[],
             _orig_protocol='http'
         )
-        self.assertIsNone(handler.is_forbidden())
+        self.assertIsNone(handler.is_forbidden(context))
 
-        handler.context = Mock(
+        context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=[],
             _orig_protocol='https'
         )
-        self.assertIsNone(handler.is_forbidden())
+        self.assertIsNone(handler.is_forbidden(context))
 
     def test_get_client_addr(self):
         handler = MixinHandler()
