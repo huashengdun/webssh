@@ -55,8 +55,11 @@ Server options
 
 .. code:: bash
 
-    # listen address and port
+    # start a http server with specified listen address and listen port
     wssh --address='0.0.0.0' --port=8000
+
+    # start a https server
+    wssh --certfile='cert.crt' --keyfile='cert.key'
 
     # missing host key policy
     wssh --policy=reject
