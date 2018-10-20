@@ -122,21 +122,21 @@ class TestSettings(unittest.TestCase):
         self.assertIsNotNone(ssl_ctx)
 
     def test_get_trusted_downstream(self):
-        options.tdstream = ''
-        tdstream = set()
-        self.assertEqual(get_trusted_downstream(options), tdstream)
+        tdstream = ''
+        result = set()
+        self.assertEqual(get_trusted_downstream(tdstream), result)
 
-        options.tdstream = '1.1.1.1, 2.2.2.2'
-        tdstream = set(['1.1.1.1', '2.2.2.2'])
-        self.assertEqual(get_trusted_downstream(options), tdstream)
+        tdstream = '1.1.1.1, 2.2.2.2'
+        result = set(['1.1.1.1', '2.2.2.2'])
+        self.assertEqual(get_trusted_downstream(tdstream), result)
 
-        options.tdstream = '1.1.1.1, 2.2.2.2, 2.2.2.2'
-        tdstream = set(['1.1.1.1', '2.2.2.2'])
-        self.assertEqual(get_trusted_downstream(options), tdstream)
+        tdstream = '1.1.1.1, 2.2.2.2, 2.2.2.2'
+        result = set(['1.1.1.1', '2.2.2.2'])
+        self.assertEqual(get_trusted_downstream(tdstream), result)
 
-        options.tdstream = '1.1.1.1, 2.2.2.'
+        tdstream = '1.1.1.1, 2.2.2.'
         with self.assertRaises(ValueError):
-            get_trusted_downstream(options), tdstream
+            get_trusted_downstream(tdstream)
 
     def test_detect_is_open_to_public(self):
         options.fbidhttp = True

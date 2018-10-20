@@ -58,7 +58,7 @@ def get_server_settings(options):
     settings = dict(
         xheaders=options.xheaders,
         max_body_size=max_body_size,
-        trusted_downstream=get_trusted_downstream(options)
+        trusted_downstream=get_trusted_downstream(options.tdstream)
     )
     return settings
 
@@ -108,14 +108,14 @@ def get_ssl_context(options):
         return ssl_ctx
 
 
-def get_trusted_downstream(options):
-    tdstream = set()
-    for ip in options.tdstream.split(','):
+def get_trusted_downstream(tdstream):
+    result = set()
+    for ip in tdstream.split(','):
         ip = ip.strip()
         if ip:
             to_ip_address(ip)
-            tdstream.add(ip)
-    return tdstream
+            result.add(ip)
+    return result
 
 
 def detect_is_open_to_public(options):
