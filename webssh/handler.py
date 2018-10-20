@@ -12,8 +12,8 @@ import tornado.web
 from tornado.ioloop import IOLoop
 from tornado.options import options
 from webssh.utils import (
-    is_valid_ip_address, is_valid_port, is_valid_hostname,
-    to_bytes, to_str, to_int, to_ip_address, UnicodeType
+    is_valid_ip_address, is_valid_port, is_valid_hostname, to_bytes, to_str,
+    to_int, to_ip_address, UnicodeType, is_name_open_to_public
 )
 from webssh.worker import Worker, recycle_worker, workers
 
@@ -33,6 +33,17 @@ KEY_MAX_SIZE = 16384
 DEFAULT_PORT = 22
 
 swallow_http_errors = True
+
+# status of the http(s) server
+open_to_public = {
+    'http': None,
+    'https': None
+}
+
+
+def config_open_to_public(address, server_type):
+    status = True if is_name_open_to_public(address) else False
+    open_to_public[server_type] = status
 
 
 class InvalidValueError(Exception):
@@ -70,11 +81,12 @@ class MixinHandler(object):
             )
             return True
 
-        if options.fbidhttp and context._orig_protocol == 'http':
-            ipaddr = to_ip_address(ip)
-            if not ipaddr.is_private:
-                logging.warning('Public plain http request is forbidden.')
-                return True
+        if open_to_public['http'] and options.fbidhttp:
+            if context._orig_protocol == 'http':
+                ipaddr = to_ip_address(ip)
+                if not ipaddr.is_private:
+                    logging.warning('Public plain http request is forbidden.')
+                    return True
 
     def set_default_headers(self):
         for header in self.custom_headers.items():

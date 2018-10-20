@@ -7,9 +7,7 @@ from tornado.options import define
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
 )
-from webssh.utils import (
-    to_ip_address, get_ips_by_name, on_public_network_interfaces
-)
+from webssh.utils import to_ip_address
 from webssh._version import __version__
 
 
@@ -116,10 +114,3 @@ def get_trusted_downstream(tdstream):
             to_ip_address(ip)
             result.add(ip)
     return result
-
-
-def detect_is_open_to_public(options):
-    result = on_public_network_interfaces(get_ips_by_name(options.address))
-    if not result and options.fbidhttp:
-        options.fbidhttp = False
-    logging.info('Forbid public plain http: {}'.format(options.fbidhttp))

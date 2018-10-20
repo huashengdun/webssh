@@ -10,7 +10,7 @@ from tests.utils import make_tests_data_path
 from webssh.policy import load_host_keys
 from webssh.settings import (
     get_host_keys_settings, get_policy_setting, base_dir, print_version,
-    get_ssl_context, get_trusted_downstream, detect_is_open_to_public,
+    get_ssl_context, get_trusted_downstream
 )
 from webssh.utils import UnicodeType
 from webssh._version import __version__
@@ -137,24 +137,3 @@ class TestSettings(unittest.TestCase):
         tdstream = '1.1.1.1, 2.2.2.'
         with self.assertRaises(ValueError):
             get_trusted_downstream(tdstream)
-
-    def test_detect_is_open_to_public(self):
-        options.fbidhttp = True
-        options.address = '127.0.0.1'
-        detect_is_open_to_public(options)
-        self.assertFalse(options.fbidhttp)
-
-        options.fbidhttp = False
-        options.address = '127.0.0.1'
-        detect_is_open_to_public(options)
-        self.assertFalse(options.fbidhttp)
-
-        options.fbidhttp = False
-        options.address = '0.0.0.0'
-        detect_is_open_to_public(options)
-        self.assertFalse(options.fbidhttp)
-
-        options.fbidhttp = True
-        options.address = '0.0.0.0'
-        detect_is_open_to_public(options)
-        self.assertTrue(options.fbidhttp)

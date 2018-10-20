@@ -4,7 +4,9 @@ import paramiko
 from tornado.httputil import HTTPServerRequest
 from tornado.options import options
 from tests.utils import read_file, make_tests_data_path
-from webssh.handler import MixinHandler, IndexHandler, InvalidValueError
+from webssh.handler import (
+    MixinHandler, IndexHandler, InvalidValueError, open_to_public
+)
 
 try:
     from unittest.mock import Mock
@@ -16,6 +18,7 @@ class TestMixinHandler(unittest.TestCase):
 
     def test_is_forbidden(self):
         handler = MixinHandler()
+        open_to_public['http'] = True
         options.fbidhttp = True
 
         context = Mock(

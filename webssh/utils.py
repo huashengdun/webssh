@@ -82,7 +82,7 @@ def on_public_network_interface(ip):
         return True
 
 
-def on_public_network_interfaces(ips):
-    for ip in ips:
+def is_name_open_to_public(name):
+    for ip in get_ips_by_name(name):
         if on_public_network_interface(ip):
             return True

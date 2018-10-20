@@ -2,8 +2,8 @@ import unittest
 
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname, to_str, to_bytes,
-    to_int, on_public_network_interface, on_public_network_interfaces,
-    get_ips_by_name
+    to_int, on_public_network_interface, get_ips_by_name,
+    is_name_open_to_public
 )
 
 
@@ -67,10 +67,9 @@ class TestUitls(unittest.TestCase):
         self.assertTrue(on_public_network_interface('2:2:2:2:2:2:2:2'))
         self.assertIsNone(on_public_network_interface('127.0.0.1'))
 
-    def test_on_public_network_interfaces(self):
-        self.assertTrue(
-            on_public_network_interfaces(['0.0.0.0', '127.0.0.1'])
-        )
-        self.assertIsNone(
-            on_public_network_interfaces(['192.168.1.1', '127.0.0.1'])
-        )
+    def test_is_name_open_to_public(self):
+        self.assertTrue(is_name_open_to_public('0.0.0.0'))
+        self.assertTrue(is_name_open_to_public('::'))
+        self.assertIsNone(is_name_open_to_public('192.168.1.1'))
+        self.assertIsNone(is_name_open_to_public('127.0.0.1'))
+        self.assertIsNone(is_name_open_to_public('localhost'))
