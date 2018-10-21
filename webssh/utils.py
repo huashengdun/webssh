@@ -50,6 +50,16 @@ def is_valid_port(port):
     return 0 < port < 65536
 
 
+def is_ip_hostname(hostname):
+    it = iter(hostname)
+    if next(it) == '[':
+        return True
+    for ch in it:
+        if ch != '.' and not ch.isdigit():
+            return False
+    return True
+
+
 def is_valid_hostname(hostname):
     if hostname[-1] == '.':
         # strip exactly one dot from the right, if present

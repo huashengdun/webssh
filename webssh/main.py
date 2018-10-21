@@ -33,8 +33,7 @@ def app_listen(app, port, address, server_settings):
     app.listen(port, address, **server_settings)
     server_type = 'https' if server_settings.get('ssl_options') else 'http'
     logging.info(
-        'Started a {} server listening on {}:{}'.format(
-            server_type, address, port)
+        'Listening on {}:{} ({})'.format(address, port, server_type)
     )
     config_open_to_public(address, server_type)
 

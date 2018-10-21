@@ -19,35 +19,64 @@ class TestMixinHandler(unittest.TestCase):
     def test_is_forbidden(self):
         handler = MixinHandler()
         open_to_public['http'] = True
+        open_to_public['https'] = True
         options.fbidhttp = True
+        options.redirect = True
 
         context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=['127.0.0.1'],
             _orig_protocol='http'
         )
-        self.assertTrue(handler.is_forbidden(context))
+        self.assertTrue(handler.is_forbidden(context, ''))
 
         context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=[],
             _orig_protocol='http'
         )
-        self.assertTrue(handler.is_forbidden(context))
+
+        hostname = 'www.google.com'
+        self.assertEqual(handler.is_forbidden(context, hostname), False)
 
         context = Mock(
             address=('192.168.1.1', 8888),
             trusted_downstream=[],
             _orig_protocol='http'
         )
-        self.assertIsNone(handler.is_forbidden(context))
+        self.assertIsNone(handler.is_forbidden(context, ''))
 
         context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=[],
             _orig_protocol='https'
         )
-        self.assertIsNone(handler.is_forbidden(context))
+        self.assertIsNone(handler.is_forbidden(context, ''))
+
+        context = Mock(
+            address=('8.8.8.8', 8888),
+            trusted_downstream=[],
+            _orig_protocol='http'
+        )
+        hostname = '8.8.8.8'
+        self.assertTrue(handler.is_forbidden(context, hostname))
+
+    def test_get_redirect_url(self):
+        handler = MixinHandler()
+        hostname = 'www.example.com'
+        uri = '/'
+        port = 443
+
+        self.assertTrue(
+            handler.get_redirect_url(hostname, port, uri=uri),
+            'https://www.example.com/'
+        )
+
+        port = 4433
+        self.assertTrue(
+            handler.get_redirect_url(hostname, port, uri),
+            'https://www.example.com:4433/'
+        )
 
     def test_get_client_addr(self):
         handler = MixinHandler()

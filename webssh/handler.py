@@ -13,7 +13,7 @@ from tornado.ioloop import IOLoop
 from tornado.options import options
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname, to_bytes, to_str,
-    to_int, to_ip_address, UnicodeType, is_name_open_to_public
+    to_int, to_ip_address, UnicodeType, is_name_open_to_public, is_ip_hostname
 )
 from webssh.worker import Worker, recycle_worker, workers
 
@@ -34,7 +34,7 @@ DEFAULT_PORT = 22
 
 swallow_http_errors = True
 
-# status of the http(s) server
+# set by config_open_to_public
 open_to_public = {
     'http': None,
     'https': None
@@ -56,22 +56,28 @@ class MixinHandler(object):
         'Server': 'TornadoServer'
     }
 
-    def initialize(self, loop=None):
-        conn = self.request.connection
-        if self.is_forbidden(conn.context):
-            result = '{} 403 Forbidden\r\n\r\n'.format(self.request.version)
-            conn.stream.write(to_bytes(result))
-            conn.close()
-            raise ValueError('Accesss denied')
-        self.loop = loop
-        self.context = conn.context
+    html = ('<html><head><title>{code} {reason}</title></head><body>{code} '
+            '{reason}</body></html>')
 
-    def is_forbidden(self, context):
-        """
-        Following requests are forbidden:
-        * requests not come from trusted_downstream (if set).
-        * plain http requests from a public network.
-        """
+    def initialize(self, loop=None):
+        context = self.request.connection.context
+        result = self.is_forbidden(context, self.request.host_name)
+        self._transforms = []
+        if result:
+            self.set_status(403)
+            self.finish(
+                self.html.format(code=self._status_code, reason=self._reason)
+            )
+        elif result is False:
+            to_url = self.get_redirect_url(
+                self.request.host_name, options.sslport, self.request.uri
+            )
+            self.redirect(to_url, permanent=True)
+        else:
+            self.loop = loop
+            self.context = context
+
+    def is_forbidden(self, context, hostname):
         ip = context.address[0]
         lst = context.trusted_downstream
 
@@ -81,12 +87,19 @@ class MixinHandler(object):
             )
             return True
 
-        if open_to_public['http'] and options.fbidhttp:
-            if context._orig_protocol == 'http':
-                ipaddr = to_ip_address(ip)
-                if not ipaddr.is_private:
+        if open_to_public['http'] and context._orig_protocol == 'http':
+            if not to_ip_address(ip).is_private:
+                if open_to_public['https'] and options.redirect:
+                    if not is_ip_hostname(hostname):
+                        # redirecting
+                        return False
+                if options.fbidhttp:
                     logging.warning('Public plain http request is forbidden.')
                     return True
+
+    def get_redirect_url(self, hostname, port, uri):
+        port = '' if port == 443 else ':%s' % port
+        return 'https://{}{}{}'.format(hostname, port, uri)
 
     def set_default_headers(self):
         for header in self.custom_headers.items():

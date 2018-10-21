@@ -17,7 +17,7 @@ def print_version(flag):
         sys.exit(0)
 
 
-define('address', default='127.0.0.1', help='Listen address')
+define('address', default='0.0.0.0', help='Listen address')
 define('port', type=int, default=8888,  help='Listen port')
 define('ssladdress', default='0.0.0.0', help='SSL listen address')
 define('sslport', type=int, default=4433,  help='SSL listen port')
@@ -29,6 +29,7 @@ define('policy', default='warning',
 define('hostfile', default='', help='User defined host keys file')
 define('syshostfile', default='', help='System wide host keys file')
 define('tdstream', default='', help='Trusted downstream, separated by comma')
+define('redirect', type=bool, default=True, help='Redirecting http to https')
 define('fbidhttp', type=bool, default=True,
        help='Forbid public plain http incoming requests')
 define('xheaders', type=bool, default=True, help='Support xheaders')
