@@ -67,13 +67,13 @@ class TestMixinHandler(unittest.TestCase):
         uri = '/'
         port = 443
 
-        self.assertTrue(
+        self.assertEqual(
             handler.get_redirect_url(hostname, port, uri=uri),
             'https://www.example.com/'
         )
 
         port = 4433
-        self.assertTrue(
+        self.assertEqual(
             handler.get_redirect_url(hostname, port, uri),
             'https://www.example.com:4433/'
         )
