@@ -56,10 +56,10 @@ Server options
 .. code:: bash
 
     # start a http server with specified listen address and listen port
-    wssh --address='0.0.0.0' --port=8000
+    wssh --address='2.2.2.2' --port=8000
 
-    # start a https server
-    wssh --certfile='cert.crt' --keyfile='cert.key'
+    # start a https server, certfile and keyfile must be passed
+    wssh --certfile='/path/to/cert.crt' --keyfile='/path/to/cert.key'
 
     # missing host key policy
     wssh --policy=reject
@@ -118,11 +118,18 @@ Use pytest to run all tests
 
     python -m pytest tests
 
-An example of config for running this app behind an Nginx server
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deployment
+~~~~~~~~~~
+
+Running behind an Nginx server
+
+.. code:: bash
+
+    wssh --address='127.0.0.1' --port=8888 --policy=reject
 
 .. code:: nginx
 
+    # Nginx config example
     location / {
         proxy_pass http://127.0.0.1:8888;
         proxy_http_version 1.1;
@@ -134,19 +141,26 @@ An example of config for running this app behind an Nginx server
         proxy_set_header X-Real-PORT $remote_port;
     }
 
+Running as a standalone server
+
+.. code:: bash
+
+    wssh --port=8080 --sslport=4433 --certfile='/path/to/cert.crt' --keyfile='/path/to/cert.key' --xheaders=False --policy=reject
+
 Tips
 ----
 
--  Try to use Nginx as a front web server (see config example above) and
-   enable SSL, this will prevent your ssh credentials from being
-   uncovered. Also afterwards the communication between your browser and
-   the web server will be encrypted as they use secured websockets.
+-  For whatever deployment choice you choose, don't forget to enable
+   SSL.
+-  If you choose running this app as a standalone server, redirecting
+   http to https is enabled by default, and only http requests from a
+   public network will be redirected.
 -  Try to use reject policy as the missing host key policy along with
    your verified known\_hosts, this will prevent man-in-the-middle
    attacks. The idea is that it checks the system host keys
    file("~/.ssh/known\_hosts") and the application host keys
    file("./known\_hosts") in order, if the ssh server's hostname is not
-   found or the key is not matched, the connection will be aborted.
+   found or the key is not matched, the connection will be ab
 
 .. |Build Status| image:: https://travis-ci.org/huashengdun/webssh.svg?branch=master
    :target: https://travis-ci.org/huashengdun/webssh
