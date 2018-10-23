@@ -43,6 +43,7 @@ open_to_public = {
 
 def config_open_to_public(address, server_type):
     status = True if is_name_open_to_public(address) else False
+    logging.debug('{} server open to public: {}'.format(server_type, status))
     open_to_public[server_type] = status
 
 
