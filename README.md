@@ -1,7 +1,7 @@
 ## WebSSH
 
-[![Build Status](https://travis-ci.org/huashengdun/webssh.svg?branch=master)](https://travis-ci.org/huashengdun/webssh)
-[![codecov](https://codecov.io/gh/huashengdun/webssh/branch/master/graph/badge.svg)](https://codecov.io/gh/huashengdun/webssh)
+[![Build Status](https://travis-ci.org/huashengdun/webssh.svg?branch=static)](https://travis-ci.org/huashengdun/webssh)
+[![codecov](https://codecov.io/gh/huashengdun/webssh/branch/static/graph/badge.svg)](https://codecov.io/gh/huashengdun/webssh)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/webssh.svg)
 ![PyPI](https://img.shields.io/pypi/v/webssh.svg)
 

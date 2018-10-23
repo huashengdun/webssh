@@ -207,12 +207,12 @@ Tips
    file("./known\_hosts") in order, if the ssh server's hostname is not
    found or the key is not matched, the connection will be aborted.
 
-.. |Build Status| image:: https://travis-ci.org/huashengdun/webssh.svg?branch=master
+.. |Build Status| image:: https://travis-ci.org/huashengdun/webssh.svg?branch=static
    :target: https://travis-ci.org/huashengdun/webssh
-.. |codecov| image:: https://codecov.io/gh/huashengdun/webssh/branch/master/graph/badge.svg
+.. |codecov| image:: https://codecov.io/gh/huashengdun/webssh/branch/static/graph/badge.svg
    :target: https://codecov.io/gh/huashengdun/webssh
 .. |PyPI - Python Version| image:: https://img.shields.io/pypi/pyversions/webssh.svg
 .. |PyPI| image:: https://img.shields.io/pypi/v/webssh.svg
-.. |Login| image:: https://github.com/huashengdun/webssh/raw/master/preview/login.png
-.. |Terminal| image:: https://github.com/huashengdun/webssh/raw/master/preview/terminal.png
+.. |Login| image:: https://github.com/huashengdun/webssh/raw/static/preview/login.png
+.. |Terminal| image:: https://github.com/huashengdun/webssh/raw/static/preview/terminal.png
 
