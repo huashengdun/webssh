@@ -145,7 +145,7 @@ Running as a standalone server
 
 .. code:: bash
 
-    wssh --port=8080 --sslport=4433 --certfile='/path/to/cert.crt' --keyfile='/path/to/cert.key' --xheaders=False --policy=reject
+    wssh --port=8080 --sslport=4433 --certfile='cert.crt' --keyfile='cert.key' --xheaders=False --policy=reject
 
 Tips
 ----
@@ -160,7 +160,7 @@ Tips
    attacks. The idea is that it checks the system host keys
    file("~/.ssh/known\_hosts") and the application host keys
    file("./known\_hosts") in order, if the ssh server's hostname is not
-   found or the key is not matched, the connection will be ab
+   found or the key is not matched, the connection will be aborted.
 
 .. |Build Status| image:: https://travis-ci.org/huashengdun/webssh.svg?branch=master
    :target: https://travis-ci.org/huashengdun/webssh

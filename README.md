@@ -133,7 +133,7 @@ location / {
 
 Running as a standalone server
 ```bash
-wssh --port=8080 --sslport=4433 --certfile='/path/to/cert.crt' --keyfile='/path/to/cert.key' --xheaders=False --policy=reject
+wssh --port=8080 --sslport=4433 --certfile='cert.crt' --keyfile='cert.key' --xheaders=False --policy=reject
 ```
 
 
@@ -141,4 +141,4 @@ wssh --port=8080 --sslport=4433 --certfile='/path/to/cert.crt' --keyfile='/path/
 
 * For whatever deployment choice you choose, don't forget to enable SSL.
 * If you choose running this app as a standalone server, redirecting http to https is enabled by default, and only http requests from a public network will be redirected.
-* Try to use reject policy as the missing host key policy along with your verified known_hosts, this will prevent man-in-the-middle attacks. The idea is that it checks the system host keys file("~/.ssh/known_hosts") and the application host keys file("./known_hosts") in order, if the ssh server's hostname is not found or the key is not matched, the connection will be ab
+* Try to use reject policy as the missing host key policy along with your verified known_hosts, this will prevent man-in-the-middle attacks. The idea is that it checks the system host keys file("~/.ssh/known_hosts") and the application host keys file("./known_hosts") in order, if the ssh server's hostname is not found or the key is not matched, the connection will be aborted.
