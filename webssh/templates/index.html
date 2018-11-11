@@ -33,9 +33,9 @@
           <div class="col">
             <label for="Hostname">Hostname</label>
             {% if onlyhost %}
-              <input class="form-control" type="text" id="hostname" name="hostname" value="{{ onlyhost }}" disabled>
+              <input class="form-control" type="text" id="hostname" name="hostname" value="{{ onlyhost }}" readonly>
             {% else %}
-              <input class="form-control" type="text" id="hostname" name="hostname" value="" required>
+              <input class="form-control" type="text" id="hostname" name="hostname" value="" readonly>
             {% end %}
           </div>
           <div class="col">
