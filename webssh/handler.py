@@ -334,10 +334,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def get(self):
         self.render('index.html',
-            debug=self.debug,
-            onlyhost=self.onlyhost,
-            onlyport=self.onlyport
-        )
+                    debug=self.debug,
+                    onlyhost=self.onlyhost,
+                    onlyport=self.onlyport
+                    )
 
     @tornado.gen.coroutine
     def post(self):
