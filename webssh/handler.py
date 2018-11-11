@@ -156,6 +156,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.privatekey_filename = None
         self.debug = self.settings.get('debug', False)
         self.onlyhost = options.onlyhost
+        self.onlyport = options.onlyport
         self.result = dict(id=None, status=None, encoding=None)
 
     def write_error(self, status_code, **kwargs):
@@ -239,6 +240,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return value
 
     def get_port(self):
+        if self.onlyhost:
+            if self.onlyport > 0:
+                return self.onlyport
         value = self.get_argument('port', u'')
         if not value:
             return DEFAULT_PORT
