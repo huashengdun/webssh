@@ -155,6 +155,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.ssh_client = self.get_ssh_client()
         self.privatekey_filename = None
         self.debug = self.settings.get('debug', False)
+        self.onlyhost = options.onlyhost
         self.result = dict(id=None, status=None, encoding=None)
 
     def write_error(self, status_code, **kwargs):
@@ -230,6 +231,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return pkey
 
     def get_hostname(self):
+        if self.onlyhost:
+            return self.onlyhost
         value = self.get_value('hostname')
         if not (is_valid_hostname(value) | is_valid_ip_address(value)):
             raise InvalidValueError('Invalid hostname: {}'.format(value))
