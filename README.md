@@ -59,6 +59,9 @@ wssh --certfile='/path/to/cert.crt' --keyfile='/path/to/cert.key'
 # missing host key policy
 wssh --policy=reject
 
+# only allow connections to a specific host
+wssh --onlyhost=127.0.0.1 --onlyport=22
+
 # logging level
 wssh --logging=debug
 
