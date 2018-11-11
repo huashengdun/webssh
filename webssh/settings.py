@@ -25,6 +25,7 @@ define('certfile', default='', help='SSL certificate file')
 define('keyfile', default='', help='SSL private key file')
 define('debug', type=bool, default=False, help='Debug mode')
 define('onlyhost', default='', help='Only allow connections to a single host')
+define('onlyport', default=0, help='Port to use with the onlyhost connection')
 define('policy', default='warning',
        help='Missing host key policy, reject|autoadd|warning')
 define('hostfile', default='', help='User defined host keys file')
