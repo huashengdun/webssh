@@ -33,6 +33,7 @@ define('redirect', type=bool, default=True, help='Redirecting http to https')
 define('fbidhttp', type=bool, default=True,
        help='Forbid public plain http incoming requests')
 define('xheaders', type=bool, default=True, help='Support xheaders')
+define('xsrf', type=bool, default=True, help='CSRF protection')
 define('wpintvl', type=int, default=0, help='Websocket ping interval')
 define('version', type=bool, help='Show version information',
        callback=print_version)
@@ -48,7 +49,7 @@ def get_app_settings(options):
         static_path=os.path.join(base_dir, 'webssh', 'static'),
         websocket_ping_interval=options.wpintvl,
         debug=options.debug,
-        xsrf_cookies=True
+        xsrf_cookies=options.xsrf
     )
     return settings
 

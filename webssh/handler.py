@@ -158,9 +158,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.result = dict(id=None, status=None, encoding=None)
 
     def write_error(self, status_code, **kwargs):
-        if self.request.method != 'POST' or not swallow_http_errors:
-            super(IndexHandler, self).write_error(status_code, **kwargs)
-        else:
+        if swallow_http_errors and self.request.method == 'POST':
             exc_info = kwargs.get('exc_info')
             if exc_info:
                 reason = getattr(exc_info[1], 'log_message', None)
@@ -169,6 +167,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             self.result.update(status=self._reason)
             self.set_status(200)
             self.finish(self.result)
+        else:
+            super(IndexHandler, self).write_error(status_code, **kwargs)
 
     def get_ssh_client(self):
         ssh = paramiko.SSHClient()

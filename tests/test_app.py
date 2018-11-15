@@ -443,6 +443,7 @@ class OtherTestBase(AsyncHTTPTestCase):
     headers = {'Cookie': '_xsrf=yummy'}
     debug = False
     policy = None
+    xsrf = True
     hostfile = ''
     syshostfile = ''
     tdstream = ''
@@ -458,6 +459,7 @@ class OtherTestBase(AsyncHTTPTestCase):
         self.body.update(port=str(self.sshserver_port))
         loop = self.io_loop
         options.debug = self.debug
+        options.xsrf = self.xsrf
         options.policy = self.policy if self.policy else random.choice(['warning', 'autoadd'])  # noqa
         options.hostfile = self.hostfile
         options.syshostfile = self.syshostfile
@@ -486,7 +488,7 @@ class OtherTestBase(AsyncHTTPTestCase):
         super(OtherTestBase, self).tearDown()
 
 
-class TestAppInDebug(OtherTestBase):
+class TestAppInDebugMode(OtherTestBase):
 
     debug = True
 
@@ -512,7 +514,7 @@ class TestAppInDebug(OtherTestBase):
         self.assertIn(b'novalidate>', response.body)
 
 
-class TestAppMiscell(OtherTestBase):
+class TestAppWithLargeBuffer(OtherTestBase):
 
     @tornado.testing.gen_test
     def test_app_for_sending_message_with_large_size(self):
@@ -562,6 +564,28 @@ class TestAppWithRejectPolicy(OtherTestBase):
         self.assertIsNone(data['encoding'])
         message = 'Connection to {}:{} is not allowed.'.format(self.body['hostname'], self.sshserver_port) # noqa
         self.assertEqual(message, data['status'])
+
+
+class TestAppWithBadHostKey(OtherTestBase):
+
+    policy = random.choice(['warning', 'autoadd', 'reject'])
+    hostfile = make_tests_data_path('test_known_hosts')
+
+    def setUp(self):
+        self.sshserver_port = 2222
+        super(TestAppWithBadHostKey, self).setUp()
+
+    @tornado.testing.gen_test
+    def test_app_with_bad_host_key(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        body = urlencode(dict(self.body, username='foo'))
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=self.headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertEqual('Bad host key.', data['status'])
 
 
 class TestAppWithTrustedStream(OtherTestBase):
@@ -616,7 +640,7 @@ class TestAppNotFoundHandler(OtherTestBase):
         self.assertIn(b'404: Not Found', response.body)
 
 
-class TestAppHeadRequest(OtherTestBase):
+class TestAppWithHeadRequest(OtherTestBase):
 
     def test_with_index_path(self):
         response = self.fetch('/', method='HEAD')
@@ -629,3 +653,20 @@ class TestAppHeadRequest(OtherTestBase):
     def test_with_not_found_path(self):
         response = self.fetch('/notfound', method='HEAD')
         self.assertEqual(response.code, 404)
+
+
+class TestAppWithPutRequest(OtherTestBase):
+
+    xsrf = False
+
+    @tornado.testing.gen_test
+    def test_app_with_method_not_supported(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        body = urlencode(dict(self.body, username='foo'))
+
+        with self.assertRaises(HTTPError) as ctx:
+            yield client.fetch(
+                url, method='PUT', body=body, headers=self.headers
+            )
+        self.assertIn('Method Not Allowed', ctx.exception.message)
