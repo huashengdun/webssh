@@ -61,6 +61,10 @@ class MixinHandler(object):
             '{reason}</body></html>')
 
     def initialize(self, loop=None):
+        self.check_request()
+        self.loop = loop
+
+    def check_request(self):
         context = self.request.connection.context
         result = self.is_forbidden(context, self.request.host_name)
         self._transforms = []
@@ -75,7 +79,6 @@ class MixinHandler(object):
             )
             self.redirect(to_url, permanent=True)
         else:
-            self.loop = loop
             self.context = context
 
     def is_forbidden(self, context, hostname):
