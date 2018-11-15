@@ -80,6 +80,16 @@ class TestPolicy(unittest.TestCase):
 
         for f in [file1, file2]:
             entry = paramiko.hostkeys.HostKeys(f)._entries[0]
+            hostname = entry.hostnames[0]
+            key = entry.key
+            key.get_name = lambda: 'unknown'
+            self.assertTrue(
+                autoadd.is_missing_host_key(client, hostname, key)
+            )
+        del key.get_name
+
+        for f in [file1, file2]:
+            entry = paramiko.hostkeys.HostKeys(f)._entries[0]
             hostname = entry.hostnames[0][1:]
             key = entry.key
             self.assertTrue(
