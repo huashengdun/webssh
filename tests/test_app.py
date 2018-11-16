@@ -122,13 +122,13 @@ class TestAppBasic(AsyncHTTPTestCase):
         self.assert_response(b'Invalid port', response)
 
     def test_app_with_wrong_hostname_ip(self):
-        body = 'hostname=127.0.0.1&port=7000&username=admin&_xsrf=yummy'
+        body = 'hostname=127.0.0.2&port=2200&username=admin&_xsrf=yummy'
         response = self.sync_post(body)
         self.assertEqual(response.code, 200)
         self.assertIn(b'Unable to connect to', response.body)
 
     def test_app_with_wrong_hostname_domain(self):
-        body = 'hostname=xxxxxxxxxxxx&port=7000&username=admin&_xsrf=yummy'
+        body = 'hostname=xxxxxxxxxxxx&port=2200&username=admin&_xsrf=yummy'
         response = self.sync_post(body)
         self.assertEqual(response.code, 200)
         self.assertIn(b'Unable to connect to', response.body)
