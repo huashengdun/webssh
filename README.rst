@@ -73,8 +73,8 @@ Server options
     # more options
     wssh --help
 
-Use console
-~~~~~~~~~~~
+Browser console
+~~~~~~~~~~~~~~~
 
 .. code:: javascript
 
@@ -152,9 +152,9 @@ Tips
 
 -  For whatever deployment choice you choose, don't forget to enable
    SSL.
--  If you choose running this app as a standalone server, redirecting
-   http to https is enabled by default, and only http requests from a
-   public network will be redirected.
+-  By default plain http requests from a public network will be either
+   redirected or blocked and being redirected takes precedence over
+   being blocked.
 -  Try to use reject policy as the missing host key policy along with
    your verified known\_hosts, this will prevent man-in-the-middle
    attacks. The idea is that it checks the system host keys
