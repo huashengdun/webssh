@@ -35,6 +35,7 @@ define('fbidhttp', type=bool, default=True,
 define('xheaders', type=bool, default=True, help='Support xheaders')
 define('xsrf', type=bool, default=True, help='CSRF protection')
 define('wpintvl', type=int, default=0, help='Websocket ping interval')
+define('maxconn', type=int, default=20,  help='Maximum connections per client')
 define('version', type=bool, help='Show version information',
        callback=print_version)
 

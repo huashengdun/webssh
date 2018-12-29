@@ -15,6 +15,7 @@ from webssh.settings import (
     get_app_settings, get_server_settings, max_body_size
 )
 from webssh.utils import to_str
+from webssh.worker import clients
 
 try:
     from urllib.parse import urlencode
@@ -447,6 +448,7 @@ class OtherTestBase(AsyncHTTPTestCase):
     hostfile = ''
     syshostfile = ''
     tdstream = ''
+    maxconn = 20
     body = {
         'hostname': '127.0.0.1',
         'port': '',
@@ -464,6 +466,7 @@ class OtherTestBase(AsyncHTTPTestCase):
         options.hostfile = self.hostfile
         options.syshostfile = self.syshostfile
         options.tdstream = self.tdstream
+        options.maxconn = self.maxconn
         app = make_app(make_handlers(loop, options), get_app_settings(options))
         return app
 
@@ -670,3 +673,46 @@ class TestAppWithPutRequest(OtherTestBase):
                 url, method='PUT', body=body, headers=self.headers
             )
         self.assertIn('Method Not Allowed', ctx.exception.message)
+
+
+class TestAppWithTooManyConnections(OtherTestBase):
+
+    maxconn = 1
+
+    def setUp(self):
+        clients.clear()
+        super(TestAppWithTooManyConnections, self).setUp()
+
+    @tornado.testing.gen_test
+    def test_app_with_too_many_connections(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        body = urlencode(dict(self.body, username='foo'))
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=self.headers)
+        data = json.loads(to_str(response.body))
+        worker_id = data['id']
+        self.assertIsNotNone(worker_id)
+        self.assertIsNotNone(data['encoding'])
+        self.assertIsNone(data['status'])
+
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=self.headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertEqual(data['status'], 'Too many connections.')
+
+        ws_url = url.replace('http', 'ws') + 'ws?id=' + worker_id
+        ws = yield tornado.websocket.websocket_connect(ws_url)
+        msg = yield ws.read_message()
+        self.assertIsNotNone(msg)
+
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=self.headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertEqual(data['status'], 'Too many connections.')
+
+        ws.close()

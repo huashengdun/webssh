@@ -15,7 +15,7 @@ from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname, to_bytes, to_str,
     to_int, to_ip_address, UnicodeType, is_name_open_to_public, is_ip_hostname
 )
-from webssh.worker import Worker, recycle_worker, workers
+from webssh.worker import Worker, recycle_worker, clients
 
 try:
     from concurrent.futures import Future
@@ -311,8 +311,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         chan = ssh.invoke_shell(term='xterm')
         chan.setblocking(0)
-        worker = Worker(self.loop, ssh, chan, dst_addr)
-        worker.src_addr = self.get_client_addr()
+        worker = Worker(self.loop, ssh, chan, dst_addr, self.src_addr)
         worker.encoding = self.get_default_encoding(ssh)
         return worker
 
@@ -337,6 +336,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             # for testing purpose only
             raise ValueError('Uncaught exception')
 
+        self.src_addr = self.get_client_addr()
+        if len(clients.get(self.src_addr[0], {})) >= options.maxconn:
+            raise tornado.web.HTTPError(403, 'Too many connections.')
+
         future = Future()
         t = threading.Thread(target=self.ssh_connect_wrapped, args=(future,))
         t.setDaemon(True)
@@ -347,6 +350,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         except (ValueError, paramiko.SSHException) as exc:
             self.result.update(status=str(exc))
         else:
+            workers = clients.setdefault(worker.src_addr[0], {})
             workers[worker.id] = worker
             self.loop.call_later(DELAY, recycle_worker, worker)
             self.result.update(id=worker.id, encoding=worker.encoding)
@@ -363,14 +367,20 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def open(self):
         self.src_addr = self.get_client_addr()
         logging.info('Connected from {}:{}'.format(*self.src_addr))
+
+        workers = clients.get(self.src_addr[0])
+        if not workers:
+            self.close(reason='Websocket authentication failed.')
+            return
+
         try:
             worker_id = self.get_value('id')
         except (tornado.web.MissingArgumentError, InvalidValueError) as exc:
             self.close(reason=str(exc))
         else:
             worker = workers.get(worker_id)
-            if worker and worker.src_addr[0] == self.src_addr[0]:
-                workers.pop(worker.id)
+            if worker:
+                workers[worker_id] = None
                 self.set_nodelay(True)
                 worker.set_handler(self)
                 self.worker_ref = weakref.ref(worker)

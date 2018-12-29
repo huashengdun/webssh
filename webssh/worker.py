@@ -7,23 +7,23 @@ from tornado.util import errno_from_exception
 
 
 BUF_SIZE = 32 * 1024
-workers = {}
+clients = {}
 
 
 def recycle_worker(worker):
     if worker.handler:
         return
     logging.warning('Recycling worker {}'.format(worker.id))
-    workers.pop(worker.id, None)
     worker.close(reason='worker recycled')
 
 
 class Worker(object):
-    def __init__(self, loop, ssh, chan, dst_addr):
+    def __init__(self, loop, ssh, chan, dst_addr, src_addr):
         self.loop = loop
         self.ssh = ssh
         self.chan = chan
         self.dst_addr = dst_addr
+        self.src_addr = src_addr
         self.fd = chan.fileno()
         self.id = str(id(self))
         self.data_to_dst = []
@@ -104,3 +104,6 @@ class Worker(object):
         self.chan.close()
         self.ssh.close()
         logging.info('Connection to {}:{} lost'.format(*self.dst_addr))
+
+        clients[self.src_addr[0]].pop(self.id, None)
+        logging.debug(clients)
