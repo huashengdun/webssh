@@ -14,7 +14,7 @@ matrix:
 
 install:
   - pip install -r requirements.txt
-  - pip install pytest pytest-cov codecov flake8
+  - pip install pytest pytest-cov==2.6 codecov flake8
   - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install mock; fi
 
 script:
