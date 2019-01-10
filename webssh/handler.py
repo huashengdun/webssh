@@ -13,7 +13,8 @@ from tornado.ioloop import IOLoop
 from tornado.options import options
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname, to_bytes, to_str,
-    to_int, to_ip_address, UnicodeType, is_name_open_to_public, is_ip_hostname
+    to_int, to_ip_address, UnicodeType, is_name_open_to_public, is_ip_hostname,
+    is_same_primary_domain
 )
 from webssh.worker import Worker, recycle_worker, clients
 
@@ -26,6 +27,11 @@ try:
     from json.decoder import JSONDecodeError
 except ImportError:
     JSONDecodeError = ValueError
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 
 DELAY = 3
@@ -363,6 +369,24 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def initialize(self, loop):
         super(WsockHandler, self).initialize(loop)
         self.worker_ref = None
+
+    def check_origin(self, origin):
+        cows = options.cows
+        parsed_origin = urlparse(origin)
+        origin = parsed_origin.netloc
+        origin = origin.lower()
+        logging.debug('origin: {}'.format(origin))
+
+        host = self.request.headers.get('Host')
+        logging.debug('host: {}'.format(host))
+
+        if cows == 0:
+            return origin == host
+        elif cows == 1:
+            return is_same_primary_domain(origin.rsplit(':', 1)[0],
+                                          host.rsplit(':', 1)[0])
+        else:
+            return True
 
     def open(self):
         self.src_addr = self.get_client_addr()

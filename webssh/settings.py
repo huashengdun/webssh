@@ -34,6 +34,10 @@ define('fbidhttp', type=bool, default=True,
        help='Forbid public plain http incoming requests')
 define('xheaders', type=bool, default=True, help='Support xheaders')
 define('xsrf', type=bool, default=True, help='CSRF protection')
+define('cows', type=int, default=0, help='Cross origin websocket, '
+       '0: matches host name and port number'
+       '1: matches primary domain only'
+       '?: matches nothing, allow all cross-origin websockets')
 define('wpintvl', type=int, default=0, help='Websocket ping interval')
 define('maxconn', type=int, default=20,  help='Maximum connections per client')
 define('version', type=bool, help='Show version information',

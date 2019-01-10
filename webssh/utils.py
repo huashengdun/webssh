@@ -96,3 +96,31 @@ def is_name_open_to_public(name):
     for ip in get_ips_by_name(name):
         if on_public_network_interface(ip):
             return True
+
+
+def is_same_primary_domain(domain1, domain2):
+    i = -1
+    dots = 0
+    l1 = len(domain1)
+    l2 = len(domain2)
+    m = 0 - min(l1, l2)
+
+    while i >= m:
+        c1 = domain1[i]
+        c2 = domain2[i]
+
+        if c1 == c2:
+            if c1 == '.':
+                dots += 1
+                if dots == 2:
+                    return True
+        else:
+            return False
+
+        i -= 1
+
+    if l1 == l2:
+        return True
+
+    c = domain1[i] if l1 > m else domain2[i]
+    return c == '.'

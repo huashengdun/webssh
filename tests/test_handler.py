@@ -5,7 +5,7 @@ from tornado.httputil import HTTPServerRequest
 from tornado.options import options
 from tests.utils import read_file, make_tests_data_path
 from webssh.handler import (
-    MixinHandler, IndexHandler, InvalidValueError, open_to_public
+    MixinHandler, IndexHandler, WsockHandler, InvalidValueError, open_to_public
 )
 
 try:
@@ -202,3 +202,30 @@ class TestIndexHandler(unittest.TestCase):
 
         with self.assertRaises(paramiko.PasswordRequiredException):
             pkey = IndexHandler.get_pkey_obj(key, '', fname)
+
+
+class TestWsockHandler(unittest.TestCase):
+
+    def test_check_origin(self):
+        request = HTTPServerRequest(uri='/')
+        obj = Mock(spec=WsockHandler, request=request)
+
+        options.cows = 0
+        request.headers['Host'] = 'www.example.com:4433'
+        origin = 'https://www.example.com:4433'
+        self.assertTrue(WsockHandler.check_origin(obj, origin))
+
+        origin = 'https://www.example.com'
+        self.assertFalse(WsockHandler.check_origin(obj, origin))
+
+        options.cows = 1
+        self.assertTrue(WsockHandler.check_origin(obj, origin))
+
+        origin = 'https://blog.example.com'
+        self.assertTrue(WsockHandler.check_origin(obj, origin))
+
+        origin = 'https://blog.example.org'
+        self.assertFalse(WsockHandler.check_origin(obj, origin))
+
+        options.cows = 2
+        self.assertTrue(WsockHandler.check_origin(obj, origin))

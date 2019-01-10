@@ -3,7 +3,7 @@ import unittest
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname, to_str, to_bytes,
     to_int, on_public_network_interface, get_ips_by_name, is_ip_hostname,
-    is_name_open_to_public
+    is_name_open_to_public, is_same_primary_domain
 )
 
 
@@ -79,3 +79,32 @@ class TestUitls(unittest.TestCase):
         self.assertTrue(is_ip_hostname('127.0.0.1'))
         self.assertFalse(is_ip_hostname('localhost'))
         self.assertFalse(is_ip_hostname('www.google.com'))
+
+    def test_is_same_primary_domain(self):
+        domain1 = 'localhost'
+        domain2 = 'localhost'
+        self.assertTrue(is_same_primary_domain(domain1, domain2))
+
+        domain1 = 'localhost'
+        domain2 = 'test'
+        self.assertFalse(is_same_primary_domain(domain1, domain2))
+
+        domain1 = 'example.com'
+        domain2 = 'example.com'
+        self.assertTrue(is_same_primary_domain(domain1, domain2))
+
+        domain1 = 'www.example.com'
+        domain2 = 'example.com'
+        self.assertTrue(is_same_primary_domain(domain1, domain2))
+
+        domain1 = 'wwwexample.com'
+        domain2 = 'example.com'
+        self.assertFalse(is_same_primary_domain(domain1, domain2))
+
+        domain1 = 'www.example.com'
+        domain2 = 'www2.example.com'
+        self.assertTrue(is_same_primary_domain(domain1, domain2))
+
+        domain1 = 'xxx.www.example.com'
+        domain2 = 'xxx.www2.example.com'
+        self.assertTrue(is_same_primary_domain(domain1, domain2))
