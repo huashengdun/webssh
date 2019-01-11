@@ -89,6 +89,10 @@ class TestUitls(unittest.TestCase):
         domain2 = 'test'
         self.assertFalse(is_same_primary_domain(domain1, domain2))
 
+        domain1 = 'com'
+        domain2 = 'example.com'
+        self.assertFalse(is_same_primary_domain(domain1, domain2))
+
         domain1 = 'example.com'
         domain2 = 'example.com'
         self.assertTrue(is_same_primary_domain(domain1, domain2))

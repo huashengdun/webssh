@@ -103,9 +103,9 @@ def is_same_primary_domain(domain1, domain2):
     dots = 0
     l1 = len(domain1)
     l2 = len(domain2)
-    m = 0 - min(l1, l2)
+    m = min(l1, l2)
 
-    while i >= m:
+    while i >= -m:
         c1 = domain1[i]
         c2 = domain2[i]
 
@@ -121,6 +121,9 @@ def is_same_primary_domain(domain1, domain2):
 
     if l1 == l2:
         return True
+
+    if dots == 0:
+        return False
 
     c = domain1[i] if l1 > m else domain2[i]
     return c == '.'
