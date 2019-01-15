@@ -13,8 +13,7 @@ from tornado.ioloop import IOLoop
 from tornado.options import options
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname, to_bytes, to_str,
-    to_int, to_ip_address, UnicodeType, is_name_open_to_public, is_ip_hostname,
-    is_same_primary_domain
+    to_int, to_ip_address, UnicodeType, is_ip_hostname, is_same_primary_domain
 )
 from webssh.worker import Worker, recycle_worker, clients
 
@@ -39,18 +38,7 @@ KEY_MAX_SIZE = 16384
 DEFAULT_PORT = 22
 
 swallow_http_errors = True
-
-# set by config_open_to_public
-open_to_public = {
-    'http': None,
-    'https': None
-}
-
-
-def config_open_to_public(address, server_type):
-    status = True if is_name_open_to_public(address) else False
-    logging.debug('{} server open to public: {}'.format(server_type, status))
-    open_to_public[server_type] = status
+https_server_enabled = False
 
 
 class InvalidValueError(Exception):
@@ -97,15 +85,15 @@ class MixinHandler(object):
             )
             return True
 
-        if open_to_public['http'] and context._orig_protocol == 'http':
-            if not to_ip_address(ip).is_private:
-                if open_to_public['https'] and options.redirect:
-                    if not is_ip_hostname(hostname):
-                        # redirecting
-                        return False
-                if options.fbidhttp:
-                    logging.warning('Public plain http request is forbidden.')
-                    return True
+        if context._orig_protocol == 'http' and \
+                not to_ip_address(ip).is_private:
+            if options.redirect and https_server_enabled:
+                if not is_ip_hostname(hostname):
+                    # redirecting
+                    return False
+            if options.fbidhttp:
+                logging.warning('Public plain http request is forbidden.')
+                return True
 
     def get_redirect_url(self, hostname, port, uri):
         port = '' if port == 443 else ':%s' % port

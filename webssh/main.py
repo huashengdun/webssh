@@ -3,9 +3,8 @@ import tornado.web
 import tornado.ioloop
 
 from tornado.options import options
-from webssh.handler import (
-    IndexHandler, WsockHandler, NotFoundHandler, config_open_to_public
-)
+from webssh import handler
+from webssh.handler import IndexHandler, WsockHandler, NotFoundHandler
 from webssh.settings import (
     get_app_settings,  get_host_keys_settings, get_policy_setting,
     get_ssl_context, get_server_settings
@@ -31,11 +30,14 @@ def make_app(handlers, settings):
 
 def app_listen(app, port, address, server_settings):
     app.listen(port, address, **server_settings)
-    server_type = 'https' if server_settings.get('ssl_options') else 'http'
+    if not server_settings.get('ssl_options'):
+        server_type = 'http'
+    else:
+        server_type = 'https'
+        handler.https_server_enabled = True
     logging.info(
         'Listening on {}:{} ({})'.format(address, port, server_type)
     )
-    config_open_to_public(address, server_type)
 
 
 def main():

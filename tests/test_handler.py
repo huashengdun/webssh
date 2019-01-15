@@ -4,8 +4,9 @@ import paramiko
 from tornado.httputil import HTTPServerRequest
 from tornado.options import options
 from tests.utils import read_file, make_tests_data_path
+from webssh import handler
 from webssh.handler import (
-    MixinHandler, IndexHandler, WsockHandler, InvalidValueError, open_to_public
+    MixinHandler, IndexHandler, WsockHandler, InvalidValueError
 )
 
 try:
@@ -17,9 +18,8 @@ except ImportError:
 class TestMixinHandler(unittest.TestCase):
 
     def test_is_forbidden(self):
-        handler = MixinHandler()
-        open_to_public['http'] = True
-        open_to_public['https'] = True
+        mhandler = MixinHandler()
+        handler.https_server_enabled = True
         options.fbidhttp = True
         options.redirect = True
 
@@ -28,7 +28,7 @@ class TestMixinHandler(unittest.TestCase):
             trusted_downstream=['127.0.0.1'],
             _orig_protocol='http'
         )
-        self.assertTrue(handler.is_forbidden(context, ''))
+        self.assertTrue(mhandler.is_forbidden(context, ''))
 
         context = Mock(
             address=('8.8.8.8', 8888),
@@ -37,21 +37,27 @@ class TestMixinHandler(unittest.TestCase):
         )
 
         hostname = 'www.google.com'
-        self.assertEqual(handler.is_forbidden(context, hostname), False)
+        self.assertEqual(mhandler.is_forbidden(context, hostname), False)
+
+        handler.https_server_enabled = False
+        self.assertTrue(mhandler.is_forbidden(context, hostname))
+
+        options.redirect = False
+        self.assertTrue(mhandler.is_forbidden(context, hostname))
 
         context = Mock(
             address=('192.168.1.1', 8888),
             trusted_downstream=[],
             _orig_protocol='http'
         )
-        self.assertIsNone(handler.is_forbidden(context, ''))
+        self.assertIsNone(mhandler.is_forbidden(context, ''))
 
         context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=[],
             _orig_protocol='https'
         )
-        self.assertIsNone(handler.is_forbidden(context, ''))
+        self.assertIsNone(mhandler.is_forbidden(context, ''))
 
         context = Mock(
             address=('8.8.8.8', 8888),
@@ -59,43 +65,46 @@ class TestMixinHandler(unittest.TestCase):
             _orig_protocol='http'
         )
         hostname = '8.8.8.8'
-        self.assertTrue(handler.is_forbidden(context, hostname))
+        self.assertTrue(mhandler.is_forbidden(context, hostname))
+
+        options.fbidhttp = False
+        self.assertIsNone(mhandler.is_forbidden(context, hostname))
 
     def test_get_redirect_url(self):
-        handler = MixinHandler()
+        mhandler = MixinHandler()
         hostname = 'www.example.com'
         uri = '/'
         port = 443
 
         self.assertEqual(
-            handler.get_redirect_url(hostname, port, uri=uri),
+            mhandler.get_redirect_url(hostname, port, uri=uri),
             'https://www.example.com/'
         )
 
         port = 4433
         self.assertEqual(
-            handler.get_redirect_url(hostname, port, uri),
+            mhandler.get_redirect_url(hostname, port, uri),
             'https://www.example.com:4433/'
         )
 
     def test_get_client_addr(self):
-        handler = MixinHandler()
+        mhandler = MixinHandler()
         client_addr = ('8.8.8.8', 8888)
         context_addr = ('127.0.0.1', 1234)
         options.xheaders = True
 
-        handler.context = Mock(address=context_addr)
-        handler.get_real_client_addr = lambda: None
-        self.assertEqual(handler.get_client_addr(), context_addr)
+        mhandler.context = Mock(address=context_addr)
+        mhandler.get_real_client_addr = lambda: None
+        self.assertEqual(mhandler.get_client_addr(), context_addr)
 
-        handler.context = Mock(address=context_addr)
-        handler.get_real_client_addr = lambda: client_addr
-        self.assertEqual(handler.get_client_addr(), client_addr)
+        mhandler.context = Mock(address=context_addr)
+        mhandler.get_real_client_addr = lambda: client_addr
+        self.assertEqual(mhandler.get_client_addr(), client_addr)
 
         options.xheaders = False
-        handler.context = Mock(address=context_addr)
-        handler.get_real_client_addr = lambda: client_addr
-        self.assertEqual(handler.get_client_addr(), context_addr)
+        mhandler.context = Mock(address=context_addr)
+        mhandler.get_real_client_addr = lambda: client_addr
+        self.assertEqual(mhandler.get_client_addr(), context_addr)
 
     def test_get_real_client_addr(self):
         x_forwarded_for = '1.1.1.1'
@@ -104,36 +113,36 @@ class TestMixinHandler(unittest.TestCase):
         x_real_port = 2222
         fake_port = 65535
 
-        handler = MixinHandler()
-        handler.request = HTTPServerRequest(uri='/')
-        handler.request.remote_ip = x_forwarded_for
+        mhandler = MixinHandler()
+        mhandler.request = HTTPServerRequest(uri='/')
+        mhandler.request.remote_ip = x_forwarded_for
 
-        self.assertIsNone(handler.get_real_client_addr())
+        self.assertIsNone(mhandler.get_real_client_addr())
 
-        handler.request.headers.add('X-Forwarded-For', x_forwarded_for)
-        self.assertEqual(handler.get_real_client_addr(),
+        mhandler.request.headers.add('X-Forwarded-For', x_forwarded_for)
+        self.assertEqual(mhandler.get_real_client_addr(),
                          (x_forwarded_for, fake_port))
 
-        handler.request.headers.add('X-Forwarded-Port', fake_port + 1)
-        self.assertEqual(handler.get_real_client_addr(),
+        mhandler.request.headers.add('X-Forwarded-Port', fake_port + 1)
+        self.assertEqual(mhandler.get_real_client_addr(),
                          (x_forwarded_for, fake_port))
 
-        handler.request.headers['X-Forwarded-Port'] = x_forwarded_port
-        self.assertEqual(handler.get_real_client_addr(),
+        mhandler.request.headers['X-Forwarded-Port'] = x_forwarded_port
+        self.assertEqual(mhandler.get_real_client_addr(),
                          (x_forwarded_for, x_forwarded_port))
 
-        handler.request.remote_ip = x_real_ip
+        mhandler.request.remote_ip = x_real_ip
 
-        handler.request.headers.add('X-Real-Ip', x_real_ip)
-        self.assertEqual(handler.get_real_client_addr(),
+        mhandler.request.headers.add('X-Real-Ip', x_real_ip)
+        self.assertEqual(mhandler.get_real_client_addr(),
                          (x_real_ip, fake_port))
 
-        handler.request.headers.add('X-Real-Port', fake_port + 1)
-        self.assertEqual(handler.get_real_client_addr(),
+        mhandler.request.headers.add('X-Real-Port', fake_port + 1)
+        self.assertEqual(mhandler.get_real_client_addr(),
                          (x_real_ip, fake_port))
 
-        handler.request.headers['X-Real-Port'] = x_real_port
-        self.assertEqual(handler.get_real_client_addr(),
+        mhandler.request.headers['X-Real-Port'] = x_real_port
+        self.assertEqual(mhandler.get_real_client_addr(),
                          (x_real_ip, x_real_port))
 
 
