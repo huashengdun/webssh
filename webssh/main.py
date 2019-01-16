@@ -34,7 +34,7 @@ def app_listen(app, port, address, server_settings):
         server_type = 'http'
     else:
         server_type = 'https'
-        handler.https_server_enabled = True
+        handler.redirecting = True if options.redirect else False
     logging.info(
         'Listening on {}:{} ({})'.format(address, port, server_type)
     )

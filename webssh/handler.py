@@ -38,7 +38,7 @@ KEY_MAX_SIZE = 16384
 DEFAULT_PORT = 22
 
 swallow_http_errors = True
-https_server_enabled = False
+redirecting = None
 
 
 class InvalidValueError(Exception):
@@ -78,6 +78,7 @@ class MixinHandler(object):
     def is_forbidden(self, context, hostname):
         ip = context.address[0]
         lst = context.trusted_downstream
+        ip_address = None
 
         if lst and ip not in lst:
             logging.warning(
@@ -85,15 +86,19 @@ class MixinHandler(object):
             )
             return True
 
-        if context._orig_protocol == 'http' and \
-                not to_ip_address(ip).is_private:
-            if options.redirect and https_server_enabled:
-                if not is_ip_hostname(hostname):
+        if context._orig_protocol == 'http':
+            if redirecting and not is_ip_hostname(hostname):
+                ip_address = to_ip_address(ip)
+                if not ip_address.is_private:
                     # redirecting
                     return False
+
             if options.fbidhttp:
-                logging.warning('Public plain http request is forbidden.')
-                return True
+                if ip_address is None:
+                    ip_address = to_ip_address(ip)
+                if not ip_address.is_private:
+                    logging.warning('Public plain http request is forbidden.')
+                    return True
 
     def get_redirect_url(self, hostname, port, uri):
         port = '' if port == 443 else ':%s' % port

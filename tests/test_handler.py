@@ -19,30 +19,31 @@ class TestMixinHandler(unittest.TestCase):
 
     def test_is_forbidden(self):
         mhandler = MixinHandler()
-        handler.https_server_enabled = True
+        handler.redirecting = True
         options.fbidhttp = True
-        options.redirect = True
 
         context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=['127.0.0.1'],
             _orig_protocol='http'
         )
-        self.assertTrue(mhandler.is_forbidden(context, ''))
+        hostname = '4.4.4.4'
+        self.assertTrue(mhandler.is_forbidden(context, hostname))
 
         context = Mock(
             address=('8.8.8.8', 8888),
             trusted_downstream=[],
             _orig_protocol='http'
         )
-
         hostname = 'www.google.com'
         self.assertEqual(mhandler.is_forbidden(context, hostname), False)
 
-        handler.https_server_enabled = False
-        self.assertTrue(mhandler.is_forbidden(context, hostname))
-
-        options.redirect = False
+        context = Mock(
+            address=('8.8.8.8', 8888),
+            trusted_downstream=[],
+            _orig_protocol='http'
+        )
+        hostname = '4.4.4.4'
         self.assertTrue(mhandler.is_forbidden(context, hostname))
 
         context = Mock(
@@ -50,24 +51,19 @@ class TestMixinHandler(unittest.TestCase):
             trusted_downstream=[],
             _orig_protocol='http'
         )
-        self.assertIsNone(mhandler.is_forbidden(context, ''))
-
-        context = Mock(
-            address=('8.8.8.8', 8888),
-            trusted_downstream=[],
-            _orig_protocol='https'
-        )
-        self.assertIsNone(mhandler.is_forbidden(context, ''))
-
-        context = Mock(
-            address=('8.8.8.8', 8888),
-            trusted_downstream=[],
-            _orig_protocol='http'
-        )
-        hostname = '8.8.8.8'
-        self.assertTrue(mhandler.is_forbidden(context, hostname))
+        hostname = 'www.google.com'
+        self.assertIsNone(mhandler.is_forbidden(context, hostname))
 
         options.fbidhttp = False
+        self.assertIsNone(mhandler.is_forbidden(context, hostname))
+
+        hostname = '4.4.4.4'
+        self.assertIsNone(mhandler.is_forbidden(context, hostname))
+
+        handler.redirecting = False
+        self.assertIsNone(mhandler.is_forbidden(context, hostname))
+
+        context._orig_protocol = 'https'
         self.assertIsNone(mhandler.is_forbidden(context, hostname))
 
     def test_get_redirect_url(self):

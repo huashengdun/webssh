@@ -11,12 +11,12 @@ class TestMain(unittest.TestCase):
         app = Application()
         app.listen = lambda x, y, **kwargs: 1
 
-        handler.https_server_enabled = False
+        handler.redirecting = None
         server_settings = dict()
         app_listen(app, 80, '127.0.0.1', server_settings)
-        self.assertFalse(handler.https_server_enabled)
+        self.assertFalse(handler.redirecting)
 
-        handler.https_server_enabled = False
+        handler.redirecting = None
         server_settings = dict(ssl_options='enabled')
         app_listen(app, 80, '127.0.0.1', server_settings)
-        self.assertTrue(handler.https_server_enabled)
+        self.assertTrue(handler.redirecting)
