@@ -449,6 +449,7 @@ class OtherTestBase(AsyncHTTPTestCase):
     syshostfile = ''
     tdstream = ''
     maxconn = 20
+    origin = 'same'
     body = {
         'hostname': '127.0.0.1',
         'port': '',
@@ -467,6 +468,7 @@ class OtherTestBase(AsyncHTTPTestCase):
         options.syshostfile = self.syshostfile
         options.tdstream = self.tdstream
         options.maxconn = self.maxconn
+        options.origin = self.origin
         app = make_app(make_handlers(loop, options), get_app_settings(options))
         return app
 
@@ -716,3 +718,28 @@ class TestAppWithTooManyConnections(OtherTestBase):
         self.assertEqual(data['status'], 'Too many connections.')
 
         ws.close()
+
+
+class TestAppWithCrossOriginConnect(OtherTestBase):
+
+    origin = 'http://www.example.com'
+
+    @tornado.testing.gen_test
+    def test_app_with_cross_orgin_connect(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        body = urlencode(dict(self.body, username='foo', _origin='localhost'))
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=self.headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertIn('Cross origin frame', data['status'])
+
+        body = urlencode(dict(self.body, username='foo', _origin=self.origin))
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=self.headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
+        self.assertIsNone(data['status'])

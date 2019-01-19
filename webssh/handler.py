@@ -76,6 +76,28 @@ class MixinHandler(object):
         else:
             self.context = context
 
+    def check_origin(self, origin):
+        if self.origin_policy == '*':
+            return True
+
+        parsed_origin = urlparse(origin)
+        netloc = parsed_origin.netloc.lower()
+        logging.debug('netloc: {}'.format(netloc))
+
+        host = self.request.headers.get('Host')
+        logging.debug('host: {}'.format(host))
+
+        if netloc == host:
+            return True
+
+        if self.origin_policy == 'same':
+            return False
+        elif self.origin_policy == 'primary':
+            return is_same_primary_domain(netloc.rsplit(':', 1)[0],
+                                          host.rsplit(':', 1)[0])
+        else:
+            return origin in self.origin_policy
+
     def is_forbidden(self, context, hostname):
         ip = context.address[0]
         lst = context.trusted_downstream
@@ -340,6 +362,13 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         if len(clients.get(self.src_addr[0], {})) >= options.maxconn:
             raise tornado.web.HTTPError(403, 'Too many connections.')
 
+        origin = self.get_argument('_origin', u'')
+        if origin:
+            if not self.check_origin(origin):
+                raise tornado.web.HTTPError(
+                        403, 'Cross origin frame operation is not allowed.'
+                    )
+
         future = Future()
         t = threading.Thread(target=self.ssh_connect_wrapped, args=(future,))
         t.setDaemon(True)
@@ -363,28 +392,6 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
     def initialize(self, loop):
         super(WsockHandler, self).initialize(loop)
         self.worker_ref = None
-
-    def check_origin(self, origin):
-        if self.origin_policy == '*':
-            return True
-
-        parsed_origin = urlparse(origin)
-        netloc = parsed_origin.netloc.lower()
-        logging.debug('netloc: {}'.format(netloc))
-
-        host = self.request.headers.get('Host')
-        logging.debug('host: {}'.format(host))
-
-        if netloc == host:
-            return True
-
-        if self.origin_policy == 'same':
-            return False
-        elif self.origin_policy == 'primary':
-            return is_same_primary_domain(netloc.rsplit(':', 1)[0],
-                                          host.rsplit(':', 1)[0])
-        else:
-            return origin in self.origin_policy
 
     def open(self):
         self.src_addr = self.get_client_addr()
