@@ -234,7 +234,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def get_hostname(self):
         value = self.get_value('hostname')
-        if not (is_valid_hostname(value) | is_valid_ip_address(value)):
+        if not (is_valid_hostname(value) or is_valid_ip_address(value)):
             raise InvalidValueError('Invalid hostname: {}'.format(value))
         return value
 
