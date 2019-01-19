@@ -57,6 +57,7 @@ class MixinHandler(object):
     def initialize(self, loop=None):
         self.check_request()
         self.loop = loop
+        self.origin_policy = self.settings.get('origin_policy')
 
     def check_request(self):
         context = self.request.connection.context
@@ -364,22 +365,26 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         self.worker_ref = None
 
     def check_origin(self, origin):
-        cows = options.cows
+        if self.origin_policy == '*':
+            return True
+
         parsed_origin = urlparse(origin)
-        origin = parsed_origin.netloc
-        origin = origin.lower()
-        logging.debug('origin: {}'.format(origin))
+        netloc = parsed_origin.netloc.lower()
+        logging.debug('netloc: {}'.format(netloc))
 
         host = self.request.headers.get('Host')
         logging.debug('host: {}'.format(host))
 
-        if cows == 0:
-            return origin == host
-        elif cows == 1:
-            return is_same_primary_domain(origin.rsplit(':', 1)[0],
+        if netloc == host:
+            return True
+
+        if self.origin_policy == 'same':
+            return False
+        elif self.origin_policy == 'primary':
+            return is_same_primary_domain(netloc.rsplit(':', 1)[0],
                                           host.rsplit(':', 1)[0])
         else:
-            return True
+            return origin in self.origin_policy
 
     def open(self):
         self.src_addr = self.get_client_addr()

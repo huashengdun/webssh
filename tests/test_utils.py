@@ -2,7 +2,7 @@ import unittest
 
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname, to_str, to_bytes,
-    to_int, is_ip_hostname, is_same_primary_domain
+    to_int, is_ip_hostname, is_same_primary_domain, parse_origin_from_url
 )
 
 
@@ -90,3 +90,34 @@ class TestUitls(unittest.TestCase):
         domain1 = 'xxx.www.example.com'
         domain2 = 'xxx.www2.example.com'
         self.assertTrue(is_same_primary_domain(domain1, domain2))
+
+    def test_parse_origin_from_url(self):
+        url = ''
+        self.assertIsNone(parse_origin_from_url(url))
+
+        url = 'www.example.com'
+        self.assertEqual(parse_origin_from_url(url), 'http://www.example.com')
+
+        url = 'http://www.example.com'
+        self.assertEqual(parse_origin_from_url(url), 'http://www.example.com')
+
+        url = 'www.example.com:80'
+        self.assertEqual(parse_origin_from_url(url), 'http://www.example.com')
+
+        url = 'http://www.example.com:80'
+        self.assertEqual(parse_origin_from_url(url), 'http://www.example.com')
+
+        url = 'www.example.com:443'
+        self.assertEqual(parse_origin_from_url(url), 'https://www.example.com')
+
+        url = 'https://www.example.com'
+        self.assertEqual(parse_origin_from_url(url), 'https://www.example.com')
+
+        url = 'https://www.example.com:443'
+        self.assertEqual(parse_origin_from_url(url), 'https://www.example.com')
+
+        url = 'https://www.example.com:80'
+        self.assertEqual(parse_origin_from_url(url), url)
+
+        url = 'http://www.example.com:443'
+        self.assertEqual(parse_origin_from_url(url), url)

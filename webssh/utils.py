@@ -6,6 +6,11 @@ try:
 except ImportError:
     UnicodeType = str
 
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
 
 numeric = re.compile(r'[0-9]+$')
 allowed = re.compile(r'(?!-)[a-z0-9-]{1,63}(?<!-)$', re.IGNORECASE)
@@ -101,3 +106,29 @@ def is_same_primary_domain(domain1, domain2):
 
     c = domain1[i] if l1 > m else domain2[i]
     return c == '.'
+
+
+def parse_origin_from_url(url):
+    url = url.strip()
+    if not url:
+        return
+
+    if not (url.startswith('http://') or url.startswith('https://') or
+            url.startswith('//')):
+        url = '//' + url
+
+    parsed = urlparse(url)
+    port = parsed.port
+    scheme = parsed.scheme
+
+    if scheme == '':
+        scheme = 'https' if port == 443 else 'http'
+
+    if port == 443 and scheme == 'https':
+        netloc = parsed.netloc.replace(':443', '')
+    elif port == 80 and scheme == 'http':
+        netloc = parsed.netloc.replace(':80', '')
+    else:
+        netloc = parsed.netloc
+
+    return '{}://{}'.format(scheme, netloc)

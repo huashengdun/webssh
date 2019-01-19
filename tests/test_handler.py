@@ -215,7 +215,7 @@ class TestWsockHandler(unittest.TestCase):
         request = HTTPServerRequest(uri='/')
         obj = Mock(spec=WsockHandler, request=request)
 
-        options.cows = 0
+        obj.origin_policy = 'same'
         request.headers['Host'] = 'www.example.com:4433'
         origin = 'https://www.example.com:4433'
         self.assertTrue(WsockHandler.check_origin(obj, origin))
@@ -223,7 +223,7 @@ class TestWsockHandler(unittest.TestCase):
         origin = 'https://www.example.com'
         self.assertFalse(WsockHandler.check_origin(obj, origin))
 
-        options.cows = 1
+        obj.origin_policy = 'primary'
         self.assertTrue(WsockHandler.check_origin(obj, origin))
 
         origin = 'https://blog.example.com'
@@ -232,5 +232,18 @@ class TestWsockHandler(unittest.TestCase):
         origin = 'https://blog.example.org'
         self.assertFalse(WsockHandler.check_origin(obj, origin))
 
-        options.cows = 2
+        origin = 'https://blog.example.org'
+        obj.origin_policy = {'https://blog.example.org'}
+        self.assertTrue(WsockHandler.check_origin(obj, origin))
+
+        origin = 'http://blog.example.org'
+        obj.origin_policy = {'http://blog.example.org'}
+        self.assertTrue(WsockHandler.check_origin(obj, origin))
+
+        origin = 'http://blog.example.org'
+        obj.origin_policy = {'https://blog.example.org'}
+        self.assertFalse(WsockHandler.check_origin(obj, origin))
+
+        obj.origin_policy = '*'
+        origin = 'https://blog.example.org'
         self.assertTrue(WsockHandler.check_origin(obj, origin))

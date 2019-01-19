@@ -1,4 +1,5 @@
 import io
+import random
 import ssl
 import sys
 import os.path
@@ -10,7 +11,7 @@ from tests.utils import make_tests_data_path
 from webssh.policy import load_host_keys
 from webssh.settings import (
     get_host_keys_settings, get_policy_setting, base_dir, print_version,
-    get_ssl_context, get_trusted_downstream
+    get_ssl_context, get_trusted_downstream, get_origin_setting
 )
 from webssh.utils import UnicodeType
 from webssh._version import __version__
@@ -137,3 +138,31 @@ class TestSettings(unittest.TestCase):
         tdstream = '1.1.1.1, 2.2.2.'
         with self.assertRaises(ValueError):
             get_trusted_downstream(tdstream)
+
+    def test_get_origin_setting(self):
+        options.debug = False
+        options.origin = '*'
+        with self.assertRaises(ValueError):
+            get_origin_setting(options)
+
+        options.debug = True
+        self.assertEqual(get_origin_setting(options), '*')
+
+        options.origin = random.choice(['Same', 'Primary'])
+        self.assertEqual(get_origin_setting(options), options.origin.lower())
+
+        options.origin = ''
+        with self.assertRaises(ValueError):
+            get_origin_setting(options)
+
+        options.origin = ','
+        with self.assertRaises(ValueError):
+            get_origin_setting(options)
+
+        options.origin = 'www.example.com,  https://www.example.org'
+        result = {'http://www.example.com', 'https://www.example.org'}
+        self.assertEqual(get_origin_setting(options), result)
+
+        options.origin = 'www.example.com:80,  www.example.org:443'
+        result = {'http://www.example.com', 'https://www.example.org'}
+        self.assertEqual(get_origin_setting(options), result)

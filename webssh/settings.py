@@ -7,7 +7,7 @@ from tornado.options import define
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
 )
-from webssh.utils import to_ip_address
+from webssh.utils import to_ip_address, parse_origin_from_url
 from webssh._version import __version__
 
 
@@ -34,10 +34,12 @@ define('fbidhttp', type=bool, default=True,
        help='Forbid public plain http incoming requests')
 define('xheaders', type=bool, default=True, help='Support xheaders')
 define('xsrf', type=bool, default=True, help='CSRF protection')
-define('cows', type=int, default=0, help='Cross origin websocket, '
-       '0: matches host name and port number, '
-       '1: matches primary domain only, '
-       '?: matches nothing, allow all cross-origin websockets')
+define('origin', default='same', help='''Origin policy,
+'same': same origin policy, matches host name and port number;
+'primary': primary domain policy, matches primary domain only;
+'<domains>': custom domains policy, matches any domain in the <domains> list
+separated by comma;
+'*': wildcard policy, matches any domain, allowed in debug mode only.''')
 define('wpintvl', type=int, default=0, help='Websocket ping interval')
 define('maxconn', type=int, default=20,  help='Maximum connections per client')
 define('version', type=bool, help='Show version information',
@@ -54,7 +56,8 @@ def get_app_settings(options):
         static_path=os.path.join(base_dir, 'webssh', 'static'),
         websocket_ping_interval=options.wpintvl,
         debug=options.debug,
-        xsrf_cookies=options.xsrf
+        xsrf_cookies=options.xsrf,
+        origin_policy=get_origin_setting(options)
     )
     return settings
 
@@ -121,3 +124,28 @@ def get_trusted_downstream(tdstream):
             to_ip_address(ip)
             result.add(ip)
     return result
+
+
+def get_origin_setting(options):
+    if options.origin == '*':
+        if not options.debug:
+            raise ValueError(
+                'Wildcard origin policy is only allowed in debug mode.'
+            )
+        else:
+            return '*'
+
+    origin = options.origin.lower()
+    if origin in ['same', 'primary']:
+        return origin
+
+    origins = set()
+    for url in origin.split(','):
+        orig = parse_origin_from_url(url)
+        if orig:
+            origins.add(orig)
+
+    if not origins:
+        raise ValueError('Empty origin list')
+
+    return origins
