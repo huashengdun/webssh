@@ -720,12 +720,12 @@ class TestAppWithTooManyConnections(OtherTestBase):
         ws.close()
 
 
-class TestAppWithCrossOriginConnect(OtherTestBase):
+class TestAppWithCrossOriginOperation(OtherTestBase):
 
     origin = 'http://www.example.com'
 
     @tornado.testing.gen_test
-    def test_app_with_cross_orgin_connect(self):
+    def test_app_with_wrong_event_origin(self):
         url = self.get_url('/')
         client = self.get_http_client()
         body = urlencode(dict(self.body, username='foo', _origin='localhost'))
@@ -734,8 +734,29 @@ class TestAppWithCrossOriginConnect(OtherTestBase):
         data = json.loads(to_str(response.body))
         self.assertIsNone(data['id'])
         self.assertIsNone(data['encoding'])
-        self.assertIn('Cross origin frame', data['status'])
+        self.assertEqual(
+            'Cross origin operation is not allowed.', data['status']
+        )
 
+    @tornado.testing.gen_test
+    def test_app_with_wrong_header_origin(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        body = urlencode(dict(self.body, username='foo'))
+        headers = dict(self.headers, Origin='localhost')
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertEqual(
+            'Cross origin operation is not allowed.', data['status']
+        )
+
+    @tornado.testing.gen_test
+    def test_app_with_correct_event_origin(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
         body = urlencode(dict(self.body, username='foo', _origin=self.origin))
         response = yield client.fetch(url, method='POST', body=body,
                                       headers=self.headers)
@@ -743,3 +764,20 @@ class TestAppWithCrossOriginConnect(OtherTestBase):
         self.assertIsNotNone(data['id'])
         self.assertIsNotNone(data['encoding'])
         self.assertIsNone(data['status'])
+        self.assertIsNone(response.headers.get('Access-Control-Allow-Origin'))
+
+    @tornado.testing.gen_test
+    def test_app_with_correct_header_origin(self):
+        url = self.get_url('/')
+        client = self.get_http_client()
+        body = urlencode(dict(self.body, username='foo'))
+        headers = dict(self.headers, Origin=self.origin)
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNotNone(data['id'])
+        self.assertIsNotNone(data['encoding'])
+        self.assertIsNone(data['status'])
+        self.assertEqual(
+            response.headers.get('Access-Control-Allow-Origin'), self.origin
+        )

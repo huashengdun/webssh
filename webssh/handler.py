@@ -346,6 +346,20 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         else:
             future.set_result(worker)
 
+    def check_origin(self):
+        event_origin = self.get_argument('_origin', u'')
+        header_origin = self.request.headers.get('Origin')
+        origin = event_origin or header_origin
+
+        if origin:
+            if not super(IndexHandler, self).check_origin(origin):
+                raise tornado.web.HTTPError(
+                    403, 'Cross origin operation is not allowed.'
+                )
+
+            if not event_origin and self.origin_policy != 'same':
+                self.set_header('Access-Control-Allow-Origin', origin)
+
     def head(self):
         pass
 
@@ -362,12 +376,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         if len(clients.get(self.src_addr[0], {})) >= options.maxconn:
             raise tornado.web.HTTPError(403, 'Too many connections.')
 
-        origin = self.get_argument('_origin', u'')
-        if origin:
-            if not self.check_origin(origin):
-                raise tornado.web.HTTPError(
-                        403, 'Cross origin frame operation is not allowed.'
-                    )
+        self.check_origin()
 
         future = Future()
         t = threading.Thread(target=self.ssh_connect_wrapped, args=(future,))
