@@ -561,7 +561,7 @@ class TestAppWithRejectPolicy(OtherTestBase):
     def test_app_with_hostname_not_in_hostkeys(self):
         url = self.get_url('/')
         client = self.get_http_client()
-        body = urlencode(dict(self.body, username='foo'))
+        body = urlencode(self.body)
         response = yield client.fetch(url, method='POST', body=body,
                                       headers=self.headers)
         data = json.loads(to_str(response.body))
@@ -584,7 +584,7 @@ class TestAppWithBadHostKey(OtherTestBase):
     def test_app_with_bad_host_key(self):
         url = self.get_url('/')
         client = self.get_http_client()
-        body = urlencode(dict(self.body, username='foo'))
+        body = urlencode(self.body)
         response = yield client.fetch(url, method='POST', body=body,
                                       headers=self.headers)
         data = json.loads(to_str(response.body))
@@ -668,7 +668,7 @@ class TestAppWithPutRequest(OtherTestBase):
     def test_app_with_method_not_supported(self):
         url = self.get_url('/')
         client = self.get_http_client()
-        body = urlencode(dict(self.body, username='foo'))
+        body = urlencode(self.body)
 
         with self.assertRaises(HTTPError) as ctx:
             yield client.fetch(
@@ -687,37 +687,26 @@ class TestAppWithTooManyConnections(OtherTestBase):
 
     @tornado.testing.gen_test
     def test_app_with_too_many_connections(self):
+        clients['127.0.0.1'] = {'fake_worker_id': None}
+
         url = self.get_url('/')
         client = self.get_http_client()
-        body = urlencode(dict(self.body, username='foo'))
+        body = urlencode(self.body)
         response = yield client.fetch(url, method='POST', body=body,
                                       headers=self.headers)
         data = json.loads(to_str(response.body))
-        worker_id = data['id']
-        self.assertIsNotNone(worker_id)
+        self.assertIsNone(data['id'])
+        self.assertIsNone(data['encoding'])
+        self.assertEqual(data['status'], 'Too many connections.')
+
+        clients['127.0.0.1'].clear()
+
+        response = yield client.fetch(url, method='POST', body=body,
+                                      headers=self.headers)
+        data = json.loads(to_str(response.body))
+        self.assertIsNotNone(data['id'])
         self.assertIsNotNone(data['encoding'])
         self.assertIsNone(data['status'])
-
-        response = yield client.fetch(url, method='POST', body=body,
-                                      headers=self.headers)
-        data = json.loads(to_str(response.body))
-        self.assertIsNone(data['id'])
-        self.assertIsNone(data['encoding'])
-        self.assertEqual(data['status'], 'Too many connections.')
-
-        ws_url = url.replace('http', 'ws') + 'ws?id=' + worker_id
-        ws = yield tornado.websocket.websocket_connect(ws_url)
-        msg = yield ws.read_message()
-        self.assertIsNotNone(msg)
-
-        response = yield client.fetch(url, method='POST', body=body,
-                                      headers=self.headers)
-        data = json.loads(to_str(response.body))
-        self.assertIsNone(data['id'])
-        self.assertIsNone(data['encoding'])
-        self.assertEqual(data['status'], 'Too many connections.')
-
-        ws.close()
 
 
 class TestAppWithCrossOriginOperation(OtherTestBase):
@@ -728,7 +717,7 @@ class TestAppWithCrossOriginOperation(OtherTestBase):
     def test_app_with_wrong_event_origin(self):
         url = self.get_url('/')
         client = self.get_http_client()
-        body = urlencode(dict(self.body, username='foo', _origin='localhost'))
+        body = urlencode(dict(self.body, _origin='localhost'))
         response = yield client.fetch(url, method='POST', body=body,
                                       headers=self.headers)
         data = json.loads(to_str(response.body))
@@ -742,7 +731,7 @@ class TestAppWithCrossOriginOperation(OtherTestBase):
     def test_app_with_wrong_header_origin(self):
         url = self.get_url('/')
         client = self.get_http_client()
-        body = urlencode(dict(self.body, username='foo'))
+        body = urlencode(self.body)
         headers = dict(self.headers, Origin='localhost')
         response = yield client.fetch(url, method='POST', body=body,
                                       headers=headers)
@@ -757,7 +746,7 @@ class TestAppWithCrossOriginOperation(OtherTestBase):
     def test_app_with_correct_event_origin(self):
         url = self.get_url('/')
         client = self.get_http_client()
-        body = urlencode(dict(self.body, username='foo', _origin=self.origin))
+        body = urlencode(dict(self.body, _origin=self.origin))
         response = yield client.fetch(url, method='POST', body=body,
                                       headers=self.headers)
         data = json.loads(to_str(response.body))
@@ -770,7 +759,7 @@ class TestAppWithCrossOriginOperation(OtherTestBase):
     def test_app_with_correct_header_origin(self):
         url = self.get_url('/')
         client = self.get_http_client()
-        body = urlencode(dict(self.body, username='foo'))
+        body = urlencode(self.body)
         headers = dict(self.headers, Origin=self.origin)
         response = yield client.fetch(url, method='POST', body=body,
                                       headers=headers)
