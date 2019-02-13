@@ -45,33 +45,36 @@ class TestAppBase(AsyncHTTPTestCase):
         self.assertIsNone(data['id'])
         self.assertIn(status, data['status'])
 
-    def assert_status_equal(self, data, status=''):
-        if not status:
-            self.assertIsNotNone(data['encoding'])
-            self.assertIsNotNone(data['id'])
-        else:
-            self.assertIsNone(data['encoding'])
-            self.assertIsNone(data['id'])
+    def assert_status_equal(self, data, status):
+        self.assertIsNone(data['encoding'])
+        self.assertIsNone(data['id'])
         self.assertEqual(status, data['status'])
 
-    def sync_post(self, body, headers={}, url='/', method='POST'):
-        headers.update(self.headers)
-        return self.fetch(url, method=method, body=body, headers=headers)
+    def assert_status_none(self, data):
+        self.assertIsNotNone(data['encoding'])
+        self.assertIsNotNone(data['id'])
+        self.assertIsNone(data['status'])
 
-    def async_post(self, url, body, headers={}, method='POST'):
+    def fetch_request(self, url, method='GET', body='', headers={}, sync=True):
         if url.startswith('/'):
-            url = self.get_url('/')
+            url = self.get_url(url)
 
         if isinstance(body, dict):
             body = urlencode(body)
 
-        if headers:
-            headers.update(self.headers)
-        else:
+        if not headers:
             headers = self.headers
+        else:
+            headers.update(self.headers)
 
-        client = self.get_http_client()
+        client = self if sync else self.get_http_client()
         return client.fetch(url, method=method, body=body, headers=headers)
+
+    def sync_post(self, url, body, headers={}):
+        return self.fetch_request(url, 'POST', body, headers)
+
+    def async_post(self, url, body, headers={}):
+        return self.fetch_request(url, 'POST', body, headers, sync=False)
 
 
 class TestAppBasic(TestAppBase):
@@ -117,63 +120,63 @@ class TestAppBasic(TestAppBase):
         self.assertEqual(response.code, 200)
 
         body = 'port=7000&username=admin&password&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assert_response(b'Missing argument hostname', response)
 
         body = 'hostname=127.0.0.1&port=7000&password&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assert_response(b'Missing argument username', response)
 
         body = 'hostname=&port=&username=&password&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assert_response(b'Missing value hostname', response)
 
         body = 'hostname=127.0.0.1&port=7000&username=&password&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assert_response(b'Missing value username', response)
 
     def test_app_with_invalid_form_for_invalid_value(self):
         body = 'hostname=127.0.0&port=22&username=&password&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assert_response(b'Invalid hostname', response)
 
         body = 'hostname=http://www.googe.com&port=22&username=&password&_xsrf=yummy'  # noqa
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assert_response(b'Invalid hostname', response)
 
         body = 'hostname=127.0.0.1&port=port&username=&password&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assert_response(b'Invalid port', response)
 
         body = 'hostname=127.0.0.1&port=70000&username=&password&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assert_response(b'Invalid port', response)
 
     def test_app_with_wrong_hostname_ip(self):
         body = 'hostname=127.0.0.2&port=2200&username=admin&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assertEqual(response.code, 200)
         self.assertIn(b'Unable to connect to', response.body)
 
     def test_app_with_wrong_hostname_domain(self):
         body = 'hostname=xxxxxxxxxxxx&port=2200&username=admin&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assertEqual(response.code, 200)
         self.assertIn(b'Unable to connect to', response.body)
 
     def test_app_with_wrong_port(self):
         body = 'hostname=127.0.0.1&port=7000&username=admin&_xsrf=yummy'
-        response = self.sync_post(body)
+        response = self.sync_post('/', body)
         self.assertEqual(response.code, 200)
         self.assertIn(b'Unable to connect to', response.body)
 
     def test_app_with_wrong_credentials(self):
-        response = self.sync_post(self.body + 's')
+        response = self.sync_post('/', self.body + 's')
         self.assert_status_in(json.loads(to_str(response.body)), 'Authentication failed.') # noqa
 
     def test_app_with_correct_credentials(self):
-        response = self.sync_post(self.body)
-        self.assert_status_equal(json.loads(to_str(response.body)), None)
+        response = self.sync_post('/', self.body)
+        self.assert_status_none(json.loads(to_str(response.body)))
 
     def test_app_with_correct_credentials_but_with_no_port(self):
         default_port = handler.DEFAULT_PORT
@@ -181,13 +184,13 @@ class TestAppBasic(TestAppBase):
 
         # with no port value
         body = self.body.replace(str(self.sshserver_port), '')
-        response = self.sync_post(body)
-        self.assert_status_equal(json.loads(to_str(response.body)), None)
+        response = self.sync_post('/', body)
+        self.assert_status_none(json.loads(to_str(response.body)))
 
         # with no port argument
         body = body.replace('port=&', '')
-        response = self.sync_post(body)
-        self.assert_status_equal(json.loads(to_str(response.body)), None)
+        response = self.sync_post('/', body)
+        self.assert_status_none(json.loads(to_str(response.body)))
 
         handler.DEFAULT_PORT = default_port
 
@@ -196,7 +199,7 @@ class TestAppBasic(TestAppBase):
         url = self.get_url('/')
         response = yield self.async_post(url, self.body)
         data = json.loads(to_str(response.body))
-        self.assert_status_equal(data, None)
+        self.assert_status_none(data)
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws?id=' + data['id']
@@ -211,7 +214,7 @@ class TestAppBasic(TestAppBase):
         url = self.get_url('/')
         response = yield self.async_post(url, self.body)
         data = json.loads(to_str(response.body))
-        self.assert_status_equal(data, None)
+        self.assert_status_none(data)
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws?id=' + data['id']
@@ -225,7 +228,7 @@ class TestAppBasic(TestAppBase):
         url = self.get_url('/')
         response = yield self.async_post(url, self.body)
         data = json.loads(to_str(response.body))
-        self.assert_status_equal(data, None)
+        self.assert_status_none(data)
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws'
@@ -239,7 +242,7 @@ class TestAppBasic(TestAppBase):
         url = self.get_url('/')
         response = yield self.async_post(url, self.body)
         data = json.loads(to_str(response.body))
-        self.assert_status_equal(data, None)
+        self.assert_status_none(data)
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws?id='
@@ -253,7 +256,7 @@ class TestAppBasic(TestAppBase):
         url = self.get_url('/')
         response = yield self.async_post(url, self.body)
         data = json.loads(to_str(response.body))
-        self.assert_status_equal(data, None)
+        self.assert_status_none(data)
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws?id=1' + data['id']
@@ -268,7 +271,7 @@ class TestAppBasic(TestAppBase):
         url = self.get_url('/')
         response = yield self.async_post(url, body)
         data = json.loads(to_str(response.body))
-        self.assert_status_equal(data, None)
+        self.assert_status_none(data)
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws?id=' + data['id']
@@ -310,10 +313,9 @@ class TestAppBasic(TestAppBase):
         url = self.get_url('/')
         privatekey = read_file(make_tests_data_path('user_rsa_key'))
         self.body_dict.update(privatekey=privatekey)
-        body = urlencode(self.body_dict)
-        response = yield self.async_post(url, body)
+        response = yield self.async_post(url, self.body_dict)
         data = json.loads(to_str(response.body))
-        self.assert_status_equal(data, None)
+        self.assert_status_none(data)
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws?id=' + data['id']
@@ -334,7 +336,7 @@ class TestAppBasic(TestAppBase):
         }
         response = yield self.async_post(url, body, headers=headers)
         data = json.loads(to_str(response.body))
-        self.assert_status_equal(data, None)
+        self.assert_status_none(data)
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws?id=' + data['id']
@@ -426,8 +428,7 @@ class TestAppBasic(TestAppBase):
     @tornado.testing.gen_test
     def test_app_with_user_keyonly_for_bad_authentication_type(self):
         self.body_dict.update(username='keyonly', password='foo')
-        body = urlencode(self.body_dict)
-        response = yield self.async_post('/', body)
+        response = yield self.async_post('/', self.body_dict)
         self.assertEqual(response.code, 200)
         self.assert_status_in(json.loads(to_str(response.body)), 'Bad authentication type') # noqa
 
@@ -496,12 +497,8 @@ class TestAppInDebugMode(OtherTestBase):
             self.assertIn(b'Uncaught exception', response.body)
 
     def test_server_error_for_post_method(self):
-        response = self.fetch(
-            '/',
-            method='POST',
-            body=urlencode(dict(self.body, error='raise')),
-            headers=self.headers
-        )
+        body = dict(self.body, error='raise')
+        response = self.sync_post('/', body)
         self.assert_response(b'"status": "Internal Server Error"', response)
 
     def test_html(self):
@@ -514,10 +511,9 @@ class TestAppWithLargeBuffer(OtherTestBase):
     @tornado.testing.gen_test
     def test_app_for_sending_message_with_large_size(self):
         url = self.get_url('/')
-        body = urlencode(dict(self.body, username='foo'))
-        response = yield self.async_post(url, body, self.headers)
+        response = yield self.async_post(url, dict(self.body, username='foo'))
         data = json.loads(to_str(response.body))
-        self.assert_status_equal(data, None)
+        self.assert_status_none(data)
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws?id=' + data['id']
@@ -545,7 +541,7 @@ class TestAppWithRejectPolicy(OtherTestBase):
 
     @tornado.testing.gen_test
     def test_app_with_hostname_not_in_hostkeys(self):
-        response = yield self.async_post('/', urlencode(self.body), self.headers) # noqa
+        response = yield self.async_post('/', self.body)
         data = json.loads(to_str(response.body))
         message = 'Connection to {}:{} is not allowed.'.format(self.body['hostname'], self.sshserver_port) # noqa
         self.assertEqual(message, data['status'])
@@ -562,7 +558,7 @@ class TestAppWithBadHostKey(OtherTestBase):
 
     @tornado.testing.gen_test
     def test_app_with_bad_host_key(self):
-        response = yield self.async_post('/', urlencode(self.body), self.headers) # noqa
+        response = yield self.async_post('/', self.body)
         data = json.loads(to_str(response.body))
         self.assertEqual('Bad host key.', data['status'])
 
@@ -576,14 +572,12 @@ class TestAppWithTrustedStream(OtherTestBase):
         self.assertIn('Forbidden', response.error.message)
 
     def test_with_forbidden_post_request(self):
-        response = self.fetch('/', method='POST', body=urlencode(self.body),
-                              headers=self.headers)
+        response = self.sync_post('/', self.body)
         self.assertEqual(response.code, 403)
         self.assertIn('Forbidden', response.error.message)
 
     def test_with_forbidden_put_request(self):
-        response = self.fetch('/', method='PUT', body=urlencode(self.body),
-                              headers=self.headers)
+        response = self.fetch_request('/', method='PUT', body=self.body)
         self.assertEqual(response.code, 403)
         self.assertIn('Forbidden', response.error.message)
 
@@ -601,8 +595,7 @@ class TestAppNotFoundHandler(OtherTestBase):
         self.assertIn(b'404: Not Found', response.body)
 
     def test_with_not_found_post_request(self):
-        response = self.fetch('/pathnotfound', method='POST',
-                              body=urlencode(self.body), headers=self.headers)
+        response = self.sync_post('/pathnotfound', self.body)
         self.assertEqual(response.code, 404)
         self.assertEqual(
             response.headers['Server'], self.custom_headers['Server']
@@ -610,8 +603,8 @@ class TestAppNotFoundHandler(OtherTestBase):
         self.assertIn(b'404: Not Found', response.body)
 
     def test_with_not_found_put_request(self):
-        response = self.fetch('/pathnotfound', method='PUT',
-                              body=urlencode(self.body), headers=self.headers)
+        response = self.fetch_request('/pathnotfound', method='PUT',
+                                      body=self.body)
         self.assertEqual(response.code, 404)
         self.assertEqual(
             response.headers['Server'], self.custom_headers['Server']
@@ -640,14 +633,8 @@ class TestAppWithPutRequest(OtherTestBase):
 
     @tornado.testing.gen_test
     def test_app_with_method_not_supported(self):
-        url = self.get_url('/')
-        client = self.get_http_client()
-        body = urlencode(self.body)
-
         with self.assertRaises(HTTPError) as ctx:
-            yield client.fetch(
-                url, method='PUT', body=body, headers=self.headers
-            )
+            yield self.fetch_request('/', 'PUT', self.body, sync=False)
         self.assertIn('Method Not Allowed', ctx.exception.message)
 
 
@@ -664,13 +651,13 @@ class TestAppWithTooManyConnections(OtherTestBase):
         clients['127.0.0.1'] = {'fake_worker_id': None}
 
         url = self.get_url('/')
-        response = yield self.async_post(url, urlencode(self.body), self.headers) # noqa
+        response = yield self.async_post(url, self.body)
         data = json.loads(to_str(response.body))
-        self.assertEqual('Too many connections.', data['status']) # noqa
+        self.assertEqual('Too many connections.', data['status'])
 
         clients['127.0.0.1'].clear()
-        response = yield self.async_post(url, urlencode(self.body), self.headers) # noqa
-        self.assert_status_equal(json.loads(to_str(response.body)), None)
+        response = yield self.async_post(url, self.body)
+        self.assert_status_none(json.loads(to_str(response.body)))
 
 
 class TestAppWithCrossOriginOperation(OtherTestBase):
@@ -679,28 +666,28 @@ class TestAppWithCrossOriginOperation(OtherTestBase):
 
     @tornado.testing.gen_test
     def test_app_with_wrong_event_origin(self):
-        body = urlencode(dict(self.body, _origin='localhost'))
-        response = yield self.async_post('/', body, self.headers)
+        body = dict(self.body, _origin='localhost')
+        response = yield self.async_post('/', body)
         self.assert_status_equal(json.loads(to_str(response.body)), 'Cross origin operation is not allowed.') # noqa
 
     @tornado.testing.gen_test
     def test_app_with_wrong_header_origin(self):
-        headers = dict(self.headers, Origin='localhost')
-        response = yield self.async_post('/', urlencode(self.body), headers)
+        headers = dict(Origin='localhost')
+        response = yield self.async_post('/', self.body, headers=headers)
         self.assert_status_equal(json.loads(to_str(response.body)), 'Cross origin operation is not allowed.') # noqa
 
     @tornado.testing.gen_test
     def test_app_with_correct_event_origin(self):
-        body = urlencode(dict(self.body, _origin=self.origin))
-        response = yield self.async_post('/', body, self.headers)
-        self.assert_status_equal(json.loads(to_str(response.body)), None)
+        body = dict(self.body, _origin=self.origin)
+        response = yield self.async_post('/', body)
+        self.assert_status_none(json.loads(to_str(response.body)))
         self.assertIsNone(response.headers.get('Access-Control-Allow-Origin'))
 
     @tornado.testing.gen_test
     def test_app_with_correct_header_origin(self):
-        headers = dict(self.headers, Origin=self.origin)
-        response = yield self.async_post('/', urlencode(self.body), headers)
-        self.assert_status_equal(json.loads(to_str(response.body)), None)
+        headers = dict(Origin=self.origin)
+        response = yield self.async_post('/', self.body, headers=headers)
+        self.assert_status_none(json.loads(to_str(response.body)))
         self.assertEqual(
             response.headers.get('Access-Control-Allow-Origin'), self.origin
         )
