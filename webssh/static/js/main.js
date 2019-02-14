@@ -202,7 +202,7 @@ jQuery(function($){
         sock = new window.WebSocket(url),
         encoding = 'utf-8',
         decoder = window.TextDecoder ? new window.TextDecoder(encoding) : encoding,
-        terminal = document.getElementById('#terminal'),
+        terminal = document.getElementById('terminal'),
         term = new window.Terminal({
           cursorBlink: true,
         });
@@ -329,7 +329,7 @@ jQuery(function($){
     });
 
     sock.onopen = function() {
-      $('.container').hide();
+      // $('.container').hide();
       term.open(terminal, true);
       term.toggleFullscreen(true);
       state = CONNECTED;
@@ -350,7 +350,7 @@ jQuery(function($){
       term = undefined;
       sock = undefined;
       reset_wssh();
-      $('.container').show();
+      // $('.container').show();
       status.text(e.reason);
       state = DISCONNECTED;
       title_text = 'WebSSH';
