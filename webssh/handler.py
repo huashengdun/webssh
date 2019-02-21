@@ -275,10 +275,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         if self.ssh_client._system_host_keys.lookup(key) is None:
             if self.ssh_client._host_keys.lookup(key) is None:
-                raise ValueError(
-                    'Connection to {}:{} is not allowed.'.format(
-                        hostname, port)
-                )
+                raise tornado.web.HTTPError(
+                        403, 'Connection to {}:{} is not allowed.'.format(
+                            hostname, port)
+                    )
 
     def get_args(self):
         hostname = self.get_hostname()
@@ -309,15 +309,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         return result if result else 'utf-8'
 
-    def ssh_connect(self):
+    def ssh_connect(self, args):
         ssh = self.ssh_client
-
-        try:
-            args = self.get_args()
-        except InvalidValueError as exc:
-            raise tornado.web.HTTPError(400, str(exc))
-
-        dst_addr = (args[0], args[1])
+        dst_addr = args[:2]
         logging.info('Connecting to {}:{}'.format(*dst_addr))
 
         try:
@@ -337,9 +331,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         worker.encoding = self.get_default_encoding(ssh)
         return worker
 
-    def ssh_connect_wrapped(self, future):
+    def ssh_connect_wrapped(self, future, args):
         try:
-            worker = self.ssh_connect()
+            worker = self.ssh_connect(args)
         except Exception as exc:
             logging.error(traceback.format_exc())
             future.set_exception(exc)
@@ -378,9 +372,16 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         self.check_origin()
 
+        try:
+            args = self.get_args()
+        except InvalidValueError as exc:
+            raise tornado.web.HTTPError(400, str(exc))
+
         future = Future()
-        t = threading.Thread(target=self.ssh_connect_wrapped, args=(future,))
-        t.setDaemon(True)
+        t = threading.Thread(
+            target=self.ssh_connect_wrapped, args=(future, args)
+        )
+        t.daemon = True
         t.start()
 
         try:
