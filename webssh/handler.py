@@ -8,10 +8,10 @@ import weakref
 import paramiko
 import tornado.web
 
-from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from tornado.ioloop import IOLoop
 from tornado.options import options
+from tornado.process import cpu_count
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname, to_bytes, to_str,
     to_int, to_ip_address, UnicodeType, is_ip_hostname, is_same_primary_domain
