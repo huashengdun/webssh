@@ -3,12 +3,12 @@ import json
 import logging
 import socket
 import struct
-import threading
 import traceback
 import weakref
 import paramiko
 import tornado.web
 
+from concurrent.futures import ThreadPoolExecutor
 from tornado.ioloop import IOLoop
 from tornado.options import options
 from webssh.utils import (
@@ -16,11 +16,6 @@ from webssh.utils import (
     to_int, to_ip_address, UnicodeType, is_ip_hostname, is_same_primary_domain
 )
 from webssh.worker import Worker, recycle_worker, clients
-
-try:
-    from concurrent.futures import Future
-except ImportError:
-    from tornado.concurrent import Future
 
 try:
     from json.decoder import JSONDecodeError
@@ -172,6 +167,8 @@ class NotFoundHandler(MixinHandler, tornado.web.ErrorHandler):
 
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor()
 
     def initialize(self, loop, policy, host_keys_settings):
         super(IndexHandler, self).initialize(loop)
@@ -331,15 +328,6 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         worker.encoding = self.get_default_encoding(ssh)
         return worker
 
-    def ssh_connect_wrapped(self, future, args):
-        try:
-            worker = self.ssh_connect(args)
-        except Exception as exc:
-            logging.error(traceback.format_exc())
-            future.set_exception(exc)
-        else:
-            future.set_result(worker)
-
     def check_origin(self):
         event_origin = self.get_argument('_origin', u'')
         header_origin = self.request.headers.get('Origin')
@@ -377,16 +365,12 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         except InvalidValueError as exc:
             raise tornado.web.HTTPError(400, str(exc))
 
-        future = Future()
-        t = threading.Thread(
-            target=self.ssh_connect_wrapped, args=(future, args)
-        )
-        t.daemon = True
-        t.start()
+        future = self.executor.submit(self.ssh_connect, args)
 
         try:
             worker = yield future
         except (ValueError, paramiko.SSHException) as exc:
+            logging.error(traceback.format_exc())
             self.result.update(status=str(exc))
         else:
             workers = clients.setdefault(worker.src_addr[0], {})
