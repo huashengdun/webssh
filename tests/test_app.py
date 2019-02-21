@@ -56,7 +56,7 @@ class TestAppBase(AsyncHTTPTestCase):
         self.assertIsNone(data['status'])
 
     def fetch_request(self, url, method='GET', body='', headers={}, sync=True):
-        if url.startswith('/'):
+        if not sync and url.startswith('/'):
             url = self.get_url(url)
 
         if isinstance(body, dict):
@@ -403,7 +403,6 @@ class TestAppBasic(TestAppBase):
                 yield self.async_post(url, body, headers=headers)
             self.assertIn('Bad Request', ctx.exception.message)
 
-    @tornado.testing.gen_test
     def test_app_post_form_with_large_body_size_by_multipart_form(self):
         privatekey = 'h' * (2 * max_body_size)
         files = [('privatekey', 'user_rsa_key', privatekey)]
@@ -412,18 +411,14 @@ class TestAppBasic(TestAppBase):
         headers = {
             'Content-Type': content_type, 'content-length': str(len(body))
         }
+        response = self.sync_post('/', body, headers=headers)
+        self.assertIn(response.code, [400, 599])
 
-        with self.assertRaises(HTTPError) as ctx:
-            yield self.async_post('/', body, headers=headers)
-        self.assertIn('Bad Request', ctx.exception.message)
-
-    @tornado.testing.gen_test
     def test_app_post_form_with_large_body_size_by_urlencoded_form(self):
         privatekey = 'h' * (2 * max_body_size)
         body = self.body + '&privatekey=' + privatekey
-        with self.assertRaises(HTTPError) as ctx:
-            yield self.async_post('/', body)
-        self.assertIn('Bad Request', ctx.exception.message)
+        response = self.sync_post('/', body)
+        self.assertIn(response.code, [400, 599])
 
     @tornado.testing.gen_test
     def test_app_with_user_keyonly_for_bad_authentication_type(self):
