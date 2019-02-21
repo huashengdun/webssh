@@ -8,6 +8,7 @@ import weakref
 import paramiko
 import tornado.web
 
+from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from tornado.ioloop import IOLoop
 from tornado.options import options
@@ -168,7 +169,7 @@ class NotFoundHandler(MixinHandler, tornado.web.ErrorHandler):
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
-    executor = ThreadPoolExecutor()
+    executor = ThreadPoolExecutor(max_workers=cpu_count()*5)
 
     def initialize(self, loop, policy, host_keys_settings):
         super(IndexHandler, self).initialize(loop)
