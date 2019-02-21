@@ -41,7 +41,8 @@ define('origin', default='same', help='''Origin policy,
 separated by comma;
 '*': wildcard policy, matches any domain, allowed in debug mode only.''')
 define('wpintvl', type=int, default=0, help='Websocket ping interval')
-define('maxconn', type=int, default=20,  help='Maximum connections per client')
+define('maxconn', type=int, default=20,
+       help='Maximum live connections (ssh sessions) per client')
 define('version', type=bool, help='Show version information',
        callback=print_version)
 

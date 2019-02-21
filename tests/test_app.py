@@ -653,7 +653,7 @@ class TestAppWithTooManyConnections(OtherTestBase):
         url = self.get_url('/')
         response = yield self.async_post(url, self.body)
         data = json.loads(to_str(response.body))
-        self.assertEqual('Too many connections.', data['status'])
+        self.assertEqual('Too many live connections.', data['status'])
 
         clients['127.0.0.1'].clear()
         response = yield self.async_post(url, self.body)
