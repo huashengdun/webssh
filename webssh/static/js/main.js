@@ -210,7 +210,7 @@ jQuery(function($){
       return;
     }
 
-    var ws_url = window.location.href.replace('http', 'ws'),
+    var ws_url = window.location.href.split('?')[0].replace('http', 'ws'),
         join = (ws_url[ws_url.length-1] === '/' ? '' : '/'),
         url = ws_url + join + 'ws?id=' + msg.id,
         sock = new window.WebSocket(url),
