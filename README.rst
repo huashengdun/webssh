@@ -103,6 +103,21 @@ Browser console
     // send a command to the server
     wssh.send('ls -l');
 
+Use Docker
+~~~~~~~~~~
+
+Start up the app
+
+::
+
+    docker-compose up
+
+Tear down the app
+
+::
+
+    docker-compose down
+
 Tests
 ~~~~~
 

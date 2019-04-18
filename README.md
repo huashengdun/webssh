@@ -98,6 +98,18 @@ wssh.reset_encoding();
 wssh.send('ls -l');
 ```
 
+### Use Docker
+
+Start up the app
+```
+docker-compose up
+```
+
+Tear down the app
+```
+docker-compose down
+```
+
 ### Tests
 
 Use unittest to run all tests
