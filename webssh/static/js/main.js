@@ -116,9 +116,17 @@ jQuery(function($){
     return {'cols': cols, 'rows': rows};
   }
 
+
   function resize_terminal(term) {
     var geometry = current_geometry(term);
     term.on_resize(geometry.cols, geometry.rows);
+  }
+
+
+  function set_backgound_color(term, color) {
+    term.setOption('theme', {
+      background: color
+    });
   }
 
 
@@ -330,6 +338,10 @@ jQuery(function($){
       } else {
         term.on_resize(cols, rows);
       }
+    };
+
+    wssh.set_bgcolor = function(color) {
+      set_backgound_color(term, color);
     };
 
     term.on_resize = function(cols, rows) {
