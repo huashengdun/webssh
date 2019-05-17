@@ -66,6 +66,7 @@ jQuery(function($){
     }
   }
 
+
   function restore_items(names) {
     var i, name, value;
 
@@ -77,8 +78,8 @@ jQuery(function($){
       }
     }
   }
-
   restore_items(fields);
+
 
   function parse_xterm_style() {
     var text = $('.xterm-helpers style').text();
@@ -94,10 +95,12 @@ jQuery(function($){
     style.height = term._core.renderer.dimensions.actualCellHeight;
   }
 
+
   function toggle_fullscreen(term) {
     var func = term.toggleFullScreen || term.toggleFullscreen;
     func.call(term, true);
   }
+
 
   function current_geometry(term) {
     if (!style.width || !style.height) {
@@ -111,6 +114,11 @@ jQuery(function($){
     var cols = parseInt(window.innerWidth / style.width, 10) - 1;
     var rows = parseInt(window.innerHeight / style.height, 10);
     return {'cols': cols, 'rows': rows};
+  }
+
+  function resize_terminal(term) {
+    var geometry = current_geometry(term);
+    term.on_resize(geometry.cols, geometry.rows);
   }
 
 
@@ -227,11 +235,6 @@ jQuery(function($){
       msg.encoding = encoding;
     } else {
       console.log('The deault encoding of your server is ' + msg.encoding);
-    }
-
-    function resize_terminal(term) {
-      var geometry = current_geometry(term);
-      term.on_resize(geometry.cols, geometry.rows);
     }
 
     function term_write(text) {
