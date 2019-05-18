@@ -39,7 +39,8 @@ jQuery(function($){
   var status = $('#status'),
       btn = $('.btn-primary'),
       style = {},
-      title_text = 'WebSSH',
+      default_title = 'WebSSH',
+      user_title = '',
       title_element = document.querySelector('title'),
       form_id = '#connect',
       debug = document.querySelector(form_id).noValidate,
@@ -384,7 +385,7 @@ jQuery(function($){
       toggle_fullscreen(term);
       term.focus();
       state = CONNECTED;
-      title_element.text = title_text;
+      title_element.text = user_title || default_title;
     };
 
     sock.onmessage = function(msg) {
@@ -403,8 +404,8 @@ jQuery(function($){
       reset_wssh();
       status.text(e.reason);
       state = DISCONNECTED;
-      title_text = 'WebSSH';
-      title_element.text = title_text;
+      default_title = 'WebSSH';
+      title_element.text = default_title;
     };
 
     $(window).resize(function(){
@@ -612,7 +613,7 @@ jQuery(function($){
 
     if (result) {
       state = CONNECTING;
-      title_text = result;
+      default_title = result;
     }
   }
 
@@ -657,13 +658,19 @@ jQuery(function($){
 
   url_data = parse_url_data(
     window.location.search.substring(1) + '&' +  window.location.hash.substring(1),
-    fields.concat(['password', 'bgcolor'])
+    fields.concat(['password', 'bgcolor', 'title'])
   );
   console.log(url_data);
 
   if (url_data.bgcolor) {
     bgcolor = url_data.bgcolor;
   }
+
+  if (url_data.title) {
+    user_title = url_data.title;
+  }
+
+  delete url_data.title;
   delete url_data.bgcolor;
 
   if (url_data.hostname && url_data.username) {
