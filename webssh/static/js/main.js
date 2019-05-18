@@ -86,14 +86,17 @@ jQuery(function($){
 
 
   function parse_url_data(string, filter_keys) {
-    var i, pair,
+    var i, pair, key, val,
         map = {},
         arr = string.split('&');
 
     for (i = 0; i < arr.length; i++) {
       pair = arr[i].split('=');
-      if (filter_keys.indexOf(pair[0]) !== -1) {
-        map[pair[0]] = pair[1];
+      key = pair[0].toLowerCase();
+      val = pair[1];
+
+      if (filter_keys.indexOf(key) !== -1) {
+        map[key] = val;
       }
     }
 
