@@ -85,6 +85,16 @@ jQuery(function($){
   restore_items(fields);
 
 
+  function decode_uri(uri) {
+    try {
+      return decodeURI(uri);
+    } catch(e) {
+      console.error(e);
+    }
+    return '';
+  }
+
+
   function parse_url_data(string, filter_keys) {
     var i, pair, key, val,
         map = {},
@@ -92,8 +102,8 @@ jQuery(function($){
 
     for (i = 0; i < arr.length; i++) {
       pair = arr[i].split('=');
-      key = pair[0].toLowerCase();
-      val = pair[1];
+      key = pair[0].trim().toLowerCase();
+      val = pair[1] && pair[1].trim();
 
       if (filter_keys.indexOf(key) !== -1) {
         map[key] = val;
@@ -660,7 +670,7 @@ jQuery(function($){
 
 
   url_data = parse_url_data(
-    window.location.search.substring(1) + '&' +  window.location.hash.substring(1),
+    decode_uri(window.location.search.substring(1)) + '&' + decode_uri(window.location.hash.substring(1)),
     fields.concat(['password', 'bgcolor', 'title'])
   );
   console.log(url_data);
