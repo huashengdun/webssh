@@ -40,7 +40,6 @@ jQuery(function($){
       btn = $('.btn-primary'),
       style = {},
       default_title = 'WebSSH',
-      user_title = '',
       title_element = document.querySelector('title'),
       form_id = '#connect',
       debug = document.querySelector(form_id).noValidate,
@@ -51,8 +50,8 @@ jQuery(function($){
       messages = {1: 'This client is connecting ...', 2: 'This client is already connnected.'},
       key_max_size = 16384,
       fields = ['hostname', 'port', 'username'],
-      url_data = {},
-      bgcolor = 'black',
+      url_form_data = {},
+      url_opts_data = {},
       event_origin,
       hostname_tester = /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)/;
 
@@ -95,9 +94,8 @@ jQuery(function($){
   }
 
 
-  function parse_url_data(string, filter_keys) {
+  function parse_url_data(string, form_keys, opts_keys, form_data, opts_data) {
     var i, pair, key, val,
-        map = {},
         arr = string.split('&');
 
     for (i = 0; i < arr.length; i++) {
@@ -105,12 +103,12 @@ jQuery(function($){
       key = pair[0].trim().toLowerCase();
       val = pair[1] && pair[1].trim();
 
-      if (filter_keys.indexOf(key) !== -1) {
-        map[key] = val;
+      if (form_keys.indexOf(key) !== -1) {
+        form_data[key] = val;
+      } else if (opts_keys.indexOf(key) !== -1) {
+        opts_data[key] = val;
       }
     }
-
-    return map;
   }
 
 
@@ -269,7 +267,7 @@ jQuery(function($){
         term = new window.Terminal({
           cursorBlink: true,
           theme: {
-            background: bgcolor
+            background: url_opts_data.bgcolor || 'black'
           }
         });
 
@@ -398,7 +396,7 @@ jQuery(function($){
       toggle_fullscreen(term);
       term.focus();
       state = CONNECTED;
-      title_element.text = user_title || default_title;
+      title_element.text = url_opts_data.title || default_title;
     };
 
     sock.onmessage = function(msg) {
@@ -669,25 +667,16 @@ jQuery(function($){
   }
 
 
-  url_data = parse_url_data(
+  parse_url_data(
     decode_uri(window.location.search.substring(1)) + '&' + decode_uri(window.location.hash.substring(1)),
-    fields.concat(['password', 'bgcolor', 'title'])
+    fields.concat(['password']), ['bgcolor', 'title'],
+    url_form_data, url_opts_data
   );
-  console.log(url_data);
+  console.log(url_form_data);
+  console.log(url_opts_data);
 
-  if (url_data.bgcolor) {
-    bgcolor = url_data.bgcolor;
-  }
-
-  if (url_data.title) {
-    user_title = url_data.title;
-  }
-
-  delete url_data.title;
-  delete url_data.bgcolor;
-
-  if (url_data.hostname && url_data.username) {
-    connect(url_data);
+  if (url_form_data.hostname && url_form_data.username) {
+    connect(url_form_data);
   }
 
 });
