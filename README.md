@@ -98,6 +98,25 @@ wssh.reset_encoding();
 wssh.send('ls -l');
 ```
 
+### URL Arguments
+
+Spport passing arugments by url (hash or search) like following examples:
+
+Passing form data
+```bash
+http://localhost:8888/?hostname=xx&username=yy
+```
+
+Passing a terminal background color
+```bash
+http://localhost:8888/#bgcolor=green
+```
+
+Passing a user defined title
+```bash
+http://localhost:8888/?title=my-webssh-server
+```
+
 ### Use Docker
 
 Start up the app

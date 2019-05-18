@@ -103,6 +103,30 @@ Browser console
     // send a command to the server
     wssh.send('ls -l');
 
+URL Arguments
+~~~~~~~~~~~~~
+
+Spport passing arugments by url (hash or search) like following
+examples:
+
+Passing form data
+
+.. code:: bash
+
+    http://localhost:8888/?hostname=xx&username=yy
+
+Passing a terminal background color
+
+.. code:: bash
+
+    http://localhost:8888/#bgcolor=green
+
+Passing a user defined title
+
+.. code:: bash
+
+    http://localhost:8888/?title=my-webssh-server
+
 Use Docker
 ~~~~~~~~~~
 
