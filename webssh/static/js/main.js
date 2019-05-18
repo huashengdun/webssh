@@ -81,8 +81,6 @@ jQuery(function($){
     }
   }
 
-  restore_items(fields);
-
 
   function initialize_map(keys, map) {
     var i;
@@ -90,7 +88,6 @@ jQuery(function($){
     for (i = 0; i < keys.length; i++) {
       map[keys[i]] = '';
     }
-
   }
 
 
@@ -676,6 +673,8 @@ jQuery(function($){
     window.Terminal.applyAddon(window.fullscreen);
   }
 
+
+  restore_items(fields);
 
   initialize_map(fields.concat(['password']), url_form_data);
   initialize_map(['bgcolor', 'title'], url_opts_data);
