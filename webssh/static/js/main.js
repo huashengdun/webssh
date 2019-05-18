@@ -483,7 +483,7 @@ jQuery(function($){
     return result;
   }
 
-
+  // Fix empty input file ajax submission error for safari 11.x
   function disable_file_inputs(inputs) {
     var i, input;
 
