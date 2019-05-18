@@ -84,6 +84,16 @@ jQuery(function($){
   restore_items(fields);
 
 
+  function initialize_map(keys, map) {
+    var i;
+
+    for (i = 0; i < keys.length; i++) {
+      map[keys[i]] = '';
+    }
+
+  }
+
+
   function decode_uri(uri) {
     try {
       return decodeURI(uri);
@@ -94,7 +104,7 @@ jQuery(function($){
   }
 
 
-  function parse_url_data(string, form_keys, opts_keys, form_data, opts_data) {
+  function parse_url_data(string, form_map, opts_map) {
     var i, pair, key, val,
         arr = string.split('&');
 
@@ -103,10 +113,10 @@ jQuery(function($){
       key = pair[0].trim().toLowerCase();
       val = pair[1] && pair[1].trim();
 
-      if (form_keys.indexOf(key) !== -1) {
-        form_data[key] = val;
-      } else if (opts_keys.indexOf(key) !== -1) {
-        opts_data[key] = val;
+      if (form_map[key] === '') {
+        form_map[key] = val;
+      } else if (opts_map[key] === '') {
+        opts_map[key] = val;
       }
     }
   }
@@ -667,9 +677,11 @@ jQuery(function($){
   }
 
 
+  initialize_map(fields.concat(['password']), url_form_data);
+  initialize_map(['bgcolor', 'title'], url_opts_data);
+
   parse_url_data(
     decode_uri(window.location.search.substring(1)) + '&' + decode_uri(window.location.hash.substring(1)),
-    fields.concat(['password']), ['bgcolor', 'title'],
     url_form_data, url_opts_data
   );
   console.log(url_form_data);
