@@ -50,6 +50,8 @@ jQuery(function($){
       messages = {1: 'This client is connecting ...', 2: 'This client is already connnected.'},
       key_max_size = 16384,
       fields = ['hostname', 'port', 'username'],
+      url_data = {},
+      bgcolor = 'black',
       event_origin,
       hostname_tester = /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)/;
 
@@ -78,7 +80,24 @@ jQuery(function($){
       }
     }
   }
+
   restore_items(fields);
+
+
+  function parse_url_data(string, filter_keys) {
+    var i, pair,
+        map = {},
+        arr = string.split('&');
+
+    for (i = 0; i < arr.length; i++) {
+      pair = arr[i].split('=');
+      if (filter_keys.indexOf(pair[0]) !== -1) {
+        map[pair[0]] = pair[1];
+      }
+    }
+
+    return map;
+  }
 
 
   function parse_xterm_style() {
@@ -235,6 +254,9 @@ jQuery(function($){
         terminal = document.getElementById('terminal'),
         term = new window.Terminal({
           cursorBlink: true,
+          theme: {
+            background: bgcolor
+          }
         });
 
     console.log(url);
@@ -630,6 +652,22 @@ jQuery(function($){
 
   if (window.Terminal.applyAddon) {
     window.Terminal.applyAddon(window.fullscreen);
+  }
+
+
+  url_data = parse_url_data(
+    window.location.search.substring(1) + '&' +  window.location.hash.substring(1),
+    fields.concat(['password', 'bgcolor'])
+  );
+  console.log(url_data);
+
+  if (url_data.bgcolor) {
+    bgcolor = url_data.bgcolor;
+  }
+  delete url_data.bgcolor;
+
+  if (url_data.hostname && url_data.username) {
+    connect(url_data);
   }
 
 });
