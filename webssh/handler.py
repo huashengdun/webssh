@@ -226,7 +226,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             pkey = pkeycls.from_private_key(io.StringIO(privatekey),
                                             password=password)
         except paramiko.PasswordRequiredException:
-            raise
+            raise InvalidValueError(
+                    'Need a password to decrypt the private key.'
+                )
         except paramiko.SSHException:
             pass
         else:

@@ -170,8 +170,9 @@ class TestIndexHandler(unittest.TestCase):
         pkey = IndexHandler.get_specific_pkey(cls, 'x'+key, None)
         self.assertIsNone(pkey)
 
-        with self.assertRaises(paramiko.PasswordRequiredException):
+        with self.assertRaises(InvalidValueError) as ctx:
             pkey = IndexHandler.get_specific_pkey(cls, key, None)
+        self.assertIn('Need a password', str(ctx.exception))
 
     def test_get_pkey_obj_with_plain_key(self):
         fname = 'test_ed25519.key'
@@ -205,8 +206,9 @@ class TestIndexHandler(unittest.TestCase):
             pkey = IndexHandler.get_pkey_obj('x'+key, '', fname)
         self.assertIn('Invalid private key', str(ctx.exception))
 
-        with self.assertRaises(paramiko.PasswordRequiredException):
-            pkey = IndexHandler.get_pkey_obj(key, '', fname)
+        with self.assertRaises(InvalidValueError) as ctx:
+            pkey = IndexHandler.get_specific_pkey(cls, key, None)
+        self.assertIn('Need a password', str(ctx.exception))
 
 
 class TestWsockHandler(unittest.TestCase):
