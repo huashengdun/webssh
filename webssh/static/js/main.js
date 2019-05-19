@@ -314,12 +314,20 @@ jQuery(function($){
           console.log('Set encoding to ' + encoding);
         } catch (RangeError) {
           console.log('Unknown encoding ' + new_encoding);
+          return false;
         }
       }
     }
 
     wssh.set_encoding = set_encoding;
-    set_encoding(msg.encoding);
+
+    if (url_opts_data.encoding) {
+      if (set_encoding(url_opts_data.encoding) === false) {
+        set_encoding(msg.encoding);
+      }
+    } else {
+      set_encoding(msg.encoding);
+    }
 
 
     wssh.geometry = function() {
@@ -677,7 +685,7 @@ jQuery(function($){
   restore_items(fields);
 
   initialize_map(fields.concat(['password']), url_form_data);
-  initialize_map(['bgcolor', 'title'], url_opts_data);
+  initialize_map(['bgcolor', 'title', 'encoding'], url_opts_data);
 
   parse_url_data(
     decode_uri(window.location.search.substring(1)) + '&' + decode_uri(window.location.hash.substring(1)),
