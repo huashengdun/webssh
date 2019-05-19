@@ -6,11 +6,11 @@
 ![PyPI](https://img.shields.io/pypi/v/webssh.svg)
 
 
-## Introduction
+### Introduction
 
 A simple web application to be used as an ssh client to connect to your ssh servers. It is written in Python, base on tornado, paramiko and xterm.js.
 
-## Features
+### Features
 
 * SSH password authentication supported, including empty password.
 * SSH public-key authentication supported, including DSA RSA ECDSA Ed25519 keys.
@@ -21,7 +21,7 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 * Modern browsers including Chrome, Firefox, Safari, Edge, Opera supported.
 
 
-## Preview
+### Preview
 
 ![Login](https://github.com/huashengdun/webssh/raw/master/preview/login.png)
 ![Terminal](https://github.com/huashengdun/webssh/raw/master/preview/terminal.png)
@@ -114,7 +114,12 @@ http://localhost:8888/#bgcolor=green
 
 Passing a user defined title
 ```bash
-http://localhost:8888/?title=my-webssh-server
+http://localhost:8888/?title=my-ssh-server
+```
+
+Passing an encoding
+```bash
+http://localhost:8888/#encoding=gbk
 ```
 
 ### Use Docker
@@ -168,7 +173,7 @@ wssh --port=8080 --sslport=4433 --certfile='cert.crt' --keyfile='cert.key' --xhe
 ```
 
 
-## Tips
+### Tips
 
 * For whatever deployment choice you choose, don't forget to enable SSL.
 * By default plain http requests from a public network will be either redirected or blocked and being redirected takes precedence over being blocked.

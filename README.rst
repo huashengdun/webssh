@@ -4,14 +4,14 @@ WebSSH
 |Build Status| |codecov| |PyPI - Python Version| |PyPI|
 
 Introduction
-------------
+~~~~~~~~~~~~
 
 A simple web application to be used as an ssh client to connect to your
 ssh servers. It is written in Python, base on tornado, paramiko and
 xterm.js.
 
 Features
---------
+~~~~~~~~
 
 -  SSH password authentication supported, including empty password.
 -  SSH public-key authentication supported, including DSA RSA ECDSA
@@ -24,7 +24,7 @@ Features
    supported.
 
 Preview
--------
+~~~~~~~
 
 |Login| |Terminal|
 
@@ -125,7 +125,13 @@ Passing a user defined title
 
 .. code:: bash
 
-    http://localhost:8888/?title=my-webssh-server
+    http://localhost:8888/?title=my-ssh-server
+
+Passing an encoding
+
+.. code:: bash
+
+    http://localhost:8888/#encoding=gbk
 
 Use Docker
 ~~~~~~~~~~
@@ -187,7 +193,7 @@ Running as a standalone server
     wssh --port=8080 --sslport=4433 --certfile='cert.crt' --keyfile='cert.key' --xheaders=False --policy=reject
 
 Tips
-----
+~~~~
 
 -  For whatever deployment choice you choose, don't forget to enable
    SSL.
