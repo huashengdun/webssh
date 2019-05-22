@@ -100,7 +100,7 @@ wssh.send('ls -l');
 
 ### URL Arguments
 
-Support passing arguments by url (hash or search) like following examples:
+Support passing arguments by url (query or fragment) like following examples:
 
 Passing form data
 ```bash

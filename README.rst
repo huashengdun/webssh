@@ -106,7 +106,7 @@ Browser console
 URL Arguments
 ~~~~~~~~~~~~~
 
-Support passing arguments by url (hash or search) like following
+Support passing arguments by url (query or fragment) like following
 examples:
 
 Passing form data
