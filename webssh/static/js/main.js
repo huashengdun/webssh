@@ -43,6 +43,8 @@ jQuery(function($){
       title_element = document.querySelector('title'),
       form_id = '#connect',
       debug = document.querySelector(form_id).noValidate,
+      custom_font = document.fonts.values().next().value,
+      default_fonts,
       DISCONNECTED = 0,
       CONNECTING = 1,
       CONNECTED = 2,
@@ -165,6 +167,48 @@ jQuery(function($){
     term.setOption('theme', {
       background: color
     });
+  }
+
+
+  function custom_font_is_loaded() {
+    if (!custom_font) {
+      console.log('No custom font specified.');
+    } else {
+      console.log('Status of custom font ' + custom_font.family + ': ' + custom_font.status);
+      if (custom_font.status === 'loaded') {
+        return true;
+      }
+      if (custom_font.status === 'unloaded') {
+        return false;
+      }
+    }
+  }
+
+  function update_font_family(term) {
+    if (term.font_family_updated) {
+      console.log('Already using custom font family');
+      return;
+    }
+
+    if (!default_fonts) {
+      default_fonts = term.getOption('fontFamily');
+    }
+
+    if (custom_font_is_loaded()) {
+      var new_fonts =  custom_font.family + ', ' + default_fonts;
+      term.setOption('fontFamily', new_fonts);
+      term.font_family_updated = true;
+      console.log('Using custom font family ' + new_fonts);
+    }
+  }
+
+
+  function reset_font_family(term) {
+    if (default_fonts) {
+      term.setOption('fontFamily',  default_fonts);
+      term.font_family_updated = false;
+      console.log('Using default font family ' + default_fonts);
+    }
   }
 
 
@@ -393,6 +437,14 @@ jQuery(function($){
       set_backgound_color(term, color);
     };
 
+    wssh.custom_font = function() {
+      update_font_family(term);
+    };
+
+    wssh.default_font = function() {
+      reset_font_family(term);
+    };
+
     term.on_resize = function(cols, rows) {
       if (cols !== this.cols || rows !== this.rows) {
         console.log('Resizing terminal to geometry: ' + format_geometry(cols, rows));
@@ -409,6 +461,7 @@ jQuery(function($){
     sock.onopen = function() {
       term.open(terminal);
       toggle_fullscreen(term);
+      update_font_family(term);
       term.focus();
       state = CONNECTED;
       title_element.text = url_opts_data.title || default_title;
@@ -681,6 +734,13 @@ jQuery(function($){
     window.Terminal.applyAddon(window.fullscreen);
   }
 
+  document.fonts.ready.then(
+    function () {
+      if (custom_font_is_loaded() === false) {
+        document.body.style.fontFamily = custom_font.family;
+      }
+    }
+  );
 
   restore_items(fields);
 
