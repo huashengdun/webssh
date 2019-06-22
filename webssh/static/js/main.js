@@ -43,7 +43,7 @@ jQuery(function($){
       title_element = document.querySelector('title'),
       form_id = '#connect',
       debug = document.querySelector(form_id).noValidate,
-      custom_font = document.fonts.values().next().value,
+      custom_font = document.fonts ? document.fonts.values().next().value : undefined,
       default_fonts,
       DISCONNECTED = 0,
       CONNECTING = 1,
@@ -739,13 +739,15 @@ jQuery(function($){
     window.Terminal.applyAddon(window.fullscreen);
   }
 
-  document.fonts.ready.then(
-    function () {
-      if (custom_font_is_loaded() === false) {
-        document.body.style.fontFamily = custom_font.family;
+  if (document.fonts) {
+    document.fonts.ready.then(
+      function () {
+        if (custom_font_is_loaded() === false) {
+          document.body.style.fontFamily = custom_font.family;
+        }
       }
-    }
-  );
+    );
+  }
 
   restore_items(fields);
 
