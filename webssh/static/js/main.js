@@ -204,6 +204,11 @@ jQuery(function($){
 
 
   function reset_font_family(term) {
+    if (!term.font_family_updated) {
+      console.log('Already using default font family');
+      return;
+    }
+
     if (default_fonts) {
       term.setOption('fontFamily',  default_fonts);
       term.font_family_updated = false;
