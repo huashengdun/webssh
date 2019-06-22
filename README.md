@@ -98,6 +98,22 @@ wssh.reset_encoding();
 wssh.send('ls -l');
 ```
 
+### Custom Font
+
+Custom font family usage example:
+```html
+<style>
+  @font-face {
+    font-family: 'font-name';
+    src: url('static/css/fonts/your-favorite-font');
+  }
+
+  body {
+    font-family: 'font-name';
+  }
+</style>
+```
+
 ### URL Arguments
 
 Support passing arguments by url (query or fragment) like following examples:

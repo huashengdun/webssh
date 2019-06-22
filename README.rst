@@ -103,6 +103,24 @@ Browser console
     // send a command to the server
     wssh.send('ls -l');
 
+Custom Font
+~~~~~~~~~~~
+
+Custom font family usage example:
+
+.. code:: html
+
+    <style>
+      @font-face {
+        font-family: 'font-name';
+        src: url('static/css/fonts/your-favorite-font');
+      }
+
+      body {
+        font-family: 'font-name';
+      }
+    </style>
+
 URL Arguments
 ~~~~~~~~~~~~~
 
