@@ -81,10 +81,11 @@ class PrivateKey(object):
             raise InvalidValueError('Need a password to decrypt the key.')
         except paramiko.SSHException as exc:
             logging.error(str(exc))
-            raise InvalidValueError(
-                'Invalid key or wrong password "{}" for decrypting it.'
-                .format(self.password)
-            )
+            msg = 'Invalid key'
+            if self.password:
+                msg += ' or wrong password "{}" for decrypting it.'.format(
+                        self.password)
+            raise InvalidValueError(msg)
 
 
 class MixinHandler(object):
