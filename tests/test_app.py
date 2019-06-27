@@ -358,7 +358,7 @@ class TestAppBasic(TestAppBase):
 
         if swallow_http_errors:
             response = yield self.async_post(url, body, headers=headers)
-            self.assertIn(b'Invalid private key', response.body)
+            self.assertIn(b'Invalid key', response.body)
         else:
             with self.assertRaises(HTTPError) as ctx:
                 yield self.async_post(url, body, headers=headers)
@@ -367,7 +367,7 @@ class TestAppBasic(TestAppBase):
     @tornado.testing.gen_test
     def test_app_auth_with_pubkey_exceeds_key_max_size(self):
         url = self.get_url('/')
-        privatekey = 'h' * (handler.KEY_MAX_SIZE * 2)
+        privatekey = 'h' * (handler.PrivateKey.max_length + 1)
         files = [('privatekey', 'user_rsa_key', privatekey)]
         content_type, body = encode_multipart_formdata(self.body_dict.items(),
                                                        files)
@@ -376,7 +376,7 @@ class TestAppBasic(TestAppBase):
         }
         if swallow_http_errors:
             response = yield self.async_post(url, body, headers=headers)
-            self.assertIn(b'Invalid private key', response.body)
+            self.assertIn(b'Invalid key', response.body)
         else:
             with self.assertRaises(HTTPError) as ctx:
                 yield self.async_post(url, body, headers=headers)

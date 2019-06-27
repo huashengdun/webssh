@@ -6,7 +6,7 @@ from tornado.options import options
 from tests.utils import read_file, make_tests_data_path
 from webssh import handler
 from webssh.handler import (
-    MixinHandler, IndexHandler, WsockHandler, InvalidValueError
+    MixinHandler, WsockHandler, PrivateKey, InvalidValueError
 )
 
 try:
@@ -142,73 +142,59 @@ class TestMixinHandler(unittest.TestCase):
                          (x_real_ip, x_real_port))
 
 
-class TestIndexHandler(unittest.TestCase):
+class TestPrivateKey(unittest.TestCase):
 
-    def test_get_specific_pkey_with_plain_key(self):
-        fname = 'test_rsa.key'
-        cls = paramiko.RSAKey
+    def get_pk_obj(self, fname, password=None):
         key = read_file(make_tests_data_path(fname))
+        return PrivateKey(key, password=password, filename=fname)
 
-        pkey = IndexHandler.get_specific_pkey(cls, key, None)
-        self.assertIsInstance(pkey, cls)
-
-        pkey = IndexHandler.get_specific_pkey(cls, key, 'iginored')
-        self.assertIsInstance(pkey, cls)
-
-        pkey = IndexHandler.get_specific_pkey(cls, 'x'+key, None)
-        self.assertIsNone(pkey)
-
-    def test_get_specific_pkey_with_encrypted_key(self):
-        fname = 'test_rsa_password.key'
-        cls = paramiko.RSAKey
-        password = 'television'
-
-        key = read_file(make_tests_data_path(fname))
-        pkey = IndexHandler.get_specific_pkey(cls, key, password)
-        self.assertIsInstance(pkey, cls)
-
-        pkey = IndexHandler.get_specific_pkey(cls, 'x'+key, None)
-        self.assertIsNone(pkey)
-
+    def _test_with_encrypted_key(self, fname, password, klass):
+        pk = self.get_pk_obj(fname, password='')
         with self.assertRaises(InvalidValueError) as ctx:
-            pkey = IndexHandler.get_specific_pkey(cls, key, None)
+            pk.get_pkey_obj()
         self.assertIn('Need a password', str(ctx.exception))
 
-    def test_get_pkey_obj_with_plain_key(self):
-        fname = 'test_ed25519.key'
-        cls = paramiko.Ed25519Key
-        key = read_file(make_tests_data_path(fname))
+        pk = self.get_pk_obj(fname, password='wrongpass')
+        with self.assertRaises(InvalidValueError) as ctx:
+            pk.get_pkey_obj()
+        self.assertIn('wrong password', str(ctx.exception))
 
-        pkey = IndexHandler.get_pkey_obj(key, None, fname)
-        self.assertIsInstance(pkey, cls)
+        pk = self.get_pk_obj(fname, password=password)
+        self.assertIsInstance(pk.get_pkey_obj(), klass)
 
-        pkey = IndexHandler.get_pkey_obj(key, 'iginored', fname)
-        self.assertIsInstance(pkey, cls)
+    def test_class_with_invalid_key_length(self):
+        key = u'a' * (PrivateKey.max_length + 1)
 
         with self.assertRaises(InvalidValueError) as ctx:
-            pkey = IndexHandler.get_pkey_obj('x'+key, None, fname)
-        self.assertIn('Invalid private key', str(ctx.exception))
+            PrivateKey(key)
+        self.assertIn('Invalid key length', str(ctx.exception))
 
-    def test_get_pkey_obj_with_encrypted_key(self):
+    def test_get_pkey_obj_with_invalid_key(self):
+        key = u'a b c'
+        fname = 'abc'
+
+        pk = PrivateKey(key, filename=fname)
+        with self.assertRaises(InvalidValueError) as ctx:
+            pk.get_pkey_obj()
+        self.assertIn('Invalid key {}'.format(fname), str(ctx.exception))
+
+    def test_get_pkey_obj_with_plain_rsa_key(self):
+        pk = self.get_pk_obj('test_rsa.key')
+        self.assertIsInstance(pk.get_pkey_obj(), paramiko.RSAKey)
+
+    def test_get_pkey_obj_with_plain_ed25519_key(self):
+        pk = self.get_pk_obj('test_ed25519.key')
+        self.assertIsInstance(pk.get_pkey_obj(), paramiko.Ed25519Key)
+
+    def test_get_pkey_obj_with_encrypted_rsa_key(self):
+        fname = 'test_rsa_password.key'
+        password = 'television'
+        self._test_with_encrypted_key(fname, password, paramiko.RSAKey)
+
+    def test_get_pkey_obj_with_encrypted_ed25519_key(self):
         fname = 'test_ed25519_password.key'
         password = 'abc123'
-        cls = paramiko.Ed25519Key
-        key = read_file(make_tests_data_path(fname))
-
-        pkey = IndexHandler.get_pkey_obj(key, password, fname)
-        self.assertIsInstance(pkey, cls)
-
-        with self.assertRaises(InvalidValueError) as ctx:
-            pkey = IndexHandler.get_pkey_obj(key, 'wrongpass', fname)
-        self.assertIn('Wrong password', str(ctx.exception))
-
-        with self.assertRaises(InvalidValueError) as ctx:
-            pkey = IndexHandler.get_pkey_obj('x'+key, '', fname)
-        self.assertIn('Invalid private key', str(ctx.exception))
-
-        with self.assertRaises(InvalidValueError) as ctx:
-            pkey = IndexHandler.get_specific_pkey(cls, key, None)
-        self.assertIn('Need a password', str(ctx.exception))
+        self._test_with_encrypted_key(fname, password, paramiko.Ed25519Key)
 
 
 class TestWsockHandler(unittest.TestCase):

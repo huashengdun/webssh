@@ -30,7 +30,6 @@ except ImportError:
 
 
 DELAY = 3
-KEY_MAX_SIZE = 16384
 DEFAULT_PORT = 22
 
 swallow_http_errors = True
@@ -39,6 +38,53 @@ redirecting = None
 
 class InvalidValueError(Exception):
     pass
+
+
+class PrivateKey(object):
+
+    max_length = 16384  # rough number
+
+    tag_to_name = {
+        'RSA': 'RSA',
+        'DSA': 'DSS',
+        'EC': 'ECDSA',
+        'OPENSSH': 'Ed25519'
+    }
+
+    def __init__(self, privatekey, password=None, filename=''):
+        self.privatekey = privatekey.strip()
+        self.filename = filename
+        self.password = password
+        self.check_length()
+
+    def check_length(self):
+        if len(self.privatekey) > self.max_length:
+            raise InvalidValueError('Invalid key length.')
+
+    def get_name(self):
+        lst = self.privatekey.split(' ', 2)
+        if len(lst) > 1:
+            return self.tag_to_name.get(lst[1])
+
+    def get_pkey_obj(self):
+        name = self.get_name()
+        if not name:
+            raise InvalidValueError('Invalid key {}.'.format(self.filename))
+
+        logging.info('Parsing {} key'.format(name))
+        pkeycls = getattr(paramiko, name+'Key')
+        password = to_bytes(self.password) if self.password else None
+        try:
+            return pkeycls.from_private_key(io.StringIO(self.privatekey),
+                                            password=password)
+        except paramiko.PasswordRequiredException:
+            raise InvalidValueError('Need a password to decrypt the key.')
+        except paramiko.SSHException as exc:
+            logging.error(str(exc))
+            raise InvalidValueError(
+                'Invalid key or wrong password "{}" for decrypting it.'
+                .format(self.password)
+            )
 
 
 class MixinHandler(object):
@@ -176,7 +222,6 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.policy = policy
         self.host_keys_settings = host_keys_settings
         self.ssh_client = self.get_ssh_client()
-        self.privatekey_filename = None
         self.debug = self.settings.get('debug', False)
         self.result = dict(id=None, status=None, encoding=None)
 
@@ -206,53 +251,15 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         lst = self.request.files.get(name)
         if lst:
             # multipart form
-            self.privatekey_filename = lst[0]['filename']
+            filename = lst[0]['filename']
             data = lst[0]['body']
             value = self.decode_argument(data, name=name).strip()
         else:
             # urlencoded form
             value = self.get_argument(name, u'')
+            filename = ''
 
-        if len(value) > KEY_MAX_SIZE:
-            raise InvalidValueError(
-                'Invalid private key: {}'.format(self.privatekey_filename)
-            )
-        return value
-
-    @classmethod
-    def get_specific_pkey(cls, pkeycls, privatekey, password):
-        logging.info('Trying {}'.format(pkeycls.__name__))
-        try:
-            pkey = pkeycls.from_private_key(io.StringIO(privatekey),
-                                            password=password)
-        except paramiko.PasswordRequiredException:
-            raise InvalidValueError(
-                    'Need a password to decrypt the private key.'
-                )
-        except paramiko.SSHException:
-            pass
-        else:
-            return pkey
-
-    @classmethod
-    def get_pkey_obj(cls, privatekey, password, filename):
-        bpass = to_bytes(password) if password else None
-
-        pkey = cls.get_specific_pkey(paramiko.RSAKey, privatekey, bpass)\
-            or cls.get_specific_pkey(paramiko.DSSKey, privatekey, bpass)\
-            or cls.get_specific_pkey(paramiko.ECDSAKey, privatekey, bpass)\
-            or cls.get_specific_pkey(paramiko.Ed25519Key, privatekey, bpass)
-
-        if not pkey:
-            if not password:
-                error = 'Invalid private key: {}'.format(filename)
-            else:
-                error = (
-                    'Wrong password {!r} for decrypting the private key.'
-                ) .format(password)
-            raise InvalidValueError(error)
-
-        return pkey
+        return value, filename
 
     def get_hostname(self):
         value = self.get_value('hostname')
@@ -287,11 +294,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             self.lookup_hostname(hostname, port)
         username = self.get_value('username')
         password = self.get_argument('password', u'')
-        privatekey = self.get_privatekey()
+        privatekey, filename = self.get_privatekey()
         if privatekey:
-            pkey = self.get_pkey_obj(
-                privatekey, password, self.privatekey_filename
-            )
+            pkey = PrivateKey(privatekey, password, filename).get_pkey_obj()
             password = None
         else:
             pkey = None
