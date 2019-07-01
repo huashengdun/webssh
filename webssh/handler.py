@@ -43,7 +43,6 @@ class InvalidValueError(Exception):
 class PrivateKey(object):
 
     max_length = 16384  # rough number
-    name = None
 
     tag_to_name = {
         'RSA': 'RSA',
@@ -63,29 +62,32 @@ class PrivateKey(object):
         if len(self.privatekey) > self.max_length:
             raise InvalidValueError('Invalid key length.')
 
-    def parse_name(self):
-        for line_orig in self.iostr:
-            line = line_orig.strip()
+    def parse_name(self, iostr, tag_to_name):
+        name = None
+        for line_ in iostr:
+            line = line_.strip()
             if line and line.startswith('-----BEGIN ') and \
                     line.endswith(' PRIVATE KEY-----'):
-                tag = line.split(' ', 2)[1]
-                if tag:
-                    name = self.tag_to_name.get(tag)
-                    if name:
-                        self.name = name
-                        break
+                lst = line.split(' ')
+                if len(lst) == 4:
+                    tag = lst[1]
+                    if tag:
+                        name = tag_to_name.get(tag)
+                        if name:
+                            break
+        return name, len(line_)
 
-        if not self.name:
+    def get_pkey_obj(self):
+        name, length = self.parse_name(self.iostr, self.tag_to_name)
+        if not name:
             raise InvalidValueError('Invalid key {}.'.format(self.filename))
 
-        offset = self.iostr.tell() - len(line_orig)
+        offset = self.iostr.tell() - length
         self.iostr.seek(offset)
         logging.debug('Reset offset to {}.'.format(offset))
 
-    def get_pkey_obj(self):
-        self.parse_name()
-        logging.info('Parsing {} key'.format(self.name))
-        pkeycls = getattr(paramiko, self.name+'Key')
+        logging.info('Parsing {} key'.format(name))
+        pkeycls = getattr(paramiko, name+'Key')
         password = to_bytes(self.password) if self.password else None
 
         try:

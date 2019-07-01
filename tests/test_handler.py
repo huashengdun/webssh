@@ -196,6 +196,39 @@ class TestPrivateKey(unittest.TestCase):
         password = 'abc123'
         self._test_with_encrypted_key(fname, password, paramiko.Ed25519Key)
 
+    def test_parse_name(self):
+        key = u'-----BEGIN PRIVATE KEY-----'
+        pk = PrivateKey(key)
+        name, _ = pk.parse_name(pk.iostr, pk.tag_to_name)
+        self.assertIsNone(name)
+
+        key = u'-----BEGIN xxx PRIVATE KEY-----'
+        pk = PrivateKey(key)
+        name, _ = pk.parse_name(pk.iostr, pk.tag_to_name)
+        self.assertIsNone(name)
+
+        key = u'-----BEGIN  RSA PRIVATE KEY-----'
+        pk = PrivateKey(key)
+        name, _ = pk.parse_name(pk.iostr, pk.tag_to_name)
+        self.assertIsNone(name)
+
+        key = u'-----BEGIN RSA  PRIVATE KEY-----'
+        pk = PrivateKey(key)
+        name, _ = pk.parse_name(pk.iostr, pk.tag_to_name)
+        self.assertIsNone(name)
+
+        key = u'-----BEGIN RSA PRIVATE  KEY-----'
+        pk = PrivateKey(key)
+        name, _ = pk.parse_name(pk.iostr, pk.tag_to_name)
+        self.assertIsNone(name)
+
+        for tag, to_name in PrivateKey.tag_to_name.items():
+            key = u'-----BEGIN {} PRIVATE KEY----- \r\n'.format(tag)
+            pk = PrivateKey(key)
+            name, length = pk.parse_name(pk.iostr, pk.tag_to_name)
+            self.assertEqual(name, to_name)
+            self.assertEqual(length, len(key))
+
 
 class TestWsockHandler(unittest.TestCase):
 
