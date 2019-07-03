@@ -462,15 +462,9 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
             worker.on_write()
 
     def on_close(self):
-        if self.close_reason:
-            logging.info(
-                'Disconnecting to {}:{} with reason: {reason}'.format(
-                    *self.src_addr, reason=self.close_reason
-                )
-            )
-        else:
+        logging.info('Disconnected from {}:{}'.format(*self.src_addr))
+        if not self.close_reason:
             self.close_reason = 'client disconnected'
-            logging.info('Disconnected from {}:{}'.format(*self.src_addr))
 
         worker = self.worker_ref() if self.worker_ref else None
         if worker:

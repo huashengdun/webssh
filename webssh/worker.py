@@ -29,6 +29,7 @@ class Worker(object):
         self.data_to_dst = []
         self.handler = None
         self.mode = IOLoop.READ
+        self.closed = False
 
     def __call__(self, fd, events):
         if events & IOLoop.READ:
@@ -95,6 +96,10 @@ class Worker(object):
                 self.update_handler(IOLoop.READ)
 
     def close(self, reason=None):
+        if self.closed:
+            return
+        self.closed = True
+
         logging.info(
             'Closing worker {} with reason: {}'.format(self.id, reason)
         )
