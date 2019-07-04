@@ -13,16 +13,13 @@ clients = {}  # {ip: {id: worker}}
 def clear_worker(worker, clients):
     ip = worker.src_addr[0]
     workers = clients.get(ip)
-    if workers:
-        try:
-            workers.pop(worker.id)
-        except KeyError:
-            pass
-        else:
-            if not workers:
-                clients.pop(ip)
-    if not clients:
-        clients.clear()
+    assert worker.id in workers
+    workers.pop(worker.id)
+
+    if not workers:
+        clients.pop(ip)
+        if not clients:
+            clients.clear()
 
 
 def recycle_worker(worker):
