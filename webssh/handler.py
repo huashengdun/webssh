@@ -431,10 +431,7 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
             worker = workers.get(worker_id)
             if worker:
                 workers[worker_id] = None
-                try:
-                    self.set_nodelay(True)
-                except AssertionError:  # tornado 6.00 bug
-                    pass
+                self.set_nodelay(True)
                 worker.set_handler(self)
                 self.worker_ref = weakref.ref(worker)
                 self.loop.add_handler(worker.fd, worker, IOLoop.READ)
