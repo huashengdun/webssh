@@ -348,7 +348,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         chan = ssh.invoke_shell(term='xterm')
         chan.setblocking(0)
-        worker = Worker(self.loop, ssh, chan, dst_addr, self.src_addr)
+        worker = Worker(self.loop, ssh, chan, dst_addr)
         worker.encoding = self.get_default_encoding(ssh)
         return worker
 
@@ -378,8 +378,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             # for testing purpose only
             raise ValueError('Uncaught exception')
 
-        self.src_addr = self.get_client_addr()
-        if len(clients.get(self.src_addr[0], {})) >= options.maxconn:
+        ip, port = self.get_client_addr()
+        workers = clients.get(ip, {})
+        if workers and len(workers) >= options.maxconn:
             raise tornado.web.HTTPError(403, 'Too many live connections.')
 
         self.check_origin()
@@ -397,7 +398,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             logging.error(traceback.format_exc())
             self.result.update(status=str(exc))
         else:
-            workers = clients.setdefault(worker.src_addr[0], {})
+            if not workers:
+                clients[ip] = workers
+            worker.src_addr = (ip, port)
             workers[worker.id] = worker
             self.loop.call_later(DELAY, recycle_worker, worker)
             self.result.update(id=worker.id, encoding=worker.encoding)
