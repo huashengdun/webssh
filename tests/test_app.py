@@ -210,6 +210,23 @@ class TestAppBasic(TestAppBase):
         self.assertEqual(ws.close_reason, 'Websocket authentication failed.')
 
     @tornado.testing.gen_test
+    def test_app_with_correct_credentials_but_ip_not_matched(self):
+        url = self.get_url('/')
+        response = yield self.async_post(url, self.body)
+        data = json.loads(to_str(response.body))
+        self.assert_status_none(data)
+
+        clients = handler.clients
+        handler.clients = {}
+        url = url.replace('http', 'ws')
+        ws_url = url + 'ws?id=' + data['id']
+        ws = yield tornado.websocket.websocket_connect(ws_url)
+        msg = yield ws.read_message()
+        self.assertIsNone(msg)
+        self.assertEqual(ws.close_reason, 'Websocket authentication failed.')
+        handler.clients = clients
+
+    @tornado.testing.gen_test
     def test_app_with_correct_credentials_user_robey(self):
         url = self.get_url('/')
         response = yield self.async_post(url, self.body)
