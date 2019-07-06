@@ -9,7 +9,7 @@
     <link href="static/css/fullscreen.min.css" rel="stylesheet" type="text/css"/>
     <style>
       .row {
-        margin-top: 20px;
+        margin-top: 15px;
         margin-bottom: 10px;
       }
 
@@ -18,7 +18,7 @@
       }
 
       .btn {
-        margin-top: 10px;
+        margin-top: 15px;
       }
 
       .btn-danger {
@@ -45,17 +45,18 @@
             <input class="form-control" type="text" id="username" name="username" value="" required>
           </div>
           <div class="col">
-            <label for="Username">Private Key</label>
-            <input class="form-control" type="file" id="privatekey" name="privatekey" value="">
+            <label for="Password">Password</label>
+            <input class="form-control" type="password" name="password" value="">
           </div>
         </div>
         <div class="row">
           <div class="col">
-            <label for="Password">Password</label>
-            <input class="form-control" type="password" name="password" value="">
+            <label for="Username">Private Key</label>
+            <input class="form-control" type="file" id="privatekey" name="privatekey" value="">
           </div>
           <div class="col">
-            If Private Key is chosen, password will be used to decrypt the Private Key if it is encrypted, otherwise used as the password of username.
+            <label for="Passphrase">Passphrase</label>
+            <input class="form-control" type="password" name="passphrase" value="">
           </div>
         </div>
         {% module xsrf_form_html() %}

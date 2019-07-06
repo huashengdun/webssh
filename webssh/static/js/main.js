@@ -515,9 +515,9 @@ jQuery(function($){
   }
 
 
-  function normalize_data(data) {
+  function clean_data(data) {
     var i, attr, val;
-    var attrs = fields.concat('privatekey');
+    var attrs = fields.concat(['password', 'privatekey', 'passphrase']);
 
     for (i = 0; i < attrs.length; i++) {
       attr = attrs[i];
@@ -530,7 +530,7 @@ jQuery(function($){
 
 
   function validate_form_data(data) {
-    normalize_data(data);
+    clean_data(data);
 
     var hostname = data.get('hostname'),
         port = data.get('port'),
@@ -668,7 +668,7 @@ jQuery(function($){
   }
 
 
-  function connect(hostname, port, username, password, privatekey) {
+  function connect(hostname, port, username, password, privatekey, passphrase) {
     // for console use
     var result, opts;
 
@@ -686,7 +686,8 @@ jQuery(function($){
           port: port,
           username: username,
           password: password,
-          privatekey: privatekey
+          privatekey: privatekey,
+          passphrase: passphrase
         };
       } else {
         opts = hostname;

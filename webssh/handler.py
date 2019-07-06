@@ -310,10 +310,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             self.lookup_hostname(hostname, port)
         username = self.get_value('username')
         password = self.get_argument('password', u'')
+        passphrase = self.get_argument('passphrase', u'')
         privatekey, filename = self.get_privatekey()
         if privatekey:
-            pkey = PrivateKey(privatekey, password, filename).get_pkey_obj()
-            password = None
+            pkey = PrivateKey(privatekey, passphrase, filename).get_pkey_obj()
         else:
             pkey = None
         args = (hostname, port, username, password, pkey)
@@ -336,7 +336,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         logging.info('Connecting to {}:{}'.format(*dst_addr))
 
         try:
-            ssh.connect(*args, timeout=6)
+            ssh.connect(
+                *args, timeout=6, allow_agent=False, look_for_keys=False
+            )
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:
