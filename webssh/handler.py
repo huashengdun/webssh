@@ -36,6 +36,78 @@ swallow_http_errors = True
 redirecting = None
 
 
+def make_handler(password, totp):
+
+    def handler(title, instructions, prompt_list):
+        answers = []
+        for prompt_, _ in prompt_list:
+            prompt = prompt_.strip().lower()
+            if prompt.startswith('password'):
+                answers.append(password)
+            elif prompt.startswith('verification'):
+                answers.append(totp)
+            else:
+                raise ValueError('Unknown prompt: {}'.format(prompt_))
+        return answers
+
+    return handler
+
+
+def auth_interactive(transport, username, handler):
+    if not handler:
+        raise ValueError('Need a verification code for 2fa.')
+    transport.auth_interactive(username, handler)
+
+
+def auth(self, username, password, pkey, *args):
+    handler = None
+    saved_exception = None
+    two_factor = False
+    allowed_types = set()
+    two_factor_types = {"keyboard-interactive", "password"}
+
+    if self._totp:
+        handler = make_handler(password, self._totp)
+
+    if pkey is not None:
+        logging.info('Trying public key authentication')
+        try:
+            allowed_types = set(
+                self._transport.auth_publickey(username, pkey)
+            )
+            two_factor = allowed_types & two_factor_types
+            if not two_factor:
+                return
+        except paramiko.SSHException as e:
+            saved_exception = e
+
+    if two_factor:
+        logging.info('Trying publickey 2fa')
+        return auth_interactive(self._transport, username, handler)
+
+    if password is not None:
+        logging.info('Trying password authentication')
+        try:
+            self._transport.auth_password(username, password)
+            return
+        except paramiko.SSHException as e:
+            saved_exception = e
+            allowed_types = set(getattr(e, 'allowed_types', []))
+            two_factor = allowed_types & two_factor_types
+
+    if two_factor:
+        logging.info('Trying password 2fa')
+        return auth_interactive(self._transport, username, handler)
+
+    # if we got an auth-failed exception earlier, re-raise it
+    if saved_exception is not None:
+        raise saved_exception
+    raise paramiko.SSHException("No authentication methods available")
+
+
+paramiko.client.SSHClient._auth = auth
+
+
 class InvalidValueError(Exception):
     pass
 
@@ -306,18 +378,24 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
     def get_args(self):
         hostname = self.get_hostname()
         port = self.get_port()
-        if isinstance(self.policy, paramiko.RejectPolicy):
-            self.lookup_hostname(hostname, port)
         username = self.get_value('username')
         password = self.get_argument('password', u'')
-        passphrase = self.get_argument('passphrase', u'')
         privatekey, filename = self.get_privatekey()
+        passphrase = self.get_argument('passphrase', u'')
+        totp = self.get_argument('totp', u'')
+
+        if isinstance(self.policy, paramiko.RejectPolicy):
+            self.lookup_hostname(hostname, port)
+
         if privatekey:
             pkey = PrivateKey(privatekey, passphrase, filename).get_pkey_obj()
         else:
             pkey = None
+
+        self.ssh_client._totp = totp
         args = (hostname, port, username, password, pkey)
         logging.debug(args)
+
         return args
 
     def get_default_encoding(self, ssh):
@@ -336,9 +414,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         logging.info('Connecting to {}:{}'.format(*dst_addr))
 
         try:
-            ssh.connect(
-                *args, timeout=6, allow_agent=False, look_for_keys=False
-            )
+            ssh.connect(*args, timeout=6)
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:

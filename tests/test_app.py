@@ -444,6 +444,73 @@ class TestAppBasic(TestAppBase):
         self.assertEqual(response.code, 200)
         self.assert_status_in(json.loads(to_str(response.body)), 'Bad authentication type') # noqa
 
+    @tornado.testing.gen_test
+    def test_app_with_user_pass2fa_with_correct_password_and_passcode(self):
+        self.body_dict.update(username='pass2fa', password='password',
+                              totp='passcode')
+        response = yield self.async_post('/', self.body_dict)
+        self.assertEqual(response.code, 200)
+        data = json.loads(to_str(response.body))
+        self.assert_status_none(data)
+
+    @tornado.testing.gen_test
+    def test_app_with_user_pass2fa_with_wrong_password(self):
+        self.body_dict.update(username='pass2fa', password='wrongpassword',
+                              totp='passcode')
+        response = yield self.async_post('/', self.body_dict)
+        self.assertEqual(response.code, 200)
+        data = json.loads(to_str(response.body))
+        self.assertIn('Authentication failed', data['status'])
+
+    @tornado.testing.gen_test
+    def test_app_with_user_pass2fa_with_wrong_passcode(self):
+        self.body_dict.update(username='pass2fa', password='password',
+                              totp='wrongpasscode')
+        response = yield self.async_post('/', self.body_dict)
+        self.assertEqual(response.code, 200)
+        data = json.loads(to_str(response.body))
+        self.assertIn('Authentication failed', data['status'])
+
+    @tornado.testing.gen_test
+    def test_app_with_user_pass2fa_with_wrong_pkey_correct_passwords(self):  # noqa
+        url = self.get_url('/')
+        privatekey = read_file(make_tests_data_path('user_rsa_key'))
+        self.body_dict.update(username='pass2fa', password='password',
+                              privatekey=privatekey, totp='passcode')
+        response = yield self.async_post(url, self.body_dict)
+        data = json.loads(to_str(response.body))
+        self.assert_status_none(data)
+
+    @tornado.testing.gen_test
+    def test_app_with_user_pkey2fa_with_correct_password_and_passcode(self):
+        url = self.get_url('/')
+        privatekey = read_file(make_tests_data_path('user_rsa_key'))
+        self.body_dict.update(username='pkey2fa', password='password',
+                              privatekey=privatekey, totp='passcode')
+        response = yield self.async_post(url, self.body_dict)
+        data = json.loads(to_str(response.body))
+        self.assert_status_none(data)
+
+    @tornado.testing.gen_test
+    def test_app_with_user_pkey2fa_with_wrong_password(self):
+        url = self.get_url('/')
+        privatekey = read_file(make_tests_data_path('user_rsa_key'))
+        self.body_dict.update(username='pkey2fa', password='wrongpassword',
+                              privatekey=privatekey, totp='passcode')
+        response = yield self.async_post(url, self.body_dict)
+        data = json.loads(to_str(response.body))
+        self.assertIn('Authentication failed', data['status'])
+
+    @tornado.testing.gen_test
+    def test_app_with_user_pkey2fa_with_wrong_passcode(self):
+        url = self.get_url('/')
+        privatekey = read_file(make_tests_data_path('user_rsa_key'))
+        self.body_dict.update(username='pkey2fa', password='password',
+                              privatekey=privatekey, totp='wrongpasscode')
+        response = yield self.async_post(url, self.body_dict)
+        data = json.loads(to_str(response.body))
+        self.assertIn('Authentication failed', data['status'])
+
 
 class OtherTestBase(TestAppBase):
     sshserver_port = 3300

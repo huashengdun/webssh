@@ -59,6 +59,14 @@
             <input class="form-control" type="password" name="passphrase" value="">
           </div>
         </div>
+        <div class="row">
+          <div class="col">
+            <label for="totp">Totp (time-based one-time password)</label>
+            <input class="form-control" type="password" name="totp" value="">
+          </div>
+          <div class="col">
+          </div>
+        </div>
         {% module xsrf_form_html() %}
         <button type="submit" class="btn btn-primary">Connect</button>
         <button type="reset" class="btn btn-danger">Reset</button>

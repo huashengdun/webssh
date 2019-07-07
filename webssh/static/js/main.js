@@ -517,7 +517,7 @@ jQuery(function($){
 
   function clean_data(data) {
     var i, attr, val;
-    var attrs = fields.concat(['password', 'privatekey', 'passphrase']);
+    var attrs = fields.concat(['password', 'privatekey', 'passphrase', 'totp']);
 
     for (i = 0; i < attrs.length; i++) {
       attr = attrs[i];
@@ -668,7 +668,7 @@ jQuery(function($){
   }
 
 
-  function connect(hostname, port, username, password, privatekey, passphrase) {
+  function connect(hostname, port, username, password, privatekey, passphrase, totp) {
     // for console use
     var result, opts;
 
@@ -687,7 +687,8 @@ jQuery(function($){
           username: username,
           password: password,
           privatekey: privatekey,
-          passphrase: passphrase
+          passphrase: passphrase,
+          totp: totp
         };
       } else {
         opts = hostname;
