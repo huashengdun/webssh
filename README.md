@@ -15,6 +15,7 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 * SSH password authentication supported, including empty password.
 * SSH public-key authentication supported, including DSA RSA ECDSA Ed25519 keys.
 * Encrypted keys supported.
+* Two-Factor Authentication(time-based one-time password) supported.
 * Fullscreen terminal supported.
 * Terminal window resizable.
 * Auto detect the ssh server's default encoding.
@@ -73,7 +74,7 @@ wssh --help
 
 ```javascript
 // connect to your ssh server
-wssh.connect(hostname, port, username, password, privatekey);
+wssh.connect(hostname, port, username, password, privatekey, passphrase, totp);
 
 // pass an object to wssh.connect
 var opts = {
@@ -81,7 +82,9 @@ var opts = {
   port: 'port',
   username: 'username',
   password: 'password',
-  privatekey: 'the private key text'
+  privatekey: 'the private key text',
+  passphrase: 'passphrase',
+  totp: 'totp'
 };
 wssh.connect(opts);
 
