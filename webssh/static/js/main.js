@@ -341,8 +341,11 @@ jQuery(function($){
         if (!term.resized) {
           resize_terminal(term);
           term.resized = true;
+
           if (url_opts_data.command) {
-           sock.send(JSON.stringify({'data': url_opts_data.command+'\r'}));
+            setTimeout(function () {
+              sock.send(JSON.stringify({'data': url_opts_data.command+'\r'}));
+            }, 500);
           }
         }
       }
