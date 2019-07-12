@@ -154,6 +154,12 @@ Passing an encoding
 
     http://localhost:8888/#encoding=gbk
 
+Passing a command
+
+.. code:: bash
+
+    http://localhost:8888/?command=pwd
+
 Use Docker
 ~~~~~~~~~~
 
