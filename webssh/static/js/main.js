@@ -341,12 +341,6 @@ jQuery(function($){
         if (!term.resized) {
           resize_terminal(term);
           term.resized = true;
-
-          if (url_opts_data.command) {
-            setTimeout(function () {
-              sock.send(JSON.stringify({'data': url_opts_data.command+'\r'}));
-            }, 500);
-          }
         }
       }
     }
@@ -476,6 +470,11 @@ jQuery(function($){
       term.focus();
       state = CONNECTED;
       title_element.text = url_opts_data.title || default_title;
+      if (url_opts_data.command) {
+        setTimeout(function () {
+          sock.send(JSON.stringify({'data': url_opts_data.command+'\r'}));
+        }, 500);
+      }
     };
 
     sock.onmessage = function(msg) {
