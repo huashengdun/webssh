@@ -341,6 +341,9 @@ jQuery(function($){
         if (!term.resized) {
           resize_terminal(term);
           term.resized = true;
+          if (url_opts_data.command) {
+           sock.send(JSON.stringify({'data': url_opts_data.command+'\r'}));
+          }
         }
       }
     }
@@ -754,7 +757,7 @@ jQuery(function($){
   restore_items(fields);
 
   initialize_map(fields.concat(['password']), url_form_data);
-  initialize_map(['bgcolor', 'title', 'encoding'], url_opts_data);
+  initialize_map(['bgcolor', 'title', 'encoding', 'command'], url_opts_data);
 
   parse_url_data(
     decode_uri(window.location.search.substring(1)) + '&' + decode_uri(window.location.hash.substring(1)),
