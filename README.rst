@@ -130,11 +130,11 @@ URL Arguments
 Support passing arguments by url (query or fragment) like following
 examples:
 
-Passing form data
+Passing form data (password must be encoded in base64)
 
 .. code:: bash
 
-    http://localhost:8888/?hostname=xx&username=yy
+    http://localhost:8888/?hostname=xx&username=yy&password=str_base64_encoded
 
 Passing a terminal background color
 
