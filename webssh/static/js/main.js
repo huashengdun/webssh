@@ -662,6 +662,14 @@ jQuery(function($){
       data._origin = event_origin;
     }
 
+    for (var datum in data) {
+        var value = data[datum];
+        if (value){
+            window.localStorage.setItem(datum, value);
+        }
+    }
+    restore_items(fields);
+
     $.ajax({
         url: url,
         type: 'post',
