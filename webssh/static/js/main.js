@@ -791,7 +791,7 @@ jQuery(function($){
     if (url_form_data.hostname && url_form_data.username) {
       connect(url_form_data);
     } else {
-      log_status('Values of hostname and username are required.');
+      console.log('Values of hostname and username are required.');
     }
   }
 
