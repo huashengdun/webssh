@@ -103,6 +103,15 @@ jQuery(function($){
   }
 
 
+  function decode_password(encoded) {
+    try {
+      return window.atob(encoded);
+    } catch (e) {
+       console.error(e);
+    }
+  }
+
+
   function parse_url_data(string, form_map, opts_map) {
     var i, pair, key, val,
         arr = string.split('&');
@@ -111,6 +120,10 @@ jQuery(function($){
       pair = arr[i].split('=');
       key = pair[0].trim().toLowerCase();
       val = pair[1] && pair[1].trim();
+
+      if (key === 'password' && val) {
+        val = decode_password(val);
+      }
 
       if (form_map[key] === '') {
         form_map[key] = val;
@@ -762,18 +775,24 @@ jQuery(function($){
 
   restore_items(fields);
 
-  initialize_map(fields.concat(['password']), url_form_data);
+  initialize_map(fields.concat(['password', 'totp']), url_form_data);
   initialize_map(['bgcolor', 'title', 'encoding', 'command'], url_opts_data);
 
   parse_url_data(
     decode_uri(window.location.search.substring(1)) + '&' + decode_uri(window.location.hash.substring(1)),
     url_form_data, url_opts_data
   );
-  console.log(url_form_data);
-  console.log(url_opts_data);
+  // console.log(url_form_data);
+  // console.log(url_opts_data);
 
-  if (url_form_data.hostname && url_form_data.username) {
-    connect(url_form_data);
+  if (url_form_data.password === undefined) {
+    log_status('Password via url must be encoded in base64.');
+  } else {
+    if (url_form_data.hostname && url_form_data.username) {
+      connect(url_form_data);
+    } else {
+      log_status('Values of hostname and username are required.');
+    }
   }
 
 });
