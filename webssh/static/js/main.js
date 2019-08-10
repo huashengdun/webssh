@@ -649,9 +649,10 @@ jQuery(function($){
     // use data from the arguments
     var form = document.querySelector(form_id),
         url = data.url || form.action,
-        _xsrf = form.querySelector('input[name="_xsrf"]');
+        _xsrf = form.querySelector('input[name="_xsrf"]'),
+        data_wrapped = wrap_object(data);
 
-    var result = validate_form_data(wrap_object(data));
+    var result = validate_form_data(data_wrapped);
     if (!result.valid) {
       console.log(result.msg);
       return;
@@ -662,12 +663,7 @@ jQuery(function($){
       data._origin = event_origin;
     }
 
-    for (var datum in data) {
-        var value = data[datum];
-        if (value){
-            window.localStorage.setItem(datum, value);
-        }
-    }
+    store_items(fields, data_wrapped);
     restore_items(fields);
 
     $.ajax({
