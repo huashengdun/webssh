@@ -71,12 +71,16 @@ jQuery(function($){
   }
 
 
-  function restore_items(names) {
+  function restore_items(names, storage) {
     var i, name, value;
+
+    if (storage === undefined) {
+      storage = window.localStorage;
+    }
 
     for (i=0; i < names.length; i++) {
       name = names[i];
-      value = window.localStorage.getItem(name);
+      value = storage.getItem(name);
       if (value) {
         $('#'+name).val(value);
       }
@@ -521,7 +525,7 @@ jQuery(function($){
   function wrap_object(opts) {
     var obj = {};
 
-    obj.get = function(attr) {
+    obj.getItem = obj.get =function(attr) {
       return opts[attr] || '';
     };
 
@@ -676,8 +680,8 @@ jQuery(function($){
       data._origin = event_origin;
     }
 
+    restore_items(fields.concat(['password']), data_wrapped);
     store_items(fields, data_wrapped);
-    restore_items(fields);
 
     $.ajax({
         url: url,
