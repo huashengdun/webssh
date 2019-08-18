@@ -525,7 +525,7 @@ jQuery(function($){
   function wrap_object(opts) {
     var obj = {};
 
-    obj.getItem = obj.get =function(attr) {
+    obj.getItem = obj.get = function(attr) {
       return opts[attr] || '';
     };
 
