@@ -130,7 +130,8 @@ URL Arguments
 Support passing arguments by url (query or fragment) like following
 examples:
 
-Passing form data (password must be encoded in base64)
+Passing form data (password must be encoded in base64, privatekey not
+supported)
 
 .. code:: bash
 
@@ -154,7 +155,7 @@ Passing an encoding
 
     http://localhost:8888/#encoding=gbk
 
-Passing a command
+Passing a command executed right after login
 
 .. code:: bash
 
@@ -177,6 +178,12 @@ Tear down the app
 
 Tests
 ~~~~~
+
+Requirements
+
+::
+
+    pip install pytest pytest-cov codecov flake8 mock
 
 Use unittest to run all tests
 

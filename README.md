@@ -121,7 +121,7 @@ Custom font family usage example:
 
 Support passing arguments by url (query or fragment) like following examples:
 
-Passing form data (password must be encoded in base64)
+Passing form data (password must be encoded in base64, privatekey not supported)
 ```bash
 http://localhost:8888/?hostname=xx&username=yy&password=str_base64_encoded
 ```
@@ -141,7 +141,7 @@ Passing an encoding
 http://localhost:8888/#encoding=gbk
 ```
 
-Passing a command
+Passing a command executed right after login
 ```bash
 http://localhost:8888/?command=pwd
 ```
@@ -159,6 +159,11 @@ docker-compose down
 ```
 
 ### Tests
+
+Requirements
+```
+pip install pytest pytest-cov codecov flake8 mock
+```
 
 Use unittest to run all tests
 ```
