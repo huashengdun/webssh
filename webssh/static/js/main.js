@@ -309,8 +309,8 @@ jQuery(function($){
 
 
   function log_status(text) {
-    status.text(text);
     console.log(text);
+    status.html(text.split('\n').join('<br/>'));
   }
 
 
@@ -558,34 +558,45 @@ jQuery(function($){
         port = data.get('port'),
         username = data.get('username'),
         pk = data.get('privatekey'),
-        result = {'vaiid': false},
-        msg, size;
+        result = {
+          valid: false,
+          title: ''
+        },
+        errors = [], size;
 
     if (!hostname) {
-      msg = 'Need value hostname';
-    } else if (!port) {
-      port = 22;
-    } else if (!username) {
-      msg = 'Need value username';
-    } else if (!hostname_tester.test(hostname)) {
-      msg =  'Invalid hostname: ' + hostname;
-    } else if (port <= 0 || port > 65535) {
-      msg = 'Invalid port: ' + port;
+      errors.push('Value of hostname is required.');
     } else {
-      if (pk) {
-        size = pk.size || pk.length;
-        if (size > key_max_size) {
-          msg = 'Invalid private key: ' + pk.name || pk;
-        }
+      if (!hostname_tester.test(hostname)) {
+         errors.push('Invalid hostname: ' + hostname);
       }
     }
 
-    if (!msg || debug) {
-      result.valid = true;
-      msg = username + '@' + hostname + ':'  + port;
+    if (!port) {
+      port = 22;
+    } else {
+      if (!(port > 0 && port < 65535)) {
+        errors.push('Invalid port: ' + port);
+      }
     }
 
-    result.msg = msg;
+    if (!username) {
+      errors.push('Value of username is required.');
+    }
+
+    if (pk) {
+      size = pk.size || pk.length;
+      if (size > key_max_size) {
+        errors.push('Invalid private key: ' + pk.name || '');
+      }
+    }
+
+    if (!errors.length || debug) {
+      result.valid = true;
+      result.title = username + '@' + hostname + ':'  + port;
+    }
+    result.errors = errors;
+
     return result;
   }
 
@@ -642,7 +653,7 @@ jQuery(function($){
 
     var result = validate_form_data(data);
     if (!result.valid) {
-      log_status(result.msg);
+      log_status(result.errors.join('\n'));
       return;
     }
 
@@ -658,7 +669,7 @@ jQuery(function($){
       ajax_post();
     }
 
-    return result.msg;
+    return result.title;
   }
 
 
@@ -671,7 +682,7 @@ jQuery(function($){
 
     var result = validate_form_data(data_wrapped);
     if (!result.valid) {
-      console.log(result.msg);
+      log_status(result.errors.join('\n'));
       return;
     }
 
@@ -690,7 +701,7 @@ jQuery(function($){
         complete: ajax_complete_callback
     });
 
-    return result.msg;
+    return result.title;
   }
 
 
@@ -792,10 +803,8 @@ jQuery(function($){
   if (url_form_data.password === undefined) {
     log_status('Password via url must be encoded in base64.');
   } else {
-    if (url_form_data.hostname && url_form_data.username) {
+    if (url_form_data.hostname || url_form_data.port || url_form_data.username || url_form_data.password || url_form_data.totp) {
       connect(url_form_data);
-    } else {
-      console.log('Values of hostname and username are required.');
     }
   }
 
