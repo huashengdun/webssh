@@ -56,6 +56,7 @@ jQuery(function($){
       opts_keys = ['bgcolor', 'title', 'encoding', 'command'],
       url_form_data = {},
       url_opts_data = {},
+      validated_form_data,
       event_origin,
       hostname_tester = /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)/;
 
@@ -307,9 +308,13 @@ jQuery(function($){
   }
 
 
-  function log_status(text) {
+  function log_status(text, fill_form) {
     console.log(text);
     status.html(text.split('\n').join('<br/>'));
+
+    if (fill_form && validated_form_data) {
+      restore_items(fields.concat(['password']), validated_form_data);
+    }
   }
 
 
@@ -317,14 +322,14 @@ jQuery(function($){
     btn.prop('disabled', false);
 
     if (resp.status !== 200) {
-      log_status(resp.status + ': ' + resp.statusText);
+      log_status(resp.status + ': ' + resp.statusText, true);
       state = DISCONNECTED;
       return;
     }
 
     var msg = resp.responseJSON;
     if (!msg.id) {
-      log_status(msg.status);
+      log_status(msg.status, true);
       state = DISCONNECTED;
       return;
     }
@@ -502,12 +507,11 @@ jQuery(function($){
     };
 
     sock.onclose = function(e) {
-      console.log(e);
       term.destroy();
       term = undefined;
       sock = undefined;
       reset_wssh();
-      status.text(e.reason);
+      log_status(e.reason, true);
       state = DISCONNECTED;
       default_title = 'WebSSH';
       title_element.text = default_title;
@@ -559,6 +563,7 @@ jQuery(function($){
         pk = data.get('privatekey'),
         result = {
           valid: false,
+          data: data,
           title: ''
         },
         errors = [], size;
@@ -634,8 +639,6 @@ jQuery(function($){
     enable_file_inputs(inputs);
 
     function ajax_post() {
-      store_items(fields, data);
-
       status.text('');
       btn.prop('disabled', true);
 
@@ -668,7 +671,7 @@ jQuery(function($){
       ajax_post();
     }
 
-    return result.title;
+    return result;
   }
 
 
@@ -676,10 +679,9 @@ jQuery(function($){
     // use data from the arguments
     var form = document.querySelector(form_id),
         url = data.url || form.action,
-        _xsrf = form.querySelector('input[name="_xsrf"]'),
-        data_wrapped = wrap_object(data);
+        _xsrf = form.querySelector('input[name="_xsrf"]');
 
-    var result = validate_form_data(data_wrapped);
+    var result = validate_form_data(wrap_object(data));
     if (!result.valid) {
       log_status(result.errors.join('\n'));
       return;
@@ -690,9 +692,6 @@ jQuery(function($){
       data._origin = event_origin;
     }
 
-    restore_items(fields.concat(['password']), data_wrapped);
-    store_items(fields, data_wrapped);
-
     $.ajax({
         url: url,
         type: 'post',
@@ -700,7 +699,7 @@ jQuery(function($){
         complete: ajax_complete_callback
     });
 
-    return result.title;
+    return result;
   }
 
 
@@ -735,7 +734,11 @@ jQuery(function($){
 
     if (result) {
       state = CONNECTING;
-      default_title = result;
+      default_title = result.title;
+      if (hostname) {
+        validated_form_data = result.data;
+      }
+      store_items(fields, result.data);
     }
   }
 
