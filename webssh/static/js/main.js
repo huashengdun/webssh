@@ -52,6 +52,8 @@ jQuery(function($){
       messages = {1: 'This client is connecting ...', 2: 'This client is already connnected.'},
       key_max_size = 16384,
       fields = ['hostname', 'port', 'username'],
+      form_keys = fields.concat(['password', 'totp']),
+      opts_keys = ['bgcolor', 'title', 'encoding', 'command'],
       url_form_data = {},
       url_opts_data = {},
       event_origin,
@@ -88,12 +90,8 @@ jQuery(function($){
   }
 
 
-  function initialize_map(keys, map) {
-    var i;
-
-    for (i = 0; i < keys.length; i++) {
-      map[keys[i]] = '';
-    }
+  function get_object_length(object) {
+    return Object.keys(object).length;
   }
 
 
@@ -113,10 +111,11 @@ jQuery(function($){
     } catch (e) {
        console.error(e);
     }
+    return null;
   }
 
 
-  function parse_url_data(string, form_map, opts_map) {
+  function parse_url_data(string, form_keys, opts_keys, form_map, opts_map) {
     var i, pair, key, val,
         arr = string.split('&');
 
@@ -125,15 +124,15 @@ jQuery(function($){
       key = pair[0].trim().toLowerCase();
       val = pair[1] && pair[1].trim();
 
-      if (key === 'password' && val) {
-        val = decode_password(val);
-      }
-
-      if (form_map[key] === '') {
+      if (form_keys.indexOf(key) >= 0) {
         form_map[key] = val;
-      } else if (opts_map[key] === '') {
+      } else if (opts_keys.indexOf(key) >=0) {
         opts_map[key] = val;
       }
+    }
+
+    if (form_map.password) {
+      form_map.password = decode_password(form_map.password);
     }
   }
 
@@ -788,23 +787,21 @@ jQuery(function($){
     );
   }
 
-  restore_items(fields);
-
-  initialize_map(fields.concat(['password', 'totp']), url_form_data);
-  initialize_map(['bgcolor', 'title', 'encoding', 'command'], url_opts_data);
 
   parse_url_data(
     decode_uri(window.location.search.substring(1)) + '&' + decode_uri(window.location.hash.substring(1)),
-    url_form_data, url_opts_data
+    form_keys, opts_keys, url_form_data, url_opts_data
   );
   // console.log(url_form_data);
   // console.log(url_opts_data);
 
-  if (url_form_data.password === undefined) {
+  if (url_form_data.password === null) {
     log_status('Password via url must be encoded in base64.');
   } else {
-    if (url_form_data.hostname || url_form_data.port || url_form_data.username || url_form_data.password || url_form_data.totp) {
+    if (get_object_length(url_form_data)) {
       connect(url_form_data);
+    } else {
+      restore_items(fields);
     }
   }
 
