@@ -37,7 +37,7 @@ var wssh = {};
 
 jQuery(function($){
   var status = $('#status'),
-      btn = $('.btn-primary'),
+      button = $('.btn-primary'),
       form_container = $('.form-container'),
       waiter = $('#waiter'),
       style = {},
@@ -330,7 +330,7 @@ jQuery(function($){
 
 
   function ajax_complete_callback(resp) {
-    btn.prop('disabled', false);
+    button.prop('disabled', false);
 
     if (resp.status !== 200) {
       log_status(resp.status + ': ' + resp.statusText, true);
@@ -651,7 +651,7 @@ jQuery(function($){
 
     function ajax_post() {
       status.text('');
-      btn.prop('disabled', true);
+      button.prop('disabled', true);
 
       $.ajax({
           url: url,
@@ -704,7 +704,7 @@ jQuery(function($){
     }
 
     status.text('');
-    btn.prop('disabled', true);
+    button.prop('disabled', true);
 
     $.ajax({
         url: url,
