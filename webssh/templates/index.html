@@ -27,7 +27,9 @@
     </style>
   </head>
   <body>
-    <div class="container">
+    <div id="waiter" style="display: none"> Connecting ... </div>
+
+    <div class="container form-container" style="display: none">
       <form id="connect" action="" method="post" enctype="multipart/form-data"{% if debug %} novalidate{% end %}>
         <div class="row">
           <div class="col">
@@ -71,7 +73,6 @@
         <button type="submit" class="btn btn-primary">Connect</button>
         <button type="reset" class="btn btn-danger">Reset</button>
       </form>
-
     </div>
 
     <div class="container">

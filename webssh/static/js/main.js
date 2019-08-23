@@ -38,6 +38,8 @@ var wssh = {};
 jQuery(function($){
   var status = $('#status'),
       btn = $('.btn-primary'),
+      form_container = $('.form-container'),
+      waiter = $('#waiter'),
       style = {},
       default_title = 'WebSSH',
       title_element = document.querySelector('title'),
@@ -314,6 +316,15 @@ jQuery(function($){
 
     if (fill_form && validated_form_data) {
       restore_items(fields.concat(['password']), validated_form_data);
+      validated_form_data = undefined;
+    }
+
+    if (waiter.css('display') !== 'none') {
+      waiter.hide();
+    }
+
+    if (form_container.css('display') === 'none') {
+      form_container.show();
     }
   }
 
@@ -692,6 +703,9 @@ jQuery(function($){
       data._origin = event_origin;
     }
 
+    status.text('');
+    btn.prop('disabled', true);
+
     $.ajax({
         url: url,
         type: 'post',
@@ -802,9 +816,11 @@ jQuery(function($){
     log_status('Password via url must be encoded in base64.');
   } else {
     if (get_object_length(url_form_data)) {
+      waiter.show();
       connect(url_form_data);
     } else {
       restore_items(fields);
+      form_container.show();
     }
   }
 
