@@ -76,19 +76,26 @@ jQuery(function($){
   }
 
 
-  function restore_items(names, storage) {
+  function restore_items(names) {
     var i, name, value;
-
-    if (storage === undefined) {
-      storage = window.localStorage;
-    }
 
     for (i=0; i < names.length; i++) {
       name = names[i];
-      value = storage.getItem(name);
+      value = window.localStorage.getItem(name);
       if (value) {
         $('#'+name).val(value);
       }
+    }
+  }
+
+
+  function populate_form(data) {
+    var names = form_keys.concat(['passphrase']),
+        i, name;
+
+    for (i=0; i < names.length; i++) {
+      name = names[i];
+      $('#'+name).val(data.get(name));
     }
   }
 
@@ -310,12 +317,12 @@ jQuery(function($){
   }
 
 
-  function log_status(text, fill_form) {
+  function log_status(text, to_populate) {
     console.log(text);
     status.html(text.split('\n').join('<br/>'));
 
-    if (fill_form && validated_form_data) {
-      restore_items(fields.concat(['password']), validated_form_data);
+    if (to_populate && validated_form_data) {
+      populate_form(validated_form_data);
       validated_form_data = undefined;
     }
 
@@ -539,7 +546,7 @@ jQuery(function($){
   function wrap_object(opts) {
     var obj = {};
 
-    obj.getItem = obj.get = function(attr) {
+    obj.get = function(attr) {
       return opts[attr] || '';
     };
 
@@ -553,7 +560,7 @@ jQuery(function($){
 
   function clean_data(data) {
     var i, attr, val;
-    var attrs = fields.concat(['password', 'privatekey', 'passphrase', 'totp']);
+    var attrs = form_keys.concat(['privatekey', 'passphrase']);
 
     for (i = 0; i < attrs.length; i++) {
       attr = attrs[i];
