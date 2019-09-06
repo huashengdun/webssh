@@ -158,7 +158,7 @@ class PrivateKey(object):
             logging.error(str(exc))
             msg = 'Invalid key'
             if self.password:
-                msg += ' or wrong password "{}" for decrypting it.'.format(
+                msg += ' or wrong passphrase "{}" for decrypting it.'.format(
                         self.password)
             raise InvalidValueError(msg)
 
