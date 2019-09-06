@@ -153,7 +153,7 @@ class PrivateKey(object):
         try:
             return pkeycls.from_private_key(self.iostr, password=password)
         except paramiko.PasswordRequiredException:
-            raise InvalidValueError('Need a password to decrypt the key.')
+            raise InvalidValueError('Need a passphrase to decrypt the key.')
         except paramiko.SSHException as exc:
             logging.error(str(exc))
             msg = 'Invalid key'
