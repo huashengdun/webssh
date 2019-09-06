@@ -152,12 +152,12 @@ class TestPrivateKey(unittest.TestCase):
         pk = self.get_pk_obj(fname, password='')
         with self.assertRaises(InvalidValueError) as ctx:
             pk.get_pkey_obj()
-        self.assertIn('Need a password', str(ctx.exception))
+        self.assertIn('Need a passphrase', str(ctx.exception))
 
         pk = self.get_pk_obj(fname, password='wrongpass')
         with self.assertRaises(InvalidValueError) as ctx:
             pk.get_pkey_obj()
-        self.assertIn('wrong password', str(ctx.exception))
+        self.assertIn('wrong passphrase', str(ctx.exception))
 
         pk = self.get_pk_obj(fname, password=password)
         self.assertIsInstance(pk.get_pkey_obj(), klass)
