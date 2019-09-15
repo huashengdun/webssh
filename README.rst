@@ -161,6 +161,12 @@ Passing a command executed right after login
 
     http://localhost:8888/?command=pwd
 
+Passing a terminal type
+
+.. code:: bash
+
+    http://localhost:8888/?term=xterm-256color
+
 Use Docker
 ~~~~~~~~~~
 
