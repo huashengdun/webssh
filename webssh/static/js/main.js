@@ -40,6 +40,7 @@ jQuery(function($){
       button = $('.btn-primary'),
       form_container = $('.form-container'),
       waiter = $('#waiter'),
+      term_type = $('#term'),
       style = {},
       default_title = 'WebSSH',
       title_element = document.querySelector('title'),
@@ -55,7 +56,7 @@ jQuery(function($){
       key_max_size = 16384,
       fields = ['hostname', 'port', 'username'],
       form_keys = fields.concat(['password', 'totp']),
-      opts_keys = ['bgcolor', 'title', 'encoding', 'command'],
+      opts_keys = ['bgcolor', 'title', 'encoding', 'command', 'term'],
       url_form_data = {},
       url_opts_data = {},
       validated_form_data,
@@ -705,6 +706,7 @@ jQuery(function($){
       return;
     }
 
+    data.term = term_type.val();
     data._xsrf = _xsrf.value;
     if (event_origin) {
       data._origin = event_origin;
@@ -818,6 +820,10 @@ jQuery(function($){
   );
   // console.log(url_form_data);
   // console.log(url_opts_data);
+
+  if (url_opts_data.term) {
+    term_type.val(url_opts_data.term);
+  }
 
   if (url_form_data.password === null) {
     log_status('Password via url must be encoded in base64.');

@@ -412,7 +412,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         except paramiko.BadHostKeyException:
             raise ValueError('Bad host key.')
 
-        chan = ssh.invoke_shell(term='xterm')
+        term = self.get_argument('term', u'') or u'xterm'
+        chan = ssh.invoke_shell(term=term)
         chan.setblocking(0)
         worker = Worker(self.loop, ssh, chan, dst_addr)
         worker.encoding = self.get_default_encoding(ssh)
