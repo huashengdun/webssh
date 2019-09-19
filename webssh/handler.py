@@ -257,9 +257,9 @@ class MixinHandler(object):
 
     def get_client_addr(self):
         if options.xheaders:
-            return self.get_real_client_addr() or self.context.address
+            return self.get_real_client_addr() or self.context.address[:2]
         else:
-            return self.context.address
+            return self.context.address[:2]
 
     def get_real_client_addr(self):
         ip = self.request.remote_ip
