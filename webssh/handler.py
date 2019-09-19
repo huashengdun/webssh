@@ -255,11 +255,14 @@ class MixinHandler(object):
             raise InvalidValueError('Missing value {}'.format(name))
         return value
 
+    def get_context_addr(self):
+        return self.context.address[:2]
+
     def get_client_addr(self):
         if options.xheaders:
-            return self.get_real_client_addr() or self.context.address[:2]
+            return self.get_real_client_addr() or self.get_context_addr()
         else:
-            return self.context.address[:2]
+            return self.get_context_addr()
 
     def get_real_client_addr(self):
         ip = self.request.remote_ip
