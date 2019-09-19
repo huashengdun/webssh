@@ -35,6 +35,10 @@ class TestUitls(unittest.TestCase):
         self.assertFalse(is_valid_ip_address(b'abc'))
         self.assertTrue(is_valid_ip_address('::1'))
         self.assertTrue(is_valid_ip_address(b'::1'))
+        self.assertTrue(is_valid_ip_address('fe80::1111:2222:3333:4444'))
+        self.assertTrue(is_valid_ip_address(b'fe80::1111:2222:3333:4444'))
+        self.assertTrue(is_valid_ip_address('fe80::1111:2222:3333:4444%eth0'))
+        self.assertTrue(is_valid_ip_address(b'fe80::1111:2222:3333:4444%eth0'))
 
     def test_is_valid_port(self):
         self.assertTrue(is_valid_port(80))

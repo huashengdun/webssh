@@ -36,7 +36,10 @@ def to_int(string):
 
 
 def to_ip_address(ipstr):
-    return ipaddress.ip_address(to_str(ipstr))
+    ip = to_str(ipstr)
+    if ip.startswith('fe80::'):
+        ip = ip.split('%')[0]
+    return ipaddress.ip_address(ip)
 
 
 def is_valid_ip_address(ipstr):
