@@ -53,10 +53,11 @@ class Server(paramiko.ServerInterface):
 
     encodings = ['UTF-8', 'GBK', 'UTF-8\r\n', 'GBK\r\n']
 
-    def __init__(self):
+    def __init__(self, encoding=None):
         self.shell_event = threading.Event()
         self.exec_event = threading.Event()
         self.encoding = random.choice(self.encodings)
+        self.bad_encoding = encoding
         self.password_verified = False
         self.key_verified = False
 
@@ -126,7 +127,7 @@ class Server(paramiko.ServerInterface):
             ret = False
         else:
             ret = True
-            channel.send(self.encoding)
+            channel.send(self.bad_encoding or self.encoding)
             channel.shutdown(1)
         self.exec_event.set()
         return ret
@@ -145,7 +146,7 @@ class Server(paramiko.ServerInterface):
         return True
 
 
-def run_ssh_server(port=2200, running=True):
+def run_ssh_server(port=2200, running=True, encoding=None):
     # now connect
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -159,7 +160,7 @@ def run_ssh_server(port=2200, running=True):
         t = paramiko.Transport(client)
         t.load_server_moduli()
         t.add_server_key(host_key)
-        server = Server()
+        server = Server(encoding)
         try:
             t.start_server(server=server)
         except Exception as e:

@@ -54,6 +54,14 @@ def is_valid_port(port):
     return 0 < port < 65536
 
 
+def is_valid_encoding(encoding, ustr=u'test'):
+    try:
+        ustr.encode(encoding)
+    except LookupError:
+        return False
+    return True
+
+
 def is_ip_hostname(hostname):
     it = iter(hostname)
     if next(it) == '[':

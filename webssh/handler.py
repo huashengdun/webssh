@@ -14,7 +14,8 @@ from tornado.options import options
 from tornado.process import cpu_count
 from webssh.utils import (
     is_valid_ip_address, is_valid_port, is_valid_hostname, to_bytes, to_str,
-    to_int, to_ip_address, UnicodeType, is_ip_hostname, is_same_primary_domain
+    to_int, to_ip_address, UnicodeType, is_ip_hostname, is_same_primary_domain,
+    is_valid_encoding
 )
 from webssh.worker import Worker, recycle_worker, clients
 
@@ -392,12 +393,18 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
     def get_default_encoding(self, ssh):
         try:
             _, stdout, _ = ssh.exec_command('locale charmap')
-        except paramiko.SSHException:
-            result = None
-        else:
-            result = to_str(stdout.read().strip())
+        except paramiko.SSHException as exc:
+            logging.warn(str(exc))
+            return u'utf-8'
 
-        return result if result else 'utf-8'
+        try:
+            enc = to_str(stdout.read().strip(), 'ascii')
+        except UnicodeDecodeError:
+            raise ValueError('Bad encoding')
+        else:
+            if not is_valid_encoding(enc):
+                raise ValueError('Unknown encoding "{}"'.format(enc))
+            return enc
 
     def ssh_connect(self, args):
         ssh = self.ssh_client
