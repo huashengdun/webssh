@@ -51,15 +51,23 @@ class Server(paramiko.ServerInterface):
             b'UWT10hcuO4Ks8=')
     good_pub_key = paramiko.RSAKey(data=decodebytes(data))
 
+    commands = [
+        b'$SHELL -ilc "locale charmap"',
+        b'$SHELL -ic "locale charmap"'
+    ]
     encodings = ['UTF-8', 'GBK', 'UTF-8\r\n', 'GBK\r\n']
 
-    def __init__(self, encoding=None):
+    def __init__(self, encodings=[]):
         self.shell_event = threading.Event()
         self.exec_event = threading.Event()
-        self.encoding = random.choice(self.encodings)
-        self.bad_encoding = encoding
+        self.cmd_to_enc = self.get_cmd2enc(encodings)
         self.password_verified = False
         self.key_verified = False
+
+    def get_cmd2enc(self, encodings):
+        while len(encodings) < 2:
+            encodings.append(random.choice(self.encodings))
+        return dict(zip(self.commands, encodings[0:2]))
 
     def check_channel_request(self, kind, chanid):
         if kind == 'session':
@@ -123,11 +131,12 @@ class Server(paramiko.ServerInterface):
         return 'password,publickey'
 
     def check_channel_exec_request(self, channel, command):
-        if command != b'locale charmap':
+        if command not in self.commands:
             ret = False
         else:
             ret = True
-            channel.send(self.bad_encoding or self.encoding)
+            self.encoding = self.cmd_to_enc[command]
+            channel.send(self.encoding)
             channel.shutdown(1)
         self.exec_event.set()
         return ret
@@ -146,7 +155,7 @@ class Server(paramiko.ServerInterface):
         return True
 
 
-def run_ssh_server(port=2200, running=True, encoding=None):
+def run_ssh_server(port=2200, running=True, encodings=[]):
     # now connect
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -160,7 +169,7 @@ def run_ssh_server(port=2200, running=True, encoding=None):
         t = paramiko.Transport(client)
         t.load_server_moduli()
         t.add_server_key(host_key)
-        server = Server(encoding)
+        server = Server(encodings)
         try:
             t.start_server(server=server)
         except Exception as e:
@@ -188,7 +197,12 @@ def run_ssh_server(port=2200, running=True, encoding=None):
 
         # chan.send('\r\n\r\nWelcome!\r\n\r\n')
         print(server.encoding)
-        chan.send(banner.encode(server.encoding.strip()))
+        try:
+            banner_encoded = banner.encode(server.encoding)
+        except (ValueError, LookupError):
+            continue
+
+        chan.send(banner_encoded)
         if username == 'bar':
             msg = chan.recv(1024)
             chan.send(msg)

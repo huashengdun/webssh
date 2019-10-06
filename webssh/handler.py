@@ -390,21 +390,31 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         return args
 
-    def get_default_encoding(self, ssh):
+    def parse_encoding(self, data):
         try:
-            _, stdout, _ = ssh.exec_command('locale charmap')
-        except paramiko.SSHException as exc:
-            logging.warn(str(exc))
-            return u'utf-8'
-
-        try:
-            enc = to_str(stdout.read().strip(), 'ascii')
+            encoding = to_str(data, 'ascii')
         except UnicodeDecodeError:
-            raise ValueError('Bad encoding')
-        else:
-            if not is_valid_encoding(enc):
-                raise ValueError('Unknown encoding "{}"'.format(enc))
-            return enc
+            return
+
+        if is_valid_encoding(encoding):
+            return encoding
+
+    def get_default_encoding(self, ssh):
+        commands = [
+            '$SHELL -ilc "locale charmap"',
+            '$SHELL -ic "locale charmap"'
+        ]
+
+        for command in commands:
+            _, stdout, _ = ssh.exec_command(command, get_pty=True)
+            data = stdout.read().strip()
+            logging.debug('encoding: {}'.format(data))
+            result = self.parse_encoding(data)
+            if result:
+                return result
+
+        logging.warn('Could not detect the default ecnoding.')
+        return 'utf-8'
 
     def ssh_connect(self, args):
         ssh = self.ssh_client

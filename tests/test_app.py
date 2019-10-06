@@ -515,7 +515,7 @@ class OtherTestBase(TestAppBase):
     tdstream = ''
     maxconn = 20
     origin = 'same'
-    encoding = ''
+    encodings = []
     body = {
         'hostname': '127.0.0.1',
         'port': '',
@@ -545,7 +545,7 @@ class OtherTestBase(TestAppBase):
 
         t = threading.Thread(
             target=run_ssh_server,
-            args=(self.sshserver_port, self.running, self.encoding)
+            args=(self.sshserver_port, self.running, self.encodings)
         )
         t.setDaemon(True)
         t.start()
@@ -768,19 +768,24 @@ class TestAppWithCrossOriginOperation(OtherTestBase):
 
 class TestAppWithBadEncoding(OtherTestBase):
 
-    encoding = b'\xe7\xbc\x96\xe7\xa0\x81'
+    encodings = [u'\u7f16\u7801']
 
     @tornado.testing.gen_test
     def test_app_with_a_bad_encoding(self):
         response = yield self.async_post('/', self.body)
-        self.assertIn(b'Bad encoding', response.body)
+        dic = json.loads(to_str(response.body))
+        self.assert_status_none(dic)
+        self.assertIn(dic['encoding'], ['UTF-8', 'GBK'])
 
 
 class TestAppWithUnknownEncoding(OtherTestBase):
 
-    encoding = u'UnknownEncoding'
+    encodings = [u'\u7f16\u7801', u'UnknownEncoding']
 
     @tornado.testing.gen_test
-    def test_app_with_a_bad_encoding(self):
+    def test_app_with_a_unknown_encoding(self):
         response = yield self.async_post('/', self.body)
-        self.assertIn(b'Unknown encoding', response.body)
+        self.assert_status_none(json.loads(to_str(response.body)))
+        dic = json.loads(to_str(response.body))
+        self.assert_status_none(dic)
+        self.assertEqual(dic['encoding'], 'utf-8')
