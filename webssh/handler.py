@@ -392,7 +392,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     def parse_encoding(self, data):
         try:
-            encoding = to_str(data, 'ascii')
+            encoding = to_str(data.strip(), 'ascii')
         except UnicodeDecodeError:
             return
 
@@ -407,8 +407,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         for command in commands:
             _, stdout, _ = ssh.exec_command(command, get_pty=True)
-            data = stdout.read().strip()
-            logging.debug('encoding: {}'.format(data))
+            data = stdout.read()
+            logging.debug('{!r} => {!r}'.format(command, data))
             result = self.parse_encoding(data)
             if result:
                 return result

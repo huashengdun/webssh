@@ -65,7 +65,7 @@ class Server(paramiko.ServerInterface):
         self.key_verified = False
 
     def get_cmd2enc(self, encodings):
-        while len(encodings) < 2:
+        while len(encodings) < len(self.commands):
             encodings.append(random.choice(self.encodings))
         return dict(zip(self.commands, encodings[0:2]))
 

@@ -7,7 +7,7 @@ import tornado.gen
 from tornado.testing import AsyncHTTPTestCase
 from tornado.httpclient import HTTPError
 from tornado.options import options
-from tests.sshserver import run_ssh_server, banner
+from tests.sshserver import run_ssh_server, banner, Server
 from tests.utils import encode_multipart_formdata, read_file, make_tests_data_path  # noqa
 from webssh import handler
 from webssh.main import make_app, make_handlers
@@ -25,6 +25,7 @@ except ImportError:
 
 handler.DELAY = 0.1
 swallow_http_errors = handler.swallow_http_errors
+server_encodings = {e.strip() for e in Server.encodings}
 
 
 class TestAppBase(AsyncHTTPTestCase):
@@ -775,7 +776,7 @@ class TestAppWithBadEncoding(OtherTestBase):
         response = yield self.async_post('/', self.body)
         dic = json.loads(to_str(response.body))
         self.assert_status_none(dic)
-        self.assertIn(dic['encoding'], ['UTF-8', 'GBK'])
+        self.assertIn(dic['encoding'], server_encodings)
 
 
 class TestAppWithUnknownEncoding(OtherTestBase):

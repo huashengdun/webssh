@@ -54,9 +54,9 @@ def is_valid_port(port):
     return 0 < port < 65536
 
 
-def is_valid_encoding(encoding, ustr=u'test'):
+def is_valid_encoding(encoding):
     try:
-        ustr.encode(encoding)
+        u'test'.encode(encoding)
     except LookupError:
         return False
     return True
