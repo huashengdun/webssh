@@ -65,9 +65,10 @@ class Server(paramiko.ServerInterface):
         self.key_verified = False
 
     def get_cmd2enc(self, encodings):
-        while len(encodings) < len(self.commands):
+        n = len(self.commands)
+        while len(encodings) < n:
             encodings.append(random.choice(self.encodings))
-        return dict(zip(self.commands, encodings[0:2]))
+        return dict(zip(self.commands, encodings[0:n]))
 
     def check_channel_request(self, kind, chanid):
         if kind == 'session':
