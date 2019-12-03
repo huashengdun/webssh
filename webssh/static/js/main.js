@@ -529,7 +529,7 @@ jQuery(function($){
     };
 
     sock.onclose = function(e) {
-      term.destroy();
+      term.dispose();
       term = undefined;
       sock = undefined;
       reset_wssh();
