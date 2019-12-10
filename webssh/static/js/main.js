@@ -158,14 +158,14 @@ jQuery(function($){
 
 
   function get_cell_size(term) {
-    style.width = term._core.renderer.dimensions.actualCellWidth;
-    style.height = term._core.renderer.dimensions.actualCellHeight;
+    style.width = term._core._renderService._renderer.dimensions.actualCellWidth;
+    style.height = term._core._renderService._renderer.dimensions.actualCellHeight;
   }
 
 
   function toggle_fullscreen(term) {
-    var func = term.toggleFullScreen || term.toggleFullscreen;
-    func.call(term, true);
+    $('#terminal .terminal').toggleClass('fullscreen');
+    term.fitAddon.fit();
   }
 
 
@@ -367,6 +367,9 @@ jQuery(function($){
           }
         });
 
+    term.fitAddon = new window.FitAddon.FitAddon();
+    term.loadAddon(term.fitAddon);
+
     console.log(url);
     if (!msg.encoding) {
       console.log('Unable to detect the default encoding of your server');
@@ -498,7 +501,7 @@ jQuery(function($){
       }
     };
 
-    term.on('data', function(data) {
+    term.onData(function(data) {
       // console.log(data);
       sock.send(JSON.stringify({'data': data}));
     });
@@ -526,7 +529,7 @@ jQuery(function($){
     };
 
     sock.onclose = function(e) {
-      term.destroy();
+      term.dispose();
       term = undefined;
       sock = undefined;
       reset_wssh();
@@ -798,10 +801,6 @@ jQuery(function($){
   }
 
   window.addEventListener('message', cross_origin_connect, false);
-
-  if (window.Terminal.applyAddon) {
-    window.Terminal.applyAddon(window.fullscreen);
-  }
 
   if (document.fonts) {
     document.fonts.ready.then(
