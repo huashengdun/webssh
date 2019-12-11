@@ -196,6 +196,15 @@ class TestPrivateKey(unittest.TestCase):
         password = 'abc123'
         self._test_with_encrypted_key(fname, password, paramiko.Ed25519Key)
 
+    def test_get_pkey_obj_with_encrypted_new_rsa_key(self):
+        fname = 'test_new_rsa_password.key'
+        password = '123456'
+        self._test_with_encrypted_key(fname, password, paramiko.RSAKey)
+
+    def test_get_pkey_obj_with_plain_new_dsa_key(self):
+        pk = self.get_pk_obj('test_new_dsa.key')
+        self.assertIsInstance(pk.get_pkey_obj(), paramiko.DSSKey)
+
     def test_parse_name(self):
         key = u'-----BEGIN PRIVATE KEY-----'
         pk = PrivateKey(key)

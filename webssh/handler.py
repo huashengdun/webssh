@@ -118,6 +118,7 @@ class PrivateKey(object):
         self.password = password
         self.check_length()
         self.iostr = io.StringIO(privatekey)
+        self.last_exception = None
 
     def check_length(self):
         if len(self.privatekey) > self.max_length:
@@ -138,30 +139,49 @@ class PrivateKey(object):
                             break
         return name, len(line_)
 
+    def get_specific_pkey(self, name, offset, password):
+        self.iostr.seek(offset)
+        logging.debug('Reset offset to {}.'.format(offset))
+
+        logging.debug('Try parsing it as {} type key'.format(name))
+        pkeycls = getattr(paramiko, name+'Key')
+        pkey = None
+
+        try:
+            pkey = pkeycls.from_private_key(self.iostr, password=password)
+        except paramiko.PasswordRequiredException:
+            raise InvalidValueError('Need a passphrase to decrypt the key.')
+        except (paramiko.SSHException, ValueError) as exc:
+            self.last_exception = exc
+            logging.debug(str(exc))
+
+        return pkey
+
     def get_pkey_obj(self):
+        logging.info('Parsing private key {!r}'.format(self.filename))
         name, length = self.parse_name(self.iostr, self.tag_to_name)
         if not name:
             raise InvalidValueError('Invalid key {}.'.format(self.filename))
 
         offset = self.iostr.tell() - length
-        self.iostr.seek(offset)
-        logging.debug('Reset offset to {}.'.format(offset))
-
-        logging.info('Parsing {} key'.format(name))
-        pkeycls = getattr(paramiko, name+'Key')
         password = to_bytes(self.password) if self.password else None
+        pkey = self.get_specific_pkey(name, offset, password)
 
-        try:
-            return pkeycls.from_private_key(self.iostr, password=password)
-        except paramiko.PasswordRequiredException:
-            raise InvalidValueError('Need a passphrase to decrypt the key.')
-        except paramiko.SSHException as exc:
-            logging.error(str(exc))
-            msg = 'Invalid key'
-            if self.password:
-                msg += ' or wrong passphrase "{}" for decrypting it.'.format(
-                        self.password)
-            raise InvalidValueError(msg)
+        if pkey is None and name == 'Ed25519':
+            for name in ['RSA', 'ECDSA', 'DSS']:
+                pkey = self.get_specific_pkey(name, offset, password)
+                if pkey:
+                    break
+
+        if pkey:
+            return pkey
+
+        logging.error(str(self.last_exception))
+        msg = 'Invalid key'
+        if self.password:
+            msg += ' or wrong passphrase "{}" for decrypting it.'.format(
+                    self.password)
+        raise InvalidValueError(msg)
 
 
 class MixinHandler(object):
