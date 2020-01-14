@@ -133,7 +133,7 @@ jQuery(function($){
     for (i = 0; i < arr.length; i++) {
       pair = arr[i].split('=');
       key = pair[0].trim().toLowerCase();
-      val = pair[1] && pair[1].trim();
+      val = pair.slice(1).join('=').trim();
 
       if (form_keys.indexOf(key) >= 0) {
         form_map[key] = val;
