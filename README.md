@@ -103,19 +103,7 @@ wssh.send('ls -l');
 
 ### Custom Font
 
-Custom font family usage example:
-```html
-<style>
-  @font-face {
-    font-family: 'font-name';
-    src: url('static/css/fonts/your-favorite-font');
-  }
-
-  body {
-    font-family: 'font-name';
-  }
-</style>
-```
+To use custom font, put your font file in the directory `webssh/static/css/fonts/` and restart the server.
 
 ### URL Arguments
 
