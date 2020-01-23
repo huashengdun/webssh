@@ -24,14 +24,14 @@
       .btn-danger {
         margin-left: 5px;
       }
-      {% if font_filename %}
+      {% if font.url %}
       @font-face {
-        font-family: '{{font_family}}';
-        src: url('static/css/fonts/{{font_filename}}');
+        font-family: '{{ font.family }}';
+        src: url('{{ font.url }}');
       }
 
       body {
-        font-family: '{{font_family}}';
+        font-family: '{{ font.family }}';
       }
       {% end %}
     </style>

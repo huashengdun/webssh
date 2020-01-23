@@ -10,7 +10,7 @@ import tornado.options as options
 from tests.utils import make_tests_data_path
 from webssh.policy import load_host_keys
 from webssh.settings import (
-    get_host_keys_settings, get_policy_setting, base_dir, get_font_setting,
+    get_host_keys_settings, get_policy_setting, base_dir, get_font_filename,
     get_ssl_context, get_trusted_downstream, get_origin_setting, print_version
 )
 from webssh.utils import UnicodeType
@@ -170,11 +170,11 @@ class TestSettings(unittest.TestCase):
     def test_get_font_setting(self):
         font_dir = os.path.join(base_dir, 'tests', 'data', 'fonts')
         font = ''
-        self.assertEqual(get_font_setting(font, font_dir), 'fake-font')
+        self.assertEqual(get_font_filename(font, font_dir), 'fake-font')
 
         font = 'fake-font'
-        self.assertEqual(get_font_setting(font, font_dir), 'fake-font')
+        self.assertEqual(get_font_filename(font, font_dir), 'fake-font')
 
         font = 'wrong-name'
         with self.assertRaises(ValueError):
-            get_font_setting(font, font_dir)
+            get_font_filename(font, font_dir)

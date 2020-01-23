@@ -478,8 +478,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         pass
 
     def get(self):
-        self.render('index.html', debug=self.debug, font_filename=self.font,
-                    font_family=self.font.split('.')[0])
+        self.render('index.html', debug=self.debug, font=self.font)
 
     @tornado.gen.coroutine
     def post(self):

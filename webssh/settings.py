@@ -49,7 +49,21 @@ define('version', type=bool, help='Show version information',
 
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+font_dirs = ['webssh', 'static', 'css', 'fonts']
 max_body_size = 1 * 1024 * 1024
+
+
+class Font(object):
+
+    def __init__(self, filename, dirs):
+        self.family = self.get_family(filename)
+        self.url = self.get_url(filename, dirs)
+
+    def get_family(self, filename):
+        return filename.split('.')[0]
+
+    def get_url(self, filename, dirs):
+        return os.path.join(*(dirs + [filename]))
 
 
 def get_app_settings(options):
@@ -59,9 +73,10 @@ def get_app_settings(options):
         websocket_ping_interval=options.wpintvl,
         debug=options.debug,
         xsrf_cookies=options.xsrf,
-        font=get_font_setting(
-            options.font,
-            os.path.join(base_dir, 'webssh', 'static', 'css', 'fonts')
+        font=Font(
+            get_font_filename(options.font,
+                              os.path.join(base_dir, *font_dirs)),
+            font_dirs[1:]
         ),
         origin_policy=get_origin_setting(options)
     )
@@ -157,7 +172,7 @@ def get_origin_setting(options):
     return origins
 
 
-def get_font_setting(font, font_dir):
+def get_font_filename(font, font_dir):
     filenames = {f for f in os.listdir(font_dir) if not f.startswith('.')
                  and os.path.isfile(os.path.join(font_dir, f))}
     if font:
