@@ -24,6 +24,16 @@
       .btn-danger {
         margin-left: 5px;
       }
+      {% if font_filename %}
+      @font-face {
+        font-family: '{{font_family}}';
+        src: url('static/css/fonts/{{font_filename}}');
+      }
+
+      body {
+        font-family: '{{font_family}}';
+      }
+      {% end %}
     </style>
   </head>
   <body>

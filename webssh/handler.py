@@ -323,6 +323,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         self.host_keys_settings = host_keys_settings
         self.ssh_client = self.get_ssh_client()
         self.debug = self.settings.get('debug', False)
+        self.font = self.settings.get('font', '')
         self.result = dict(id=None, status=None, encoding=None)
 
     def write_error(self, status_code, **kwargs):
@@ -477,7 +478,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         pass
 
     def get(self):
-        self.render('index.html', debug=self.debug)
+        self.render('index.html', debug=self.debug, font_filename=self.font,
+                    font_family=self.font.split('.')[0])
 
     @tornado.gen.coroutine
     def post(self):

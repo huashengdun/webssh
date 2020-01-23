@@ -43,6 +43,7 @@ separated by comma;
 define('wpintvl', type=int, default=0, help='Websocket ping interval')
 define('maxconn', type=int, default=20,
        help='Maximum live connections (ssh sessions) per client')
+define('font', default='', help='custom font filename')
 define('version', type=bool, help='Show version information',
        callback=print_version)
 
@@ -58,6 +59,10 @@ def get_app_settings(options):
         websocket_ping_interval=options.wpintvl,
         debug=options.debug,
         xsrf_cookies=options.xsrf,
+        font=get_font_setting(
+            options.font,
+            os.path.join(base_dir, 'webssh', 'static', 'css', 'fonts')
+        ),
         origin_policy=get_origin_setting(options)
     )
     return settings
@@ -150,3 +155,17 @@ def get_origin_setting(options):
         raise ValueError('Empty origin list')
 
     return origins
+
+
+def get_font_setting(font, font_dir):
+    filenames = {f for f in os.listdir(font_dir) if
+                 os.path.isfile(os.path.join(font_dir, f))}
+    if font:
+        if font not in filenames:
+            raise ValueError(
+                'Font file {!r} not found'.format(os.path.join(font_dir, font))
+            )
+    elif filenames:
+        font = filenames.pop()
+
+    return font
