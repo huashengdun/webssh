@@ -11,7 +11,8 @@ from tests.utils import make_tests_data_path
 from webssh.policy import load_host_keys
 from webssh.settings import (
     get_host_keys_settings, get_policy_setting, base_dir, get_font_filename,
-    get_ssl_context, get_trusted_downstream, get_origin_setting, print_version
+    get_ssl_context, get_trusted_downstream, get_origin_setting, print_version,
+    check_encoding_setting
 )
 from webssh.utils import UnicodeType
 from webssh._version import __version__
@@ -178,3 +179,9 @@ class TestSettings(unittest.TestCase):
         font = 'wrong-name'
         with self.assertRaises(ValueError):
             get_font_filename(font, font_dir)
+
+    def test_check_encoding_setting(self):
+        self.assertIsNone(check_encoding_setting(''))
+        self.assertIsNone(check_encoding_setting('utf-8'))
+        with self.assertRaises(ValueError):
+            check_encoding_setting('unknown-encoding')

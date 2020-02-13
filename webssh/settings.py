@@ -193,4 +193,3 @@ def get_font_filename(font, font_dir):
 def check_encoding_setting(encoding):
     if encoding and not is_valid_encoding(encoding):
         raise ValueError('Unknown character encoding.')
-    return encoding
