@@ -457,7 +457,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         chan = ssh.invoke_shell(term=term)
         chan.setblocking(0)
         worker = Worker(self.loop, ssh, chan, dst_addr)
-        worker.encoding = self.get_default_encoding(ssh)
+        worker.encoding = options.encoding if options.encoding else \
+            self.get_default_encoding(ssh)
         return worker
 
     def check_origin(self):

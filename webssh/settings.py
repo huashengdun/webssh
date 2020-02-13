@@ -7,7 +7,9 @@ from tornado.options import define
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
 )
-from webssh.utils import to_ip_address, parse_origin_from_url
+from webssh.utils import (
+    to_ip_address, parse_origin_from_url, is_valid_encoding
+)
 from webssh._version import __version__
 
 
@@ -44,6 +46,8 @@ define('wpintvl', type=int, default=0, help='Websocket ping interval')
 define('maxconn', type=int, default=20,
        help='Maximum live connections (ssh sessions) per client')
 define('font', default='', help='custom font filename')
+define('encoding', default='',
+       help='The default character encoding of ssh servers')
 define('version', type=bool, help='Show version information',
        callback=print_version)
 
@@ -184,3 +188,9 @@ def get_font_filename(font, font_dir):
         font = filenames.pop()
 
     return font
+
+
+def check_encoding_setting(encoding):
+    if encoding and not is_valid_encoding(encoding):
+        raise ValueError('Unknown character encoding.')
+    return encoding
