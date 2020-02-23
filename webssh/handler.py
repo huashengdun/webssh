@@ -443,7 +443,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         logging.info('Connecting to {}:{}'.format(*dst_addr))
 
         try:
-            ssh.connect(*args, timeout=6)
+            ssh.connect(*args, timeout=options.timeout)
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:
@@ -511,7 +511,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                 clients[ip] = workers
             worker.src_addr = (ip, port)
             workers[worker.id] = worker
-            self.loop.call_later(DELAY, recycle_worker, worker)
+            self.loop.call_later(options.delay or DELAY, recycle_worker,
+                                 worker)
             self.result.update(id=worker.id, encoding=worker.encoding)
 
         self.write(self.result)
