@@ -67,6 +67,21 @@ class SSHClient(paramiko.SSHClient):
         allowed_types = set()
         two_factor_types = {'keyboard-interactive', 'password'}
 
+        agent = paramiko.Agent()
+        agent_keys = agent.get_keys()
+        if len(agent_keys) == 0:
+            return
+
+        for key in agent_keys:
+            logging.info("Trying ssh-agent key %s" % hexlify(key.get_fingerprint()))
+            try:
+                self._transport.auth_publickey(username, key)
+                logging.info("... success!")
+                return
+            except paramiko.SSHException as e:
+                logging.info("... nope.")
+                saved_exception = e
+        
         if pkey is not None:
             logging.info('Trying publickey authentication')
             try:
@@ -438,7 +453,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                 if result:
                     return result
 
-        logging.warning('Could not detect the default ecnoding.')
+        logging.warning('Could not detect the default encoding.')
         return 'utf-8'
 
     def ssh_connect(self, args):
@@ -447,7 +462,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         logging.info('Connecting to {}:{}'.format(*dst_addr))
 
         try:
-            ssh.connect(*args, timeout=options.timeout)
+            ssh.connect(*args, allow_agent=True, look_for_keys=True, timeout=options.timeout)
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:
