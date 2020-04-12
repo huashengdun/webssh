@@ -438,7 +438,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                 if result:
                     return result
 
-        logging.warning('Could not detect the default ecnoding.')
+        logging.warning('Could not detect the default encoding.')
         return 'utf-8'
 
     def ssh_connect(self, args):
