@@ -591,7 +591,7 @@ jQuery(function($){
         errors = [], size;
 
     if (!hostname) {
-      errors.push('Value of hostname is required.');
+        hostname = 'localhost'; // set local as hostname by default
     } else {
       if (!hostname_tester.test(hostname)) {
          errors.push('Invalid hostname: ' + hostname);

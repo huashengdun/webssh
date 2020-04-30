@@ -270,10 +270,12 @@ class MixinHandler(object):
         for header in self.custom_headers.items():
             self.set_header(*header)
 
-    def get_value(self, name):
+    def get_value(self, name, default=None):
         value = self.get_argument(name)
         if not value:
-            raise InvalidValueError('Missing value {}'.format(name))
+            if not default:
+                raise InvalidValueError('Missing value {}'.format(name))
+            return default
         return value
 
     def get_context_addr(self):
@@ -363,7 +365,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return value, filename
 
     def get_hostname(self):
-        value = self.get_value('hostname')
+        value = self.get_value('hostname', 'localhost')
         if not (is_valid_hostname(value) or is_valid_ip_address(value)):
             raise InvalidValueError('Invalid hostname: {}'.format(value))
         return value
