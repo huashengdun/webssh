@@ -67,7 +67,7 @@ class Worker(object):
             data = self.chan.recv(BUF_SIZE)
         except (OSError, IOError) as e:
             logging.error(e)
-            if errno_from_exception(e) in _ERRNO_CONNRESET:
+            if self.chan.closed or errno_from_exception(e) in _ERRNO_CONNRESET:
                 self.close(reason='chan error on reading')
         else:
             logging.debug('{!r} from {}:{}'.format(data, *self.dst_addr))
@@ -93,7 +93,7 @@ class Worker(object):
             sent = self.chan.send(data)
         except (OSError, IOError) as e:
             logging.error(e)
-            if errno_from_exception(e) in _ERRNO_CONNRESET:
+            if self.chan.closed or errno_from_exception(e) in _ERRNO_CONNRESET:
                 self.close(reason='chan error on writing')
             else:
                 self.update_handler(IOLoop.WRITE)
