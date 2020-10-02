@@ -11,7 +11,7 @@ python:
 
 install:
   - pip install -r requirements.txt
-  - pip install pytest>=4.6 pytest-cov codecov flake8
+  - pip install 'pytest>=4.6' pytest-cov codecov flake8
   - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install mock; fi
 
 script:
