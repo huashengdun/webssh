@@ -30,7 +30,6 @@ except ImportError:
     from urlparse import urlparse
 
 
-DELAY = 3
 DEFAULT_PORT = 22
 
 swallow_http_errors = True
@@ -515,8 +514,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                 clients[ip] = workers
             worker.src_addr = (ip, port)
             workers[worker.id] = worker
-            self.loop.call_later(options.delay or DELAY, recycle_worker,
-                                 worker)
+            self.loop.call_later(options.delay, recycle_worker, worker)
             self.result.update(id=worker.id, encoding=worker.encoding)
 
         self.write(self.result)

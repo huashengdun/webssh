@@ -23,7 +23,6 @@ except ImportError:
     from urllib import urlencode
 
 
-handler.DELAY = 0.1
 swallow_http_errors = handler.swallow_http_errors
 server_encodings = {e.strip() for e in Server.encodings}
 
@@ -99,6 +98,7 @@ class TestAppBasic(TestAppBase):
         options.hostfile = ''
         options.syshostfile = ''
         options.tdstream = ''
+        options.delay = 0.1
         app = make_app(make_handlers(loop, options), get_app_settings(options))
         return app
 
@@ -204,7 +204,7 @@ class TestAppBasic(TestAppBase):
 
         url = url.replace('http', 'ws')
         ws_url = url + 'ws?id=' + data['id']
-        yield tornado.gen.sleep(handler.DELAY + 0.1)
+        yield tornado.gen.sleep(options.delay + 0.1)
         ws = yield tornado.websocket.websocket_connect(ws_url)
         msg = yield ws.read_message()
         self.assertIsNone(msg)
