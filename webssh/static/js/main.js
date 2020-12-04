@@ -366,7 +366,7 @@ jQuery(function($){
             background: url_opts_data.bgcolor || 'black'
           }
         });
-
+    
     term.fitAddon = new window.FitAddon.FitAddon();
     term.loadAddon(term.fitAddon);
 
@@ -508,6 +508,8 @@ jQuery(function($){
 
     sock.onopen = function() {
       term.open(terminal);
+      term.WebglAddon = new window.WebglAddon.WebglAddon();
+      term.loadAddon(term.WebglAddon);  
       toggle_fullscreen(term);
       update_font_family(term);
       term.focus();
