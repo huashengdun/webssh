@@ -44,6 +44,7 @@ separated by comma;
 '*': wildcard policy, matches any domain, allowed in debug mode only.''')
 define('wpintvl', type=float, default=0, help='Websocket ping interval')
 define('timeout', type=float, default=3, help='SSH connection timeout')
+define('auth_timeout', type=int, default=120, help='SSH connection auth timeout')
 define('delay', type=float, default=3, help='The delay to call recycle_worker')
 define('maxconn', type=int, default=20,
        help='Maximum live connections (ssh sessions) per client')
