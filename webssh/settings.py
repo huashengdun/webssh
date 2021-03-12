@@ -54,9 +54,12 @@ Example: --encoding='utf-8' to solve the problem with some switches&routers''')
 define('version', type=bool, help='Show version information',
        callback=print_version)
 
-
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 font_dirs = ['webssh', 'static', 'css', 'fonts']
+
+define('template_path', default=os.path.join(base_dir, 'webssh', 'templates'))
+define('static_path', default=os.path.join(base_dir, 'webssh', 'static'))
+
 max_body_size = 1 * 1024 * 1024
 
 
@@ -75,8 +78,8 @@ class Font(object):
 
 def get_app_settings(options):
     settings = dict(
-        template_path=os.path.join(base_dir, 'webssh', 'templates'),
-        static_path=os.path.join(base_dir, 'webssh', 'static'),
+        template_path=options.template_path,
+        static_path=options.static_path,
         websocket_ping_interval=options.wpintvl,
         debug=options.debug,
         xsrf_cookies=options.xsrf,
