@@ -35,6 +35,7 @@ setup(
     ],
     install_requires=[
         'tornado>=4.5.0',
+        'tornado-prometheus>=0.1.1',
         'paramiko>=2.3.1',
     ],
 )
