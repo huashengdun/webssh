@@ -7,6 +7,7 @@ import traceback
 import weakref
 import paramiko
 import tornado.web
+from tornado import escape
 
 from concurrent.futures import ThreadPoolExecutor
 from tornado.ioloop import IOLoop
@@ -581,3 +582,12 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         worker = self.worker_ref() if self.worker_ref else None
         if worker:
             worker.close(reason=self.close_reason)
+
+class XSRFHandler(MixinHandler, tornado.web.RequestHandler):
+
+    def initialize(self, loop=None):
+        super(XSRFHandler, self).initialize(loop)
+        self.result = dict(xsrf=escape.native_str(self.xsrf_token))
+
+    def get(self):
+        self.write(self.result)
