@@ -1,6 +1,12 @@
 dist: xenial
 language: python
 
+services:
+  - docker
+
+env:
+  - DOCKER_REGISTRY=docker.io DOCKER_REPOSITORY=huashengdun/webssh
+
 python:
   - "2.7"
   - "3.4"
@@ -17,6 +23,26 @@ install:
 script:
   - pytest --cov=webssh
   - flake8
-
+  
 after_success:
   - codecov
+
+jobs:
+  include:
+    - stage: deploy
+      script: docker build -t webssh:build .
+      deploy:
+        - provider: script
+          script: >-
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin &&
+            docker tag webssh:build "${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:latest" &&
+            docker push "${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:latest"
+          on:
+            branch: master
+        - provider: script
+          script: >-
+            docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
+            docker tag webssh:build "${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:$TRAVIS_TAG" &&
+            docker push "${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:$TRAVIS_TAG"
+          on:
+            tags: true
