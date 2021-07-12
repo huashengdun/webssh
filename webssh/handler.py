@@ -362,13 +362,17 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return value, filename
 
     def get_hostname(self):
-        value = self.get_value('hostname')
+        value = self.settings.get('dstaddress')
+        if not value:                    
+            value = self.get_value('hostname')
         if not (is_valid_hostname(value) or is_valid_ip_address(value)):
             raise InvalidValueError('Invalid hostname: {}'.format(value))
         return value
 
     def get_port(self):
-        value = self.get_argument('port', u'')
+        value = self.settings.get('dstport',u'')
+        if not value:
+            value = self.get_argument('port', u'')
         if not value:
             return DEFAULT_PORT
 
@@ -482,7 +486,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         pass
 
     def get(self):
-        self.render('index.html', debug=self.debug, font=self.font)
+        self.render('index.html', debug=self.debug, font=self.font, fixhost=self.settings.get('dstaddress'), fixport=self.settings.get('dstport'))
 
     @tornado.gen.coroutine
     def post(self):

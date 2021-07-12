@@ -42,13 +42,13 @@
     <div class="container form-container" style="display: none">
       <form id="connect" action="" method="post" enctype="multipart/form-data"{% if debug %} novalidate{% end %}>
         <div class="row">
-          <div class="col">
+          <div class="col" id="hostcol"{% if fixhost %} hidden{% end %}>
             <label for="Hostname">Hostname</label>
-            <input class="form-control" type="text" id="hostname" name="hostname" value="" required>
+            <input class="form-control" type="text" id="hostname" name="hostname" value="{{fixhost}}" required>
           </div>
-          <div class="col">
+          <div class="col" id="portcol"{% if fixport %} hidden{% end %}>
             <label for="Port">Port</label>
-            <input class="form-control" type="number" id="port" name="port" placeholder="22" value="" min=1 max=65535>
+            <input class="form-control" type="number" id="port" name="port" placeholder="22" value="{{fixport}}" min=1 max=65535>
           </div>
         </div>
         <div class="row">
