@@ -56,7 +56,7 @@ jQuery(function($){
       key_max_size = 16384,
       fields = ['hostname', 'port', 'username'],
       form_keys = fields.concat(['password', 'totp']),
-      opts_keys = ['bgcolor', 'title', 'encoding', 'command', 'term'],
+      opts_keys = ['bgcolor', 'title', 'encoding', 'command', 'term', 'fontsize'],
       url_form_data = {},
       url_opts_data = {},
       validated_form_data,
@@ -360,12 +360,16 @@ jQuery(function($){
         encoding = 'utf-8',
         decoder = window.TextDecoder ? new window.TextDecoder(encoding) : encoding,
         terminal = document.getElementById('terminal'),
-        term = new window.Terminal({
-          cursorBlink: true,
+        termOptions = {
           theme: {
             background: url_opts_data.bgcolor || 'black'
           }
-        });
+        };
+
+    if (url_opts_data.fontsize !== undefined)
+      termOptions.fontSize = parseInt(url_opts_data.fontsize);
+
+    var term = new window.Terminal(termOptions);
 
     term.fitAddon = new window.FitAddon.FitAddon();
     term.loadAddon(term.fitAddon);
