@@ -129,6 +129,11 @@ Passing an encoding
 http://localhost:8888/#encoding=gbk
 ```
 
+Passing a font size
+```bash
+http://localhost:8888/#fontsize=24
+```
+
 Passing a command executed right after login
 ```bash
 http://localhost:8888/?command=pwd
