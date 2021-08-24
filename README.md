@@ -24,8 +24,8 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 
 ### Preview
 
-![Login](https://github.com/huashengdun/webssh/raw/master/preview/login.png)
-![Terminal](https://github.com/huashengdun/webssh/raw/master/preview/terminal.png)
+![Login](preview/login.png)
+![Terminal](preview/terminal.png)
 
 
 ### How it works
