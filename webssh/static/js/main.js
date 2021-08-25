@@ -361,13 +361,18 @@ jQuery(function($){
         decoder = window.TextDecoder ? new window.TextDecoder(encoding) : encoding,
         terminal = document.getElementById('terminal'),
         termOptions = {
+          cursorBlink: true,
           theme: {
             background: url_opts_data.bgcolor || 'black'
           }
         };
 
-    if (url_opts_data.fontsize !== undefined)
-      termOptions.fontSize = parseInt(url_opts_data.fontsize);
+    if (url_opts_data.fontsize) {
+      var fontsize = window.parseInt(url_opts_data.fontsize);
+      if (fontsize && fontsize > 0) {
+        termOptions.fontSize = fontsize;
+      }
+    }
 
     var term = new window.Terminal(termOptions);
 
