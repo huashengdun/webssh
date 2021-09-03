@@ -119,6 +119,11 @@ Passing a terminal background color
 http://localhost:8888/#bgcolor=green
 ```
 
+Passing a terminal font color
+```bash
+http://localhost:8888/#fontcolor=red
+```
+
 Passing a user defined title
 ```bash
 http://localhost:8888/?title=my-ssh-server
