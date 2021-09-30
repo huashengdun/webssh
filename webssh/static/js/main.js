@@ -56,7 +56,7 @@ jQuery(function($){
       key_max_size = 16384,
       fields = ['hostname', 'port', 'username'],
       form_keys = fields.concat(['password', 'totp']),
-      opts_keys = ['bgcolor', 'title', 'encoding', 'command', 'term', 'fontsize'],
+      opts_keys = ['bgcolor', 'title', 'encoding', 'command', 'term', 'fontsize', 'fontcolor'],
       url_form_data = {},
       url_opts_data = {},
       validated_form_data,
@@ -196,6 +196,11 @@ jQuery(function($){
     });
   }
 
+  function set_font_color(term, color) {
+    term.setOption('theme', {
+      foreground: color
+    });
+  }
 
   function custom_font_is_loaded() {
     if (!custom_font) {
@@ -363,7 +368,8 @@ jQuery(function($){
         termOptions = {
           cursorBlink: true,
           theme: {
-            background: url_opts_data.bgcolor || 'black'
+            background: url_opts_data.bgcolor || 'black',
+            foreground: url_opts_data.fontcolor || 'white'
           }
         };
 
@@ -492,6 +498,10 @@ jQuery(function($){
 
     wssh.set_bgcolor = function(color) {
       set_backgound_color(term, color);
+    };
+
+    wssh.set_fontcolor = function(color) {
+      set_font_color(term, color);
     };
 
     wssh.custom_font = function() {
