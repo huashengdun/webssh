@@ -427,7 +427,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         for command in commands:
             try:
-                _, stdout, _ = ssh.exec_command(command, get_pty=True, timeout=1)
+                _, stdout, _ = ssh.exec_command(command,
+                                                get_pty=True,
+                                                timeout=1)
             except paramiko.SSHException as exc:
                 logging.info(str(exc))
             else:
