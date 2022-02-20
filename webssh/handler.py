@@ -435,12 +435,13 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             else:
                 try:
                     data = stdout.read()
+                except socket.timeout:
+                    pass
+                else:
                     logging.debug('{!r} => {!r}'.format(command, data))
                     result = self.parse_encoding(data)
                     if result:
                         return result
-                except socket.timeout:
-                    pass
 
         logging.warning('Could not detect the default encoding.')
         return 'utf-8'
