@@ -106,9 +106,9 @@ jQuery(function($){
   }
 
 
-  function decode_uri(uri) {
+  function decode_uri_component(uri) {
     try {
-      return decodeURI(uri);
+      return decodeURIComponent(uri);
     } catch(e) {
       console.error(e);
     }
@@ -833,7 +833,7 @@ jQuery(function($){
 
 
   parse_url_data(
-    decode_uri(window.location.search.substring(1)) + '&' + decode_uri(window.location.hash.substring(1)),
+    decode_uri_component(window.location.search.substring(1)) + '&' + decode_uri_component(window.location.hash.substring(1)),
     form_keys, opts_keys, url_form_data, url_opts_data
   );
   // console.log(url_form_data);
