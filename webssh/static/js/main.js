@@ -620,7 +620,7 @@ jQuery(function($){
     if (!port) {
       port = 22;
     } else {
-      if (!(port > 0 && port < 65535)) {
+      if (!(port > 0 && port <= 65535)) {
         errors.push('Invalid port: ' + port);
       }
     }
