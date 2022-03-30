@@ -9,6 +9,7 @@ from webssh.settings import (
     get_app_settings,  get_host_keys_settings, get_policy_setting,
     get_ssl_context, get_server_settings, check_encoding_setting
 )
+from tornado_prometheus import PrometheusMixIn, MetricsHandler
 
 
 def make_handlers(loop, options):
@@ -18,14 +19,18 @@ def make_handlers(loop, options):
     handlers = [
         (r'/', IndexHandler, dict(loop=loop, policy=policy,
                                   host_keys_settings=host_keys_settings)),
-        (r'/ws', WsockHandler, dict(loop=loop))
+        (r'/ws', WsockHandler, dict(loop=loop)),
+        (r"/metrics", MetricsHandler)
     ]
     return handlers
 
 
 def make_app(handlers, settings):
+    class WebsshApplication(PrometheusMixIn, tornado.web.Application):
+        pass
+
     settings.update(default_handler_class=NotFoundHandler)
-    return tornado.web.Application(handlers, **settings)
+    return WebsshApplication(handlers, **settings)
 
 
 def app_listen(app, port, address, server_settings):
