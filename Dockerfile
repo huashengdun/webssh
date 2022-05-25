@@ -1,9 +1,10 @@
-FROM python:3.7-slim
+FROM python:3-alpine
 ADD . /code
 WORKDIR /code
 RUN \
+  apk --no-cache add libc-dev libffi-dev gcc && \
   groupadd -r webssh && \
-  useradd -r -s /bin/false -g webssh webssh && \
+  adduser -Ss /bin/false -g webssh webssh && \
   chown -R webssh:webssh /code && \
   pip install -r requirements.txt
 
