@@ -1,9 +1,14 @@
-FROM python:3.7-slim
+FROM python:3-alpine
+
+LABEL maintainer='<author>'
+LABEL version='0.0.0-dev.0-build.0'
+
 ADD . /code
 WORKDIR /code
 RUN \
-  groupadd -r webssh && \
-  useradd -r -s /bin/false -g webssh webssh && \
+  apk --no-cache add libc-dev libffi-dev gcc && \
+  addgroup webssh && \
+  adduser -Ss /bin/false -g webssh webssh && \
   chown -R webssh:webssh /code && \
   pip install -r requirements.txt
 
