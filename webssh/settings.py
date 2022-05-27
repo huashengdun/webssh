@@ -3,6 +3,10 @@ import os.path
 import ssl
 import sys
 
+import os
+import yaml
+from yaml.loader import SafeLoader
+
 from tornado.options import define
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
@@ -87,6 +91,18 @@ def get_app_settings(options):
         ),
         origin_policy=get_origin_setting(options)
     )
+    filename=os.getenv('PROFILES', None)
+    if filename:
+      if not filename.startswith(os.sep): filename=os.path.join(os.path.abspath(os.sep), filename)
+      try:
+         if not os.path.exists(filename): raise FileNotFoundError()
+         with open(filename, 'r') as fp:
+            settings['profiles']=yaml.load(fp, Loader=SafeLoader)
+            if settings['profiles']: settings['profiles']=settings['profiles']['profiles']
+      except FileNotFoundError:
+         logging.warning('Cannot found file profiles: {0}'.format(filename))
+      except:
+         logging.warning('Unexpected error', exc_info=True)
     return settings
 
 
