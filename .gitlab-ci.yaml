@@ -35,9 +35,6 @@ default:
    rules:
       - !reference [.default-rules, rules]
 
-      # For debug CICD
-      - if: $CI_COMMIT_BRANCH == 'migrate2gitlab'
-
       # If the tag name is matched with regex: 1.2.3-rc.4+build.5
       - if: $CI_COMMIT_TAG =~ /^([0-9]+\.){2}([0-9]+){1}(\-[a-zA-Z\.]*[0-9]+)?(\+[a-zA-Z\.]*[0-9]+)?/
 
@@ -99,6 +96,8 @@ testing:
       - if: $CI_COMMIT_DESCRIPTION =~ /CI:NoTesting/
         when: never
       - when: always
+   dependencies:
+      - prepare
    before_script:
       - apk --no-cache add libc-dev libffi-dev gcc
       - pip install pytest pytest-cov codecov flake8 mock
