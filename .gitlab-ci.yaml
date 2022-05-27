@@ -1,0 +1,221 @@
+# The file used for the GitLab-CI for automation in webssh project.
+stages:
+   - pre
+   - test
+   - build
+   - release
+   - deploy
+   - post
+
+# Default Variables here
+variables:
+   GIT_STRATEGY: "fetch"
+   GIT_SUBMODULE_STRATEGY: "recursive"
+   REGISTRY_REPO: "kensonman/webssh"
+   REGISTRY_TEMP_TAG: "CICD"
+   DOCKER_HOST: tcp://docker:2376
+   DOCKER_TLS_CERTDIR: "/certs"
+   DOCKER_TLS_VERIFY: 1
+   DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+
+services:
+  - docker:19.03.13-dind
+
+# Default Job Specification
+default:
+   image: "python:3-alpine"
+
+.default-rules:
+   rules:
+      # Ignorethe releasing
+      - if: $CI_COMMIT_TAG =~ /^release(s)?\//
+        when: never
+
+.on-versioning-branch:
+   rules:
+      - !reference [.default-rules, rules]
+
+      # If the tag name is matched with regex: 1.2.3-rc.4+build.5
+      - if: $CI_COMMIT_TAG =~ /^([0-9]+\.){2}([0-9]+){1}(\-[a-zA-Z\.]*[0-9]+)?(\+[a-zA-Z\.]*[0-9]+)?/
+
+      # If the commit-title is match with regex: 1.2.3-rc.4+build.5
+      - if: $CI_COMMIT_TITLE =~ /^([0-9]+\.){2}([0-9]+){1}(\-[a-zA-Z\.]*[0-9]+)?(\+[a-zA-Z\.]*[0-9]+)? -/
+
+      # If the branch is match with regex, e.g.: 1.2.3-rc.4+build.x
+      - if: $CI_COMMIT_BRANCH =~ /^([0-9]+\.){0,3}([0-9]+[\+\-]){0,2}x$/
+
+# Prepare the versioning
+prepare:
+   stage: pre
+   image: "kensonman/versioning:1.0.10"
+   rules:
+      - !reference [.default-rules, rules]
+      - when: always
+   variables:
+      #To override the last version when detecting the versioning
+      #VERSION: 1.0.0
+#   before_script:
+#      -> git config --global --add safe.directory `pwd`
+      #For testing
+      BRANCH: 0.0.0-dev.0-test.x
+      LOGGER_LEVEL: "10"
+   script:
+      - >
+         echo "Preparing the CI/CD environment: `pwd`..."
+         && echo "   > CI_COMMIT_TITLE:"
+         && echo ${CI_COMMIT_TITLE}
+         && echo "   > CI_COMMIT_DESCRIPTION:"
+         && echo ${CI_COMMIT_DESCRIPTION}
+         && echo "   > CI_COMMIT_MESSAGE:"
+         && echo ${CI_COMMIT_MESSAGE}
+         && echo "   > CI_COMMIT_TAG:"
+         && echo ${CI_COMMIT_TAG}
+         && echo "   > Detecting the versioning pattern: `version.py getVersionPattern`"
+         && echo "   > Getting the next version..."
+         && export VERSION=`version.py getNextVersion`
+         && echo "   > Next version: ${VERSION}"
+         && export DOCKERIZED_VERSION=`version.py toDockerized --option ${VERSION}`
+         && echo "   > Dockerized next version: ${DOCKERIZED_VERSION}"
+         && echo "   > Exporting..."
+         && echo "VERSION=${VERSION}" > VERSION.env
+         && echo "DOCKERIZED_VERSION=${DOCKERIZED_VERSION}" > VERSION.env
+         && echo "${VERSION}" > VERSION
+   artifacts:
+      reports:
+         # Put the version into env for sharing the variable between job
+         dotenv: VERSION.env
+      paths:
+         # Put the VERSION as an artifact for futer development
+         - VERSION
+
+# Teting the binary/output which builded by "building" job.
+testing:
+   stage: test
+   rules:
+      - !reference [.default-rules, rules]
+      - if: $CI_COMMIT_DESCRIPTION =~ /CI:NoTesting/
+        when: never
+      - when: always
+   dependencies:
+      - prepare
+   before_script:
+      - apk --no-cache add libc-dev libffi-dev gcc
+      - pip install pytest pytest-cov codecov flake8 mock
+      - pip install -r requirements.txt
+   script:
+      - >
+         if [ $VERSION == "value-from-prepare" || $VERSION == 'None' || -z $VERSION ]; then
+            echo "Skip the job due to the VERSION did not specified: JobName: ${CI_JOB_NAME}, Version: ${VERSION}"
+            exit 1;
+         fi
+      - pytest --junitxml=test-results.xml tests
+   artifacts:
+      reports:
+         junit: test-results.xml
+
+# Building the binary/output according to the string. It may be the docker image
+building:
+   stage: build
+   image: "docker:19.03.13"
+   dependencies:
+      - prepare
+      - testing
+   rules:
+      - !reference [.on-versioning-branch, rules]
+      - if: $CI_COMMIT_DESCRIPTION =~ /CI:NoBuilding/
+        when: never
+   variables:
+      VERSION: value-from-prepare
+      DOCKERIZED_VERSION: value-from-prepare
+   script:
+      - >
+         if [ "$VERSION" == "value-from-prepare" || "$VERSION" == "None" || -z "$VERSION" ]; then
+            echo "Skip the job due to the VERSION did not specified: JobName: ${CI_JOB_NAME}, Version: ${VERSION}"
+            exit 1;
+         fi
+      - >
+         echo "Building the repo..."
+         && export TEMP_IMAGE="${REGISTRY_SERVER}${REGISTRY_REPO}:${REGISTRY_TEMP_TAG}"
+         && export TARGET_IMAGE="${REGISTRY_SERVER}${REGISTRY_REPO}:${DOCKERIZED_VERSION}"
+         && echo "   > the docker image: ${TEMP_IMAGE}"
+         && sed 's/<author>/${CI_COMMIT_AUTHOR}/g' Dockerfile
+         && sed 's/[0-9]\+\.[0-9]\+\.[0-9]\+\(\-\(\w*\.\)[0-9]\+\)\{0,2\}/${DOCKERIZED_VERSION}/g' Dockerfile
+         && docker build -t ${TEMP_IMAGE} .
+         && echo "   > Tagging ${TEMP_IMAGE} => ${TARGET_IMAGE}"
+         && docker tag ${TEMP_IMAGE} ${TARGET_IMAGE}
+         && echo "   > Sign-In to registry server: ${REGISTRY_SERVER} with username:password ${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}"
+         && echo -n ${REGISTRY_PASSWORD} | base64 -d | docker login --username `echo -n ${REGISTRY_USERNAME} | base64 -d` --password-stdin ${REGISTRY_SERVER}
+         && docker push ${TARGET_IMAGE}
+
+# Releasing the binary/output. Usually push the docker image into the registry
+releasing:
+   image: registry.gitlab.com/gitlab-org/release-cli:latest
+   stage: release
+   dependencies:
+      - prepare
+      - testing
+      - building
+   rules:
+      - !reference [.on-versioning-branch, rules]
+      - if: $CI_COMMIT_DESCRIPTION =~ /CI:NoReleasing/
+        when: never
+   variables:
+      VERSION: value-from-prepare 
+      DOCKERIZED_VERSION: value-from-prepare
+      #Don't pull the source code
+      GIT_STRATEGY: none
+   before_script:
+      - >
+         if [ "$VERSION" == "value-from-prepare" || "$VERSION" == "None" || -z "$VERSION" ]; then
+            echo "Skip the job due to the VERSION did not specified: JobName: ${CI_JOB_NAME}, Version: ${VERSION}";
+            exit 1;
+         fi
+   script: 
+      - > 
+         echo "Creating release: $VERSION..."
+   release:
+      name: "Release - $VERSION"
+      description: "$CI_COMMIT_REF_NAME - $CI_COMMIT_MESSAGE"
+      tag_name: "releases/$VERSION"
+      ref: '$CI_COMMIT_REF_NAME'
+
+# Deploy the binary/output into production. Usually askying the k8s to update the image
+deploying:
+   stage: deploy
+   dependencies:
+      - prepare
+      - testing
+      - building
+      - releasing
+   rules:
+      - !reference [.on-versioning-branch, rules]
+      - if: $CI_COMMIT_TITLE =~ /CI:NoDeploying/
+        when: never
+   variables:
+      VERSION: value-from-prepare 
+      DOCKERIZED_VERSION: value-from-prepare
+      #Don't pull the source code
+      GIT_STRATEGY: none
+   script:
+      - >
+         if [ $VERSION == "value-from-prepare" || $VERSION == 'None' || -z $VERSION ]; then
+            echo "Skip the job due to the VERSION did not specified: JobName: ${CI_JOB_NAME}, Version: ${VERSION}"
+            exit 1;
+         fi
+      - > 
+         echo "Deploying..."
+         && echo "No implemented yet!"
+
+# Cleaning the CI/CD
+clean:
+   stage: post
+   rules:
+      - !reference [.default-rules, rules]
+      - if: $CI_COMMIT_TITLE =~ /CI:NoCleaning/
+        when: never
+   variables:
+      #Don't pull the source code
+      GIT_STRATEGY: none
+   script:
+      - >
+         echo "Cleaning up..."
