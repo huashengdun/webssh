@@ -76,6 +76,13 @@ class TestAppBase(AsyncHTTPTestCase):
     def async_post(self, url, body, headers={}):
         return self.fetch_request(url, 'POST', body, headers, sync=False)
 
+    def sync_get(self, url, body, headers={}):
+      assert body == None
+      return self.fetch_request(url, 'GET', body, headers)
+
+    def async_get(self, url, body, headers={}):
+      assert body==None
+      return self.fetch_request(url, 'GET', body, headers, sync=False)
 
 class TestAppBasic(TestAppBase):
 

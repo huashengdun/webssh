@@ -204,6 +204,37 @@ Running as a standalone server
 wssh --port=8080 --sslport=4433 --certfile='cert.crt' --keyfile='cert.key' --xheaders=False --policy=reject
 ```
 
+### Profiling
+
+Due to security, we should not disclose our private keys to anybody. Especially transfer 
+the private key and the passphrase in the same transaction, although the HTTPS protocol 
+can protect the transaction data. 
+
+That is the reason I implement the profiling feature. 
+
+This feature can provide the selectable profiles (just like ~/.ssh/config), it provides 
+the features just like the SSH Client config file (normally located at ~/.ssh/config) like this:
+```yaml
+required: False #If true, the profile is required to be selected before connect
+profiles:
+   - name: The label will be shown on the profiles dropdown box   
+     description: "It will be shown on the tooltip"
+     host: my-server.com 
+     port: 22
+     username: user
+     private-key: | 
+         -----BEGIN OPENSSH PRIVATE KEY-----
+         ABCD........
+         ......
+         ......
+         -----END OPENSSH PRIVATE KEY-----
+   - name: Profile 2
+     description: "It will shown on the tooltip"
+     host: my-server.com 
+     port: 22
+     username: user2
+```
+
 
 ### Tips
 
