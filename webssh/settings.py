@@ -3,6 +3,10 @@ import os.path
 import ssl
 import sys
 
+import os
+import yaml
+from yaml.loader import SafeLoader
+
 from tornado.options import define
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
@@ -72,6 +76,26 @@ class Font(object):
     def get_url(self, filename, dirs):
         return os.path.join(*(dirs + [filename]))
 
+def get_profiles():
+    filename=os.getenv('PROFILES', None)
+    if filename:
+      if not filename.startswith(os.sep): filename=os.path.join(os.path.abspath(os.sep), filename)
+      try:
+         if not os.path.exists(filename): raise FileNotFoundError()
+         with open(filename, 'r') as fp:
+            result=yaml.load(fp, Loader=SafeLoader)
+            if result: 
+               idx=0
+               for p in result['profiles']:
+                  p['index']=idx
+                  idx+=1
+            result['required']=bool(result.get('required', 'False'))
+         return result
+      except FileNotFoundError:
+         logging.warning('Cannot found file profiles: {0}'.format(filename))
+      except:
+         logging.warning('Unexpected error', exc_info=True)
+    return None
 
 def get_app_settings(options):
     settings = dict(
@@ -87,6 +111,8 @@ def get_app_settings(options):
         ),
         origin_policy=get_origin_setting(options)
     )
+    settings['profiles']=get_profiles()
+    if not settings['profiles']: del settings['profiles']
     return settings
 
 

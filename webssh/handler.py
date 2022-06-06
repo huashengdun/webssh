@@ -387,12 +387,33 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                             hostname, port)
                     )
 
+    def get_profile(self):
+        profiles=self.settings.get('profiles', None)
+        if profiles: #if the profiles is configurated
+           value=self.get_argument('profile', None)
+           if profiles.get('required', False) and len(profiles['profiles'])>0 and not value:
+              raise InvalidValueError('Argument "profile" is required according to your settings.')
+           if not (value is None or profiles['profiles'] is None):
+              return profiles['profiles'][int(value)]
+        return None
+
     def get_args(self):
-        hostname = self.get_hostname()
-        port = self.get_port()
-        username = self.get_value('username')
+        profile=self.get_profile()
+        if profile is not None and len(profile)>0:
+           hostname=profile['host'] if 'host' in profile else self.get_hostname()
+           port=profile['port'] if 'port' in profile else self.get_port()
+           username=profile['username'] if 'username' in profile else self.get_value('username')
+           if 'private-key' in profile:
+              filename=''
+              privatekey=profile['private-key']
+           else:
+              privatekey, filename = self.get_privatekey()
+        else:
+           hostname = self.get_hostname()
+           port = self.get_port()
+           username = self.get_value('username')
+           privatekey, filename = self.get_privatekey()
         password = self.get_argument('password', u'')
-        privatekey, filename = self.get_privatekey()
         passphrase = self.get_argument('passphrase', u'')
         totp = self.get_argument('totp', u'')
 
@@ -488,7 +509,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         pass
 
     def get(self):
-        self.render('index.html', debug=self.debug, font=self.font)
+      if self.settings.get('profiles') is not None and len(self.settings.get('profiles'))>0:
+         self.render('profiles.html', profiles=self.settings.get('profiles'), debug=self.debug, font=self.font)
+      else:
+         self.render('index.html', debug=self.debug, font=self.font)
 
     @tornado.gen.coroutine
     def post(self):
