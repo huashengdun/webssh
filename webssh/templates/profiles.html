@@ -51,10 +51,10 @@
                   Select a profile
               </button>
               <div class="dropdown-menu" aria-labelledby="profilesBtn">
-                 <a class="dropdown-item profile-item" href="#" value="-1">[[ Clear ]]</a>
+                 <a class="dropdown-item profile-item" href="#" value="">[[ Clear ]]</a>
                  {%for p in profiles['profiles']%}<a class="dropdown-item profile-item" href="#" value="{{p['index']}}" {%if 'description' in p%}data-toggle="tooltip" title="{{p['description']}}" tooltip-delay="3"{%end%}>{{p['name']}}</a>{%end%} 
               </div>
-              <input type="hidden" name="profile" value=""/>
+              <input type="hidden" name="profile" value="" {%if profiles['required']%}required{%end%}/>
             </div>
            </div>
         </div>
@@ -119,14 +119,15 @@
       const profiles=[{%for p in profiles['profiles']%}{
          "index": {{p['index']}},
          "name": "{{p['name']}}",
-         {%if 'host' in p%}"host": "{{p['host']}}",{%end%}
-         {%if 'port' in p%}"port": {{p['port']}},{%end%}
-         {%if 'username' in p%}"username": "{{p['username']}}",{%end%}
-         "private-key": {%if 'private-key' in p and len(p['private-key'])>0%}true{%else%}false{%end%},
+         "host": {{'true' if 'host' in p else 'false'}},
+         "port": {{'true' if 'port' in p else 'false'}},
+         "username": {{'true' if 'username' in p else 'false'}},
+         "private-key": {{'true' if ('private-key' in p and len(p['private-key'])>0) else 'false'}},
       },{%end%}
       ];
     //></script>
     <script src="static/js/jquery.min.js"></script>
+    <script src="static/js/jquery.validation-1.19.3.min.js"></script>
     <script src="static/js/popper.min.js"></script>
     <script src="static/js/bootstrap.min.js"></script>
     <script src="static/js/xterm.min.js"></script>
@@ -134,6 +135,6 @@
     <script src="static/js/cookiealert.js"></script>
     <script src="static/js/js.cookie.min.js"></script>
     <script src="static/js/main.js"></script>
-    <script type="module" src="static/js/profiles.js"></script>
+    <script src="static/js/profiles.js"></script>
   </body>
 </html>
