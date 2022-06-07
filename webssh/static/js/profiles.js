@@ -2,6 +2,7 @@
 
    $(document).ready(function(){
       $('[data-toggle="tooltip"]').tooltip();
+      $('form').validate({'ignore':'.ignore-validation'});
 
       $('.profile-item').click(function(evt){
          console.log('Selected a profile: '+$(this).text());
@@ -10,6 +11,7 @@
          $('input:first').val($(this).attr('value'));
 
          let profile=$(this).attr('value');
+         if(profile=='')profile='-1';
          let found=false;
          for(var i=0; i<profiles.length; i++)
             if(profiles[i]['index']==profile){
@@ -21,12 +23,12 @@
          $('form#connect').trigger('reset');
          $('.fld-private-key').show();
          $('.fld-password').show()
-         $('input').removeAttr('readonly');
+         $('input[type=text],input[type=password],input[type=number]').val('').removeAttr('readonly');
          if(found){
             $('input[name=profile]').val(profile['index']);
-            if(profile['host']!=undefined)$('input[name=hostname]').val(profile['host']).attr('readonly', Boolean(profile['host']));
-            if(profile['port']!=undefined)$('input[name=port]').val(profile['port']).attr('readonly', Boolean(profile['port']));
-            if(profile['username']!=undefined)$('input[name=username]').val(profile['username']).attr('readonly', Boolean(profile['username']));
+            if(profile['host'])$('input[name=hostname]').val('somewhere.com').attr('readonly', 'readonly');
+            if(profile['port'])$('input[name=port]').val('65535').attr('readonly', 'readonly');
+            if(profile['username'])$('input[name=username]').val('somebody').attr('readonly', 'readonly');
             if(profile['private-key']){
                $('.fld-private-key').hide();
                $('input[name=passphrase]').focus().select();
