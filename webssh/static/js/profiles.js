@@ -40,8 +40,10 @@
 
          if(Boolean(Cookies.get('acceptCookies'))){
             console.debug('Store the profile: '+profile['index']+' - '+profile['name']);
-            Cookies.set('profileIndex', profile['index']);
-            Cookies.set('profileName', profile['name']);
+            let expired=new Date();
+            expired.setTime(expired.getTime()*30*86400000); //expired=now+30days; 86400000=1000*60*60*24
+            Cookies.set('profileIndex', profile['index'], {'expires':expired, 'path':'/'});
+            Cookies.set('profileName', profile['name'], {'expires':expired, 'path':'/'});
          }
 
          return this;
