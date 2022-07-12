@@ -173,13 +173,11 @@ releasing:
    script: 
       - > 
          echo "Creating release: $VERSION..."
-      - >
-         release-cli create --name "Release - ${VERSION}" --description "${CI_COMMIT_REF_NAME} - ${CI_COMMIT_MESSAGE}" --tag-name "releases/${VERSION}" --ref "${CI_COMMIT_REF_NAME}"
-#   release:
-#      name: "Release - $VERSION"
-#      description: "$CI_COMMIT_REF_NAME - $CI_COMMIT_MESSAGE"
-#      tag_name: "releases/$VERSION"
-#      ref: '$CI_COMMIT_REF_NAME'
+   release:
+      name: "Release - $CI_COMMIT_REF_NAME"
+      description: "$CI_COMMIT_REF_NAME - $CI_COMMIT_MESSAGE"
+      tag_name: "releases/$CI_COMMIT_REF_NAME"
+      ref: '$CI_COMMIT_REF_NAME'
 
 # Deploy the binary/output into production. Usually askying the k8s to update the image
 deploying:
