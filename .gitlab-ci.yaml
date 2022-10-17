@@ -37,9 +37,11 @@ default:
 
       # If the tag name is matched with regex: 1.2.3-rc.4+build.5
       - if: $CI_COMMIT_TAG =~ /^([0-9]+\.){2}([0-9]+){1}(\-[a-zA-Z\.]*[0-9]+)?(\+[a-zA-Z\.]*[0-9]+)?/
+        when: always
 
       # If this is protected ref
-      - if: '$CI_COMMIT_REF_NAME == "true"'
+      - if: '$CI_COMMIT_REF_PROTECTED == "true"'
+        when: always
 
 # Prepare the versioning
 prepare:
