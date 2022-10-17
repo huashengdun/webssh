@@ -32,6 +32,13 @@ except ImportError:
 
 DEFAULT_PORT = 22
 
+# Config should system hide the password when the password/passphrase invalid.
+# When:
+#   HIDE_PASS == 0, Don't hide the password/passphrase
+#   HIDE_PASS >= 1, Hide the digits of password/passphrase, e.g.: HIDE_PASS==2, PASSWORD="0123456789abcdefg", then show "01...fg"
+#   HIDE_PASS <=-1, Don't show the password/passphrase
+HIDE_PASS = 2
+
 swallow_http_errors = True
 redirecting = None
 
@@ -178,7 +185,12 @@ class PrivateKey(object):
         logging.error(str(self.last_exception))
         msg = 'Invalid key'
         if self.password:
-            msg += ' or wrong passphrase "{}...{}" for decrypting it.'.format(self.password[0:3], self.password[:-3])
+            if HIDE_PASS == 0:
+               msg += ' or wrong passphrase "{}" for decrypting it.'.format(self.password)
+            elif HIDE_PASS > 0:
+               msg += ' or wrong passphrase "{}...{}" for decrypting it.'.format(self.password[0:HIDE_PASS], self.password[HIDE_PASS*-1:])
+            else:
+               msg += ' or wrong passphrase for decrypting it.'
         raise InvalidValueError(msg)
 
 
