@@ -16,6 +16,11 @@ from webssh.utils import (
 )
 from webssh._version import __version__
 
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
 
 def print_version(flag):
     if flag:
@@ -76,26 +81,30 @@ class Font(object):
     def get_url(self, filename, dirs):
         return os.path.join(*(dirs + [filename]))
 
+
 def get_profiles():
-    filename=os.getenv('PROFILES', None)
+    filename = os.getenv('PROFILES', None)
     if filename:
-      if not filename.startswith(os.sep): filename=os.path.join(os.path.abspath(os.sep), filename)
-      try:
-         if not os.path.exists(filename): raise FileNotFoundError()
-         with open(filename, 'r') as fp:
-            result=yaml.load(fp, Loader=SafeLoader)
-            if result: 
-               idx=0
-               for p in result['profiles']:
-                  p['index']=idx
-                  idx+=1
-            result['required']=bool(result.get('required', 'False'))
-         return result
-      except FileNotFoundError:
-         logging.warning('Cannot found file profiles: {0}'.format(filename))
-      except:
-         logging.warning('Unexpected error', exc_info=True)
+        if not filename.startswith(os.sep):
+            filename = os.path.join(os.path.abspath(os.sep), filename)
+        try:
+            if not os.path.exists(filename):
+                raise FileNotFoundError()
+            with open(filename, 'r') as fp:
+                result = yaml.load(fp, Loader=SafeLoader)
+                if result:
+                    idx = 0
+                    for p in result['profiles']:
+                        p['index'] = idx
+                        idx += 1
+                result['required'] = bool(result.get('required', 'False'))
+            return result
+        except FileNotFoundError:
+            logging.warning('Cannot found file profiles: {0}'.format(filename))
+        except Exception:
+            logging.warning('Unexpected error', exc_info=True)
     return None
+
 
 def get_app_settings(options):
     settings = dict(
@@ -111,8 +120,9 @@ def get_app_settings(options):
         ),
         origin_policy=get_origin_setting(options)
     )
-    settings['profiles']=get_profiles()
-    if not settings['profiles']: del settings['profiles']
+    settings['profiles'] = get_profiles()
+    if not settings['profiles']:
+        del settings['profiles']
     return settings
 
 
