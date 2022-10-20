@@ -1,7 +1,7 @@
 paramiko==2.10.4
 tornado==5.1.1; python_version < '3.5'
 tornado==6.1.0; python_version >= '3.5'
-PyYAML==6.0
+PyYAML>=5.4.1
 
 #The following package used for testing
 #pytest 
