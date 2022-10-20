@@ -35,7 +35,8 @@ DEFAULT_PORT = 22
 # Config should system hide the password when the password/passphrase invalid.
 # When:
 #   HIDE_PASS == 0, Don't hide the password/passphrase
-#   HIDE_PASS >= 1, Hide the digits of password/passphrase, e.g.: HIDE_PASS==2, PASSWORD="0123456789abcdefg", then show "01...fg"
+#   HIDE_PASS >= 1, Hide the digits of password/passphrase, e.g.: HIDE_PASS==2
+#                   , PASSWORD="0123456789abcdefg", then show "01...fg"
 #   HIDE_PASS <=-1, Don't show the password/passphrase
 HIDE_PASS = 2
 
@@ -186,11 +187,16 @@ class PrivateKey(object):
         msg = 'Invalid key'
         if self.password:
             if HIDE_PASS == 0:
-               msg += ' or wrong passphrase "{}" for decrypting it.'.format(self.password)
+                msg += ' or wrong passphrase "{}" for decrypting it.'.format(
+                  self.password)
             elif HIDE_PASS > 0:
-               msg += ' or wrong passphrase "{}...{}" for decrypting it.'.format(self.password[0:HIDE_PASS], self.password[HIDE_PASS*-1:])
+                msg += ' or wrong passphrase "{}...{}" for decrypting it.'\
+                  .format(
+                    self.password[0:HIDE_PASS],
+                    self.password[HIDE_PASS*-1:]
+                  )
             else:
-               msg += ' or wrong passphrase for decrypting it.'
+                msg += ' or wrong passphrase for decrypting it.'
         raise InvalidValueError(msg)
 
 
@@ -399,31 +405,35 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
                     )
 
     def get_profile(self):
-        profiles=self.settings.get('profiles', None)
-        if profiles: #if the profiles is configurated
-           value=self.get_argument('profile', None)
-           if profiles.get('required', False) and len(profiles['profiles'])>0 and not value:
-              raise InvalidValueError('Argument "profile" is required according to your settings.')
-           if not (value is None or profiles['profiles'] is None):
-              return profiles['profiles'][int(value)]
+        profiles = self.settings.get('profiles', None)
+        if profiles:  # if the profiles is configurated
+            value = self.get_argument('profile', None)
+            if profiles.get('required', False) and \
+               len(profiles['profiles']) > 0 and \
+               not value:
+                raise InvalidValueError(
+                  'Argument "profile" is required according to your settings.'
+                )
+            if not (value is None or profiles['profiles'] is None):
+                return profiles['profiles'][int(value)]
         return None
 
     def get_args(self):
-        profile=self.get_profile()
-        if profile is not None and len(profile)>0:
-           hostname=profile['host'] if 'host' in profile else self.get_hostname()
-           port=profile['port'] if 'port' in profile else self.get_port()
-           username=profile['username'] if 'username' in profile else self.get_value('username')
-           if 'private-key' in profile:
-              filename=''
-              privatekey=profile['private-key']
-           else:
-              privatekey, filename = self.get_privatekey()
+        profile = self.get_profile()
+        if profile is not None and len(profile) > 0:
+            hostname = profile.get('host', self.get_hostname())
+            port = profile.get('port', self.get_port())
+            username = profile.get('username', self.get_value('username'))
+            if 'private-key' in profile:
+                filename = ''
+                privatekey = profile['private-key']
+            else:
+                privatekey, filename = self.get_privatekey()
         else:
-           hostname = self.get_hostname()
-           port = self.get_port()
-           username = self.get_value('username')
-           privatekey, filename = self.get_privatekey()
+            hostname = self.get_hostname()
+            port = self.get_port()
+            username = self.get_value('username')
+            privatekey, filename = self.get_privatekey()
         password = self.get_argument('password', u'')
         passphrase = self.get_argument('passphrase', u'')
         totp = self.get_argument('totp', u'')
@@ -520,10 +530,16 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         pass
 
     def get(self):
-      if self.settings.get('profiles') is not None and len(self.settings.get('profiles'))>0:
-         self.render('profiles.html', profiles=self.settings.get('profiles'), debug=self.debug, font=self.font)
-      else:
-         self.render('index.html', debug=self.debug, font=self.font)
+        profiles = self.settings.get('profiles')
+        if profiles and len(profiles) > 0:
+            self.render(
+                'profiles.html',
+                profiles=self.settings.get('profiles'),
+                debug=self.debug,
+                font=self.font
+            )
+        else:
+            self.render('index.html', debug=self.debug, font=self.font)
 
     @tornado.gen.coroutine
     def post(self):
