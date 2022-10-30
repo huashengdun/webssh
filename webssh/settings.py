@@ -70,7 +70,7 @@ class Font(object):
         return filename.split('.')[0]
 
     def get_url(self, filename, dirs):
-        return os.path.join(*(dirs + [filename]))
+        return '/'.join(dirs + [filename])
 
 
 def get_app_settings(options):
