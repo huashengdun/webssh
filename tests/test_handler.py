@@ -5,6 +5,7 @@ from tornado.httputil import HTTPServerRequest
 from tornado.options import options
 from tests.utils import read_file, make_tests_data_path
 from webssh import handler
+from webssh import worker
 from webssh.handler import (
     MixinHandler, WsockHandler, PrivateKey, InvalidValueError
 )
@@ -277,3 +278,19 @@ class TestWsockHandler(unittest.TestCase):
         obj.origin_policy = '*'
         origin = 'https://blog.example.org'
         self.assertTrue(WsockHandler.check_origin(obj, origin))
+
+    def test_failed_weak_ref(self):
+        request = HTTPServerRequest(uri='/')
+        obj = Mock(spec=WsockHandler, request=request)
+        obj.src_addr = ("127.0.0.1", 8888)
+        class FakeWeakRef:
+            def __init__(self):
+                self.count = 0
+            def __call__(self):
+                self.count += 1
+                return None
+
+        ref = FakeWeakRef()
+        obj.worker_ref = ref
+        WsockHandler.on_message(obj, b'{"data": "somestuff"}')
+        self.assertGreaterEqual(ref.count, 1)
