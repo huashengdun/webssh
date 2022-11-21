@@ -297,3 +297,21 @@ class TestWsockHandler(unittest.TestCase):
         WsockHandler.on_message(obj, b'{"data": "somestuff"}')
         self.assertGreaterEqual(ref.count, 1)
         obj.close.assert_called_with(reason='No worker found')
+
+    def test_worker_closed(self):
+        request = HTTPServerRequest(uri='/')
+        obj = Mock(spec=WsockHandler, request=request)
+        obj.src_addr = ("127.0.0.1", 8888)
+
+        class Worker:
+            def __init__(self):
+                self.closed = True
+
+        class FakeWeakRef:
+            def __call__(self):
+                return Worker()
+
+        ref = FakeWeakRef()
+        obj.worker_ref = ref
+        WsockHandler.on_message(obj, b'{"data": "somestuff"}')
+        obj.close.assert_called_with(reason='Worker closed')
