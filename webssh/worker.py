@@ -1,7 +1,11 @@
 import logging
-import secrets
+try:
+    import secrets
+except ImportError:
+    secrets = None
 import tornado.websocket
 
+from uuid import uuid4
 from tornado.ioloop import IOLoop
 from tornado.iostream import _ERRNO_CONNRESET
 from tornado.util import errno_from_exception
@@ -53,7 +57,7 @@ class Worker(object):
 
     @classmethod
     def gen_id(cls):
-        return secrets.token_urlsafe(nbytes=32)
+        return secrets.token_urlsafe(nbytes=32) if secrets else uuid4().hex
 
     def set_handler(self, handler):
         if not self.handler:
