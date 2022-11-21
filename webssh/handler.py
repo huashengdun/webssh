@@ -566,7 +566,13 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
                     *self.src_addr
                 )
             )
+            self.close(reason='No worker found')
             return
+
+        if worker.closed:
+            self.close(reason='Worker closed')
+            return
+
         try:
             msg = json.loads(message)
         except JSONDecodeError:
