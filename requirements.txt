@@ -1,3 +1,12 @@
 paramiko==2.10.4
 tornado==5.1.1; python_version < '3.5'
 tornado==6.1.0; python_version >= '3.5'
+PyYAML>=5.3.1;  python_version == '2.7'
+PyYAML>=5.3.1;  python_version >= '3.5'
+
+#The following package used for testing
+#pytest 
+#pytest-cov 
+#codecov 
+#flake8 
+#mock
