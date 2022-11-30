@@ -57,8 +57,8 @@ jQuery(function($){
       title_element = document.querySelector('title'),
       form_id = '#connect',
       debug = document.querySelector(form_id).noValidate,
-      fonts = document.fonts;
-      custom_font_family_name = $("body").attr("data-wssh-custom-font-family-name", "");
+      fonts = document.fonts,
+      custom_font_family_name = $("body").attr("data-wssh-custom-font-family-name", ""),
       custom_font = findFont(fonts, custom_font_family_name),
       default_fonts,
       DISCONNECTED = 0,
