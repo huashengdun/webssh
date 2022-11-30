@@ -34,13 +34,13 @@ var wssh = {};
   }
 }());
 
-const findFont = (iterator, familyName) => {
-  if (iterator === undefined) {
+const findFont = (src_list, familyName) => {
+  if (src_list === undefined) {
     return undefined;
   }
-  while (iterator.next()) {
-    if (iterator.family() === familyName) {
-      return iterator;
+  for (font of src_list) {
+    if (font.family === familyName) {
+      return font;
     }
   }
   return undefined;
