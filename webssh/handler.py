@@ -378,8 +378,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         return port
 
     def get_source_address(self):
-        value = self.get_value('source_address')
-        if not is_valid_ip_address(value):
+        value = self.get_argument('source_address', u'')
+        if value and not is_valid_ip_address(value):
             raise InvalidValueError('Invalid source ip address: {}'.format(value))
         return value
 
