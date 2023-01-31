@@ -3,6 +3,10 @@ import os.path
 import ssl
 import sys
 
+import os
+import yaml
+from yaml.loader import SafeLoader
+
 from tornado.options import define
 from webssh.policy import (
     load_host_keys, get_policy_class, check_policy_setting
@@ -11,6 +15,11 @@ from webssh.utils import (
     to_ip_address, parse_origin_from_url, is_valid_encoding
 )
 from webssh._version import __version__
+
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
 
 
 def print_version(flag):
@@ -73,6 +82,30 @@ class Font(object):
         return '/'.join(dirs + [filename])
 
 
+def get_profiles():
+    filename = os.getenv('PROFILES', None)
+    if filename:
+        if not filename.startswith(os.sep):
+            filename = os.path.join(os.path.abspath(os.sep), filename)
+        try:
+            if not os.path.exists(filename):
+                raise FileNotFoundError()
+            with open(filename, 'r') as fp:
+                result = yaml.load(fp, Loader=SafeLoader)
+                if result:
+                    idx = 0
+                    for p in result['profiles']:
+                        p['index'] = idx
+                        idx += 1
+                result['required'] = bool(result.get('required', 'False'))
+            return result
+        except FileNotFoundError:
+            logging.warning('Cannot found file profiles: {0}'.format(filename))
+        except Exception:
+            logging.warning('Unexpected error', exc_info=True)
+    return None
+
+
 def get_app_settings(options):
     settings = dict(
         template_path=os.path.join(base_dir, 'webssh', 'templates'),
@@ -87,6 +120,9 @@ def get_app_settings(options):
         ),
         origin_policy=get_origin_setting(options)
     )
+    settings['profiles'] = get_profiles()
+    if not settings['profiles']:
+        del settings['profiles']
     return settings
 
 
