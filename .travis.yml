@@ -2,18 +2,12 @@ dist: xenial
 language: python
 
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  - "3.7"
   - "3.8"
   - "3.9"
 
 install:
   - pip install -r requirements.txt
-  - pip install 'pytest>=4.6' pytest-cov codecov flake8
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install mock; fi
+  - pip install pytest pytest-cov codecov flake8
 
 script:
   - pytest --cov=webssh

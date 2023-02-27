@@ -1,3 +1,4 @@
+import base64
 import random
 import socket
 # import sys
@@ -6,7 +7,6 @@ import threading
 import paramiko
 
 from binascii import hexlify
-from paramiko.py3compat import u, decodebytes
 from tests.utils import make_tests_data_path
 
 
@@ -16,7 +16,7 @@ paramiko.util.log_to_file(make_tests_data_path('sshserver.log'))
 host_key = paramiko.RSAKey(filename=make_tests_data_path('test_rsa.key'))
 # host_key = paramiko.DSSKey(filename='test_dss.key')
 
-print('Read key: ' + u(hexlify(host_key.get_fingerprint())))
+print('Read key: ' + hexlify(host_key.get_fingerprint()).decode('utf-8'))
 
 banner = u'\r\n\u6b22\u8fce\r\n'
 event_timeout = 5
@@ -29,7 +29,7 @@ class Server(paramiko.ServerInterface):
             b'fAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMC'
             b'KDqIexkgHAfID/6mqvmnSJf0b5W8v5h2pI/stOSwTQ+pxVhwJ9ctYDhRSlF0iT'
             b'UWT10hcuO4Ks8=')
-    good_pub_key = paramiko.RSAKey(data=decodebytes(data))
+    good_pub_key = paramiko.RSAKey(data=base64.decodebytes(data))
 
     commands = [
         b'$SHELL -ilc "locale charmap"',
@@ -62,7 +62,7 @@ class Server(paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        print('Auth attempt with username: {!r} & key: {!r}'.format(username, u(hexlify(key.get_fingerprint())))) # noqa
+        print('Auth attempt with username: {!r} & key: {!r}'.format(username, hexlify(key.get_fingerprint()).decode('utf-8'))) # noqa
         if (username in ['robey', 'keyonly']) and (key == self.good_pub_key):
             return paramiko.AUTH_SUCCESSFUL
         if username == 'pkey2fa' and key == self.good_pub_key:
