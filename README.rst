@@ -41,7 +41,7 @@ How it works
 Requirements
 ~~~~~~~~~~~~
 
--  Python 2.7/3.4+
+-  Python 3.8+
 
 Quickstart
 ~~~~~~~~~~
