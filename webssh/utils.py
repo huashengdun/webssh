@@ -59,6 +59,8 @@ def is_valid_encoding(encoding):
         u'test'.encode(encoding)
     except LookupError:
         return False
+    except ValueError:
+        return False
     return True
 
 
