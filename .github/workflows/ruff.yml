@@ -1,5 +1,5 @@
 # https://beta.ruff.rs
-name: ruff
+name: python
 on:
   push:
     branches: [master]
@@ -9,6 +9,20 @@ jobs:
   ruff:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - run: pip install --user ruff
-    - run: ruff --format=github --ignore=F401 --target-version=py37 .
+      - uses: actions/checkout@v3
+      - run: pip install --user ruff
+      - run: ruff --format=github --ignore=F401 --target-version=py37 .
+  pytest:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "pypy-3.9"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      # - run: pip install --upgrade pip setuptools wheel
+      - run: pip install pytest  # cov pytest-cov
+      - run: pytest  #  --cov=webssh
