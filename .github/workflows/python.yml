@@ -25,5 +25,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       # - run: pip install --upgrade pip setuptools wheel
-      - run: pip install pytest  # cov pytest-cov
+      - run: pip install pytest -r requirements.txt  # cov pytest-cov
       - run: pytest  #  --cov=webssh
