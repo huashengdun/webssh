@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: pip install --user ruff
-      - run: ruff --format=github --ignore=F401 --target-version=py37 .
+      - run: ruff --format=github --ignore=F401 --target-version=py38 .
   pytest:
     strategy:
       fail-fast: false
