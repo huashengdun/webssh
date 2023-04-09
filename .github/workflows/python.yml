@@ -16,13 +16,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]  # , "pypy-3.9"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      # - run: pip install --upgrade pip setuptools wheel
-      - run: pip install pytest -r requirements.txt  # cov pytest-cov
-      - run: pytest  #  --cov=webssh
+      - run: pip install pytest pytest-cov -r requirements.txt
+      - run: pytest --cov=webssh
+      - run: mkdir -p coverage
+      - uses: tj-actions/coverage-badge-py@v2
+        with:
+          output: coverage/coverage.svg
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: coverage-badge
+          folder: coverage
