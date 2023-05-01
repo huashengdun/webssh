@@ -56,7 +56,7 @@ jQuery(function($){
       key_max_size = 16384,
       fields = ['hostname', 'port', 'username'],
       form_keys = fields.concat(['password', 'totp']),
-      opts_keys = ['bgcolor', 'title', 'encoding', 'command', 'term', 'fontsize', 'fontcolor'],
+      opts_keys = ['bgcolor', 'title', 'encoding', 'command', 'term', 'fontsize', 'fontcolor', 'cursor'],
       url_form_data = {},
       url_opts_data = {},
       validated_form_data,
@@ -369,7 +369,8 @@ jQuery(function($){
           cursorBlink: true,
           theme: {
             background: url_opts_data.bgcolor || 'black',
-            foreground: url_opts_data.fontcolor || 'white'
+            foreground: url_opts_data.fontcolor || 'white',
+            cursor: url_opts_data.cursor || url_opts_data.fontcolor || 'white'
           }
         };
 
