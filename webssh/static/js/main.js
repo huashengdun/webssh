@@ -34,6 +34,17 @@ var wssh = {};
   }
 }());
 
+const findFont = (src_list, familyName) => {
+  if (src_list === undefined) {
+    return undefined;
+  }
+  for (font of src_list) {
+    if (font.family === familyName) {
+      return font;
+    }
+  }
+  return undefined;
+}
 
 jQuery(function($){
   var status = $('#status'),
@@ -46,7 +57,9 @@ jQuery(function($){
       title_element = document.querySelector('title'),
       form_id = '#connect',
       debug = document.querySelector(form_id).noValidate,
-      custom_font = document.fonts ? document.fonts.values().next().value : undefined,
+      fonts = document.fonts,
+      custom_font_family_name = $("body").attr("data-wssh-custom-font-family-name") || "",
+      custom_font = findFont(fonts, custom_font_family_name),
       default_fonts,
       DISCONNECTED = 0,
       CONNECTING = 1,

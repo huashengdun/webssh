@@ -36,7 +36,7 @@
       {% end %}
     </style>
   </head>
-  <body>
+  <body {% if font.family %}data-wssh-custom-font-family-name="{{ font.family }}"{% end %}>
     <div id="waiter" style="display: none"> Connecting ... </div>
 
     <div class="container form-container" style="display: none">
