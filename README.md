@@ -199,6 +199,23 @@ location / {
 }
 ```
 
+If the Nginx server is also serving a website,
+you can have it put WebSSH into a subdirectory:
+
+```nginx
+location = /webssh {
+    return 302 /webssh/;
+}
+location /webssh/ws {
+    proxy_pass http://127.0.0.1:8888/ws;
+    proxy_http_version 1.1;
+    # ... (rest as above)
+}
+location /webssh/ {
+    proxy_pass http://127.0.0.1:8888/;
+}
+```
+
 Running as a standalone server
 ```bash
 wssh --port=8080 --sslport=4433 --certfile='cert.crt' --keyfile='cert.key' --xheaders=False --policy=reject
