@@ -18,7 +18,6 @@ def print_version(flag):
         print(__version__)
         sys.exit(0)
 
-
 define('address', default='', help='Listen address')
 define('port', type=int, default=8888,  help='Listen port')
 define('ssladdress', default='', help='SSL listen address')
@@ -53,7 +52,8 @@ define('encoding', default='',
 Example: --encoding='utf-8' to solve the problem with some switches&routers''')
 define('version', type=bool, help='Show version information',
        callback=print_version)
-
+define('dstaddress', default='', help='Fix destination address')
+define('dstport', default='', help='Fix destination port')
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 font_dirs = ['webssh', 'static', 'css', 'fonts']
@@ -79,13 +79,15 @@ def get_app_settings(options):
         static_path=os.path.join(base_dir, 'webssh', 'static'),
         websocket_ping_interval=options.wpintvl,
         debug=options.debug,
-        xsrf_cookies=options.xsrf,
+        xsrf_cookies=options.xsrf,        
         font=Font(
             get_font_filename(options.font,
                               os.path.join(base_dir, *font_dirs)),
             font_dirs[1:]
         ),
-        origin_policy=get_origin_setting(options)
+        origin_policy=get_origin_setting(options),
+        dstaddress=options.dstaddress,
+        dstport=options.dstport
     )
     return settings
 
