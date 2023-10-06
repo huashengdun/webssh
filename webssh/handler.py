@@ -6,6 +6,7 @@ import struct
 import traceback
 import weakref
 import paramiko
+import socks
 import tornado.web
 
 from concurrent.futures import ThreadPoolExecutor
@@ -28,7 +29,6 @@ try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse
-
 
 DEFAULT_PORT = 22
 
@@ -101,7 +101,6 @@ class SSHClient(paramiko.SSHClient):
 
 
 class PrivateKey(object):
-
     max_length = 16384  # rough number
 
     tag_to_name = {
@@ -143,7 +142,7 @@ class PrivateKey(object):
         logging.debug('Reset offset to {}.'.format(offset))
 
         logging.debug('Try parsing it as {} type key'.format(name))
-        pkeycls = getattr(paramiko, name+'Key')
+        pkeycls = getattr(paramiko, name + 'Key')
         pkey = None
 
         try:
@@ -179,12 +178,11 @@ class PrivateKey(object):
         msg = 'Invalid key'
         if self.password:
             msg += ' or wrong passphrase "{}" for decrypting it.'.format(
-                    self.password)
+                self.password)
         raise InvalidValueError(msg)
 
 
 class MixinHandler(object):
-
     custom_headers = {
         'Server': 'TornadoServer'
     }
@@ -313,8 +311,7 @@ class NotFoundHandler(MixinHandler, tornado.web.ErrorHandler):
 
 
 class IndexHandler(MixinHandler, tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(max_workers=cpu_count()*5)
+    executor = ThreadPoolExecutor(max_workers=cpu_count() * 5)
 
     def initialize(self, loop, policy, host_keys_settings):
         super(IndexHandler, self).initialize(loop)
@@ -383,9 +380,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         if self.ssh_client._system_host_keys.lookup(key) is None:
             if self.ssh_client._host_keys.lookup(key) is None:
                 raise tornado.web.HTTPError(
-                        403, 'Connection to {}:{} is not allowed.'.format(
-                            hostname, port)
-                    )
+                    403, 'Connection to {}:{} is not allowed.'.format(
+                        hostname, port)
+                )
 
     def get_args(self):
         hostname = self.get_hostname()
@@ -396,6 +393,19 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         passphrase = self.get_argument('passphrase', u'')
         totp = self.get_argument('totp', u'')
 
+        # proxyType, proxyIp, proxyPort, proxyRdns = true, proxyUser, proxyPass
+
+        proxyType = self.get_argument('proxytype', None)
+        if proxyType is not None and proxyType != '':
+            proxyType = int(proxyType)
+        proxyIp = self.get_argument('proxyip', u'')
+        proxyPort = self.get_argument('proxyport', None)
+        if proxyPort is not None and proxyPort != '':
+            proxyPort = int(proxyPort)
+        proxyRdns = self.get_argument('proxyrdns', u'')
+        proxyUser = self.get_argument('proxyuser', u'')
+        proxyPass = self.get_argument('proxypass', u'')
+
         if isinstance(self.policy, paramiko.RejectPolicy):
             self.lookup_hostname(hostname, port)
 
@@ -405,7 +415,8 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             pkey = None
 
         self.ssh_client.totp = totp
-        args = (hostname, port, username, password, pkey)
+        args = (
+            hostname, port, username, password, pkey, proxyType, proxyIp, proxyPort, proxyRdns, proxyUser, proxyPass)
         logging.debug(args)
 
         return args
@@ -446,13 +457,33 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         logging.warning('Could not detect the default encoding.')
         return 'utf-8'
 
+    def http_proxy_tunnel_connect(self, proxy, target, timeout=None):
+        logging.info('Connecting to proxy {}'.format(proxy))
+        logging.info('Connecting to target {}'.format(target))
+        sock = socks.socksocket()
+        sock.set_proxy(*proxy)
+        sock.connect(target)
+        sock.settimeout(timeout)
+        return sock
+
     def ssh_connect(self, args):
         ssh = self.ssh_client
         dst_addr = args[:2]
+        logging.info(args)
         logging.info('Connecting to {}:{}'.format(*dst_addr))
 
+        sock = None
+        if len(args) > 5:
+            if args[6] is not None and args[6] != '':
+                # 从args中获取代理信息
+                sock = self.http_proxy_tunnel_connect(
+                    proxy=args[5:],
+                    target=dst_addr,
+                    timeout=5000
+                )
+
         try:
-            ssh.connect(*args, timeout=options.timeout)
+            ssh.connect(*args[:5], timeout=options.timeout, sock=sock)
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:
@@ -503,6 +534,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
         self.check_origin()
 
+        logging.info('Connected from {}'.format(self.get_args()))
         try:
             args = self.get_args()
         except InvalidValueError as exc:
