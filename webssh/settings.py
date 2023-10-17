@@ -20,6 +20,7 @@ def print_version(flag):
 
 
 define('address', default='', help='Listen address')
+define('accesskey', default='', help='If provided, requests must have a matching url parameter')
 define('port', type=int, default=8888,  help='Listen port')
 define('ssladdress', default='', help='SSL listen address')
 define('sslport', type=int, default=4433,  help='SSL listen port')
@@ -76,7 +77,7 @@ class Font(object):
 def get_app_settings(options):
     settings = dict(
         template_path=os.path.join(base_dir, 'webssh', 'templates'),
-        static_path=os.path.join(base_dir, 'webssh', 'static'),
+        static_path=os.path.join(base_dir,'webssh', 'static'),
         websocket_ping_interval=options.wpintvl,
         debug=options.debug,
         xsrf_cookies=options.xsrf,
@@ -126,6 +127,8 @@ def get_policy_setting(options, host_keys_settings):
     check_policy_setting(policy_class, host_keys_settings)
     return policy_class()
 
+def get_access_key(options):
+    return options.accesskey
 
 def get_ssl_context(options):
     if not options.certfile and not options.keyfile:

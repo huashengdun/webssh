@@ -186,7 +186,7 @@ class PrivateKey(object):
 class MixinHandler(object):
 
     custom_headers = {
-        'Server': 'TornadoServer'
+        'You Should': 'Stay Out'
     }
 
     html = ('<html><head><title>{code} {reason}</title></head><body>{code} '
@@ -316,10 +316,11 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(max_workers=cpu_count()*5)
 
-    def initialize(self, loop, policy, host_keys_settings):
+    def initialize(self, loop, policy, host_keys_settings, access_key):
         super(IndexHandler, self).initialize(loop)
         self.policy = policy
         self.host_keys_settings = host_keys_settings
+        self.access_key = access_key
         self.ssh_client = self.get_ssh_client()
         self.debug = self.settings.get('debug', False)
         self.font = self.settings.get('font', '')
@@ -395,6 +396,10 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         privatekey, filename = self.get_privatekey()
         passphrase = self.get_argument('passphrase', u'')
         totp = self.get_argument('totp', u'')
+        supplied_access_key = self.get_argument('access_key', u'')
+
+        
+
 
         if isinstance(self.policy, paramiko.RejectPolicy):
             self.lookup_hostname(hostname, port)
@@ -405,7 +410,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             pkey = None
 
         self.ssh_client.totp = totp
-        args = (hostname, port, username, password, pkey)
+        args = (hostname, port, username, password, pkey, supplied_access_key)
         logging.debug(args)
 
         return args
@@ -488,7 +493,17 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         pass
 
     def get(self):
-        self.render('index.html', debug=self.debug, font=self.font)
+        # if path matches options.path
+        supplied_access_key = self.get_argument('accesskey', u'')
+
+        if self.debug:        
+            logging.debug(f"Provided access key: {supplied_access_key}")
+            logging.debug(f"actual access key: {self.access_key}")
+
+        if supplied_access_key != self.access_key:
+            self.render('access_denied.html')
+        else:
+            self.render('index.html', debug=self.debug, font=self.font)
 
     @tornado.gen.coroutine
     def post(self):
