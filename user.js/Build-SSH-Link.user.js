@@ -6,6 +6,7 @@
 // @author       ǝɔ∀ǝdʎz∀ɹɔ 👽
 // @match        https://ssh.vps.vc/*
 // @match        https://ssh.hax.co.id/*
+// @match        https://ssh-crazypeace.koyeb.app/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=koyeb.app
 // @grant        none
 // ==/UserScript==
@@ -56,6 +57,9 @@ function updateSSHlinkA() {
         portstr = "22"
     }
     var usrnamestr = document.getElementById("username").value;
+    if (usrnamestr == "") {
+        portstr = "root"
+    }
     var passwdstr = document.getElementById("password").value;
     var passwdstrAfterBase64 = window.btoa(passwdstr);
 
