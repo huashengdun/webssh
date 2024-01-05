@@ -1,3 +1,8 @@
+## 我的修改
+增加生成SSH Link功能，方便收藏，下次使用不需要输入密码。
+![image](https://github.com/crazypeace/huashengdun-webssh/assets/665889/123a33bd-9514-46a5-8e64-d7a82b7f6f19)
+
+
 ## WebSSH
 
 [![python](https://github.com/huashengdun/webssh/actions/workflows/python.yml/badge.svg)](https://github.com/huashengdun/webssh/actions/workflows/python.yml)
