@@ -158,8 +158,8 @@ jQuery(function($){
 
 
   function get_cell_size(term) {
-    style.width = term._core._renderService._renderer.dimensions.actualCellWidth;
-    style.height = term._core._renderService._renderer.dimensions.actualCellHeight;
+    style.width = term._core._renderService.dimensions.css.cell.width;
+    style.height = term._core._renderService.dimensions.css.cell.height;
   }
 
 
@@ -191,15 +191,15 @@ jQuery(function($){
 
 
   function set_backgound_color(term, color) {
-    term.setOption('theme', {
+    term.options.theme = {
       background: color
-    });
+    };
   }
 
   function set_font_color(term, color) {
-    term.setOption('theme', {
+    term.options.theme = {
       foreground: color
-    });
+    };
   }
 
   function custom_font_is_loaded() {
@@ -223,12 +223,12 @@ jQuery(function($){
     }
 
     if (!default_fonts) {
-      default_fonts = term.getOption('fontFamily');
+      default_fonts = term.options.fontFamily;
     }
 
     if (custom_font_is_loaded()) {
       var new_fonts =  custom_font.family + ', ' + default_fonts;
-      term.setOption('fontFamily', new_fonts);
+      term.options.fontFamily = new_fonts;
       term.font_family_updated = true;
       console.log('Using custom font family ' + new_fonts);
     }
@@ -242,7 +242,7 @@ jQuery(function($){
     }
 
     if (default_fonts) {
-      term.setOption('fontFamily',  default_fonts);
+      term.options.fontFamily = default_fonts;
       term.font_family_updated = false;
       console.log('Using default font family ' + default_fonts);
     }
@@ -385,13 +385,17 @@ jQuery(function($){
 
     term.fitAddon = new window.FitAddon.FitAddon();
     term.loadAddon(term.fitAddon);
+    term.WebglAddon = new window.WebglAddon.WebglAddon();
+    term.loadAddon(term.WebglAddon);
+    term.WebLinksAddon = new window.WebLinksAddon.WebLinksAddon();
+    term.loadAddon(term.WebLinksAddon);
 
     console.log(url);
     if (!msg.encoding) {
       console.log('Unable to detect the default encoding of your server');
       msg.encoding = encoding;
     } else {
-      console.log('The deault encoding of your server is ' + msg.encoding);
+      console.log('The default encoding of your server is ' + msg.encoding);
     }
 
     function term_write(text) {
@@ -549,6 +553,7 @@ jQuery(function($){
     };
 
     sock.onclose = function(e) {
+      term.WebglAddon.dispose();
       term.dispose();
       term = undefined;
       sock = undefined;
@@ -795,6 +800,31 @@ jQuery(function($){
     connect();
   });
 
+  $('#btn-fullscreen').click(fullscreen_handler);
+  window.document.addEventListener('fullscreenchange', fullscreen_handler, false);
+  window.document.addEventListener('mozfullscreenchange', fullscreen_handler, false);
+  window.document.addEventListener('webkitfullscreenchange', fullscreen_handler, false);
+  window.document.addEventListener('msfullscreenChange', fullscreen_handler, false);
+  function fullscreen_handler(event) {
+    var doc = window.document;
+    var docEl = doc.documentElement;
+    var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+    var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+    if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+      if (event.currentTarget.id === 'btn-fullscreen') {
+        requestFullScreen.call(docEl);
+      }
+      $('#fullscreen-enter').show();
+      $('#fullscreen-exit').hide();
+    } else {
+      if (event.currentTarget.id === 'btn-fullscreen') {
+        cancelFullScreen.call(doc);
+      }
+      $('#fullscreen-enter').hide();
+      $('#fullscreen-exit').show();
+    }
+    event.preventDefault();
+  }
 
   function cross_origin_connect(event)
   {
