@@ -158,8 +158,8 @@ jQuery(function($){
 
 
   function get_cell_size(term) {
-    style.width = term._core._renderService._renderer.dimensions.actualCellWidth;
-    style.height = term._core._renderService._renderer.dimensions.actualCellHeight;
+    style.width = term._core._renderService.dimensions.css.cell.width;
+    style.height = term._core._renderService.dimensions.css.cell.height;
   }
 
 
@@ -191,15 +191,15 @@ jQuery(function($){
 
 
   function set_backgound_color(term, color) {
-    term.setOption('theme', {
+    term.options.theme = {
       background: color
-    });
+    };
   }
 
   function set_font_color(term, color) {
-    term.setOption('theme', {
+    term.options.theme = {
       foreground: color
-    });
+    };
   }
 
   function custom_font_is_loaded() {
@@ -223,12 +223,12 @@ jQuery(function($){
     }
 
     if (!default_fonts) {
-      default_fonts = term.getOption('fontFamily');
+      default_fonts = term.options.fontFamily;
     }
 
     if (custom_font_is_loaded()) {
       var new_fonts =  custom_font.family + ', ' + default_fonts;
-      term.setOption('fontFamily', new_fonts);
+      term.options.fontFamily = new_fonts;
       term.font_family_updated = true;
       console.log('Using custom font family ' + new_fonts);
     }
@@ -242,7 +242,7 @@ jQuery(function($){
     }
 
     if (default_fonts) {
-      term.setOption('fontFamily',  default_fonts);
+      term.options.fontFamily = default_fonts;
       term.font_family_updated = false;
       console.log('Using default font family ' + default_fonts);
     }
@@ -391,7 +391,7 @@ jQuery(function($){
       console.log('Unable to detect the default encoding of your server');
       msg.encoding = encoding;
     } else {
-      console.log('The deault encoding of your server is ' + msg.encoding);
+      console.log('The default encoding of your server is ' + msg.encoding);
     }
 
     function term_write(text) {
