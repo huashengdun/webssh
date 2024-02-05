@@ -385,6 +385,10 @@ jQuery(function($){
 
     term.fitAddon = new window.FitAddon.FitAddon();
     term.loadAddon(term.fitAddon);
+    term.WebglAddon = new window.WebglAddon.WebglAddon();
+    term.loadAddon(term.WebglAddon);
+    term.WebLinksAddon = new window.WebLinksAddon.WebLinksAddon();
+    term.loadAddon(term.WebLinksAddon);
 
     console.log(url);
     if (!msg.encoding) {
@@ -549,6 +553,7 @@ jQuery(function($){
     };
 
     sock.onclose = function(e) {
+      term.WebglAddon.dispose();
       term.dispose();
       term = undefined;
       sock = undefined;
