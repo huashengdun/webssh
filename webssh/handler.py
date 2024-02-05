@@ -248,11 +248,9 @@ class MixinHandler(object):
             return True
 
         if context._orig_protocol == 'http':
-            if redirecting and not is_ip_hostname(hostname):
-                ip_address = to_ip_address(ip)
-                if not ip_address.is_private:
-                    # redirecting
-                    return False
+            if redirecting:
+                # redirecting
+                return False
 
             if options.fbidhttp:
                 if ip_address is None:
