@@ -799,6 +799,31 @@ jQuery(function($){
     connect();
   });
 
+  $('#btn-fullscreen').click(fullscreen_handler);
+  window.document.addEventListener('fullscreenchange', fullscreen_handler, false);
+  window.document.addEventListener('mozfullscreenchange', fullscreen_handler, false);
+  window.document.addEventListener('webkitfullscreenchange', fullscreen_handler, false);
+  window.document.addEventListener('msfullscreenChange', fullscreen_handler, false);
+  function fullscreen_handler(event) {
+    var doc = window.document;
+    var docEl = doc.documentElement;
+    var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+    var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+    if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+      if (event.currentTarget.id === 'btn-fullscreen') {
+        requestFullScreen.call(docEl);
+      }
+      $('#fullscreen-enter').show();
+      $('#fullscreen-exit').hide();
+    } else {
+      if (event.currentTarget.id === 'btn-fullscreen') {
+        cancelFullScreen.call(doc);
+      }
+      $('#fullscreen-enter').hide();
+      $('#fullscreen-exit').show();
+    }
+    event.preventDefault();
+  }
 
   function cross_origin_connect(event)
   {
