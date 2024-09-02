@@ -6,6 +6,10 @@
 
 https://zelikk.blogspot.com/2023/10/huashengdun-webssh-codesandbox.html
 
+补充 部署到Hugging Face的教程 / 作者 Xiang xjfkkk
+
+https://linux.do/t/topic/135264
+
 <details>
     <summary>原项目readme (点击展开)</summary>
   
