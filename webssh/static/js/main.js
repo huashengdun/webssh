@@ -52,8 +52,11 @@ function updateSSHlink() {
     var passwdstr = document.getElementById("password").value;
     var passwdstrAfterBase64 = window.btoa(passwdstr);
 
+    var initcmdstr = document.getElementById("initcmd").value;
+    var initcmdstrAfterURI = encodeURIComponent(initcmdstr);
+
     var sshlinkstr;
-    sshlinkstr = thisPageProtocol+"//"+thisPageUrl+"/?hostname="+hostnamestr+"&port="+portstr+"&username="+usrnamestr+"&password="+passwdstrAfterBase64;
+    sshlinkstr = thisPageProtocol+"//"+thisPageUrl+"/?hostname="+hostnamestr+"&port="+portstr+"&username="+usrnamestr+"&password="+passwdstrAfterBase64+"&command="+initcmdstrAfterURI;
 
     document.getElementById("sshlink").innerHTML = sshlinkstr;
 }
