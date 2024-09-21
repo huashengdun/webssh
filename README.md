@@ -1,3 +1,18 @@
+## 我的修改
+增加生成SSH Link功能，方便收藏，下次使用不需要输入密码。
+![image](https://github.com/crazypeace/huashengdun-webssh/assets/665889/123a33bd-9514-46a5-8e64-d7a82b7f6f19)
+
+部署到容器的教程:
+
+https://zelikk.blogspot.com/2023/10/huashengdun-webssh-codesandbox.html
+
+补充 部署到Hugging Face的教程 / 作者 Xiang xjfkkk
+
+https://linux.do/t/topic/135264
+
+<details>
+    <summary>原项目readme (点击展开)</summary>
+  
 ## WebSSH
 
 [![python](https://github.com/huashengdun/webssh/actions/workflows/python.yml/badge.svg)](https://github.com/huashengdun/webssh/actions/workflows/python.yml)
@@ -210,3 +225,5 @@ wssh --port=8080 --sslport=4433 --certfile='cert.crt' --keyfile='cert.key' --xhe
 * For whatever deployment choice you choose, don't forget to enable SSL.
 * By default plain http requests from a public network will be either redirected or blocked and being redirected takes precedence over being blocked.
 * Try to use reject policy as the missing host key policy along with your verified known_hosts, this will prevent man-in-the-middle attacks. The idea is that it checks the system host keys file("~/.ssh/known_hosts") and the application host keys file("./known_hosts") in order, if the ssh server's hostname is not found or the key is not matched, the connection will be aborted.
+
+</details>
