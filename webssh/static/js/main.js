@@ -47,7 +47,7 @@ function updateSSHlink() {
     }
     var usrnamestr = document.getElementById("username").value;
     if (usrnamestr == "") {
-      portstr = "root"
+      usrnamestr = "root"
     }
     var passwdstr = document.getElementById("password").value;
     var passwdstrAfterBase64 = window.btoa(passwdstr);
