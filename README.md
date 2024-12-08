@@ -5,13 +5,15 @@
 SSH Link 可以带一个命令参数. 登录完成后就执行命令.  
 [![](https://res.cloudinary.com/marcomontalbano/image/upload/v1726912439/video_to_markdown/images/youtube--hCoAy06NA4k-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=hCoAy06NA4k "")
 
-部署到容器的教程:
-
+部署到容器的教程:  
 https://zelikk.blogspot.com/2023/10/huashengdun-webssh-codesandbox.html
 
-补充 部署到Hugging Face的教程 / 作者 Xiang xjfkkk
-
+部署到Hugging Face的教程 / 作者 Xiang xjfkkk  
 https://linux.do/t/topic/135264
+
+部署到 Serv00 教程 / 作者 Xiang xjfkkk  
+https://linux.do/t/topic/211113
+
 
 <details>
     <summary>原项目readme (点击展开)</summary>
