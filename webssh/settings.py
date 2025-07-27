@@ -128,20 +128,42 @@ def get_policy_setting(options, host_keys_settings):
 
 
 def get_ssl_context(options):
-    if not options.certfile and not options.keyfile:
+    """
+    Returns the SSL context configuration if both certificate and key files are provided and valid.
+    :param options: Configuration options
+    :return: SSL context object or None if SSL is not configured
+    """
+    # Strip the paths to remove any leading/trailing whitespaces or carriage return characters
+    certfile = options.certfile.strip() if options.certfile else None
+    keyfile = options.keyfile.strip() if options.keyfile else None
+
+    # Case when neither certificate nor key file is provided
+    if not certfile and not keyfile:
+        logging.warning("Both certfile and keyfile are not provided. SSL will not be configured.")
         return None
-    elif not options.certfile:
-        raise ValueError('certfile is not provided')
-    elif not options.keyfile:
-        raise ValueError('keyfile is not provided')
-    elif not os.path.isfile(options.certfile):
-        raise ValueError('File {!r} does not exist'.format(options.certfile))
-    elif not os.path.isfile(options.keyfile):
-        raise ValueError('File {!r} does not exist'.format(options.keyfile))
-    else:
+    
+    # Case when only one of the files is missing
+    if not certfile:
+        raise ValueError("certfile is not provided")
+    if not keyfile:
+        raise ValueError("keyfile is not provided")
+
+    # Check if the certificate file exists
+    if not os.path.isfile(certfile):
+        raise ValueError(f"File {certfile!r} does not exist. Please check the path.")
+    
+    # Check if the key file exists
+    if not os.path.isfile(keyfile):
+        raise ValueError(f"File {keyfile!r} does not exist. Please check the path.")
+    
+    # If both files exist, create SSL context and load the certs
+    try:
         ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        ssl_ctx.load_cert_chain(options.certfile, options.keyfile)
+        ssl_ctx.load_cert_chain(certfile, keyfile)
+        logging.info(f"Successfully loaded SSL certificate: {certfile}")
         return ssl_ctx
+    except Exception as e:
+        raise ValueError(f"Failed to load SSL certificate: {e}")
 
 
 def get_trusted_downstream(tdstream):
