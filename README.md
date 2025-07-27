@@ -37,7 +37,7 @@ A simple web application to be used as an ssh client to connect to your ssh serv
 
 ### Requirements
 
-* Python 3.8+
+* Python 3.10+
 
 
 ### Quickstart
