@@ -1,2 +1,2 @@
-paramiko==3.0.0
-tornado==6.2.0
+paramiko==3.5.1
+tornado==6.5.1
