@@ -377,6 +377,12 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             raise InvalidValueError('Invalid port: {}'.format(value))
         return port
 
+    def get_source_address(self):
+        value = self.get_argument('source_address', u'')
+        if value and not is_valid_ip_address(value):
+            raise InvalidValueError('Invalid source ip address: {}'.format(value))
+        return value
+
     def lookup_hostname(self, hostname, port):
         key = hostname if port == 22 else '[{}]:{}'.format(hostname, port)
 
@@ -395,6 +401,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         privatekey, filename = self.get_privatekey()
         passphrase = self.get_argument('passphrase', u'')
         totp = self.get_argument('totp', u'')
+        source_address = self.get_argument('source_address', u'')
 
         if isinstance(self.policy, paramiko.RejectPolicy):
             self.lookup_hostname(hostname, port)
@@ -405,7 +412,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             pkey = None
 
         self.ssh_client.totp = totp
-        args = (hostname, port, username, password, pkey)
+        args = (hostname, port, username, password, pkey, source_address)
         logging.debug(args)
 
         return args
@@ -451,8 +458,23 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         dst_addr = args[:2]
         logging.info('Connecting to {}:{}'.format(*dst_addr))
 
+        sock = None
+        source_address = args[5]
+        if source_address:
+            logging.info('Connecting source address socket')
+            sock = socket.socket()
+            sock.settimeout(options.timeout)  # Set a timeout on blocking socket operations
+            try:
+                sock.bind((source_address, 0))
+            except OSError:
+                raise InvalidValueError('Unable to bind source address {} socket'.format(source_address))
+            try:
+                sock.connect(dst_addr)
+            except socket.error:
+                raise ValueError('Unable to connect source address socket to {}:{}'.format(*dst_addr))
+
         try:
-            ssh.connect(*args, timeout=options.timeout)
+            ssh.connect(*args, sock=sock, timeout=options.timeout)
         except socket.error:
             raise ValueError('Unable to connect to {}:{}'.format(*dst_addr))
         except paramiko.BadAuthenticationType:
