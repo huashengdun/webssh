@@ -32,8 +32,34 @@ var wssh = {};
       data[name] = value;
     };
   }
+
+  document.querySelector('#sshlinkBtn').addEventListener("click", updateSSHlink);
 }());
 
+function updateSSHlink() {
+    var thisPageProtocol = window.location.protocol;
+    var thisPageUrl = window.location.host;
+
+    var hostnamestr = document.getElementById("hostname").value;
+    var portstr = document.getElementById("port").value;
+    if (portstr == "") {
+        portstr = "22"
+    }
+    var usrnamestr = document.getElementById("username").value;
+    if (usrnamestr == "") {
+      usrnamestr = "root"
+    }
+    var passwdstr = document.getElementById("password").value;
+    var passwdstrAfterBase64 = window.btoa(passwdstr);
+
+    var initcmdstr = document.getElementById("initcmd").value;
+    var initcmdstrAfterURI = encodeURIComponent(initcmdstr);
+
+    var sshlinkstr;
+    sshlinkstr = thisPageProtocol+"//"+thisPageUrl+"/?hostname="+hostnamestr+"&port="+portstr+"&username="+usrnamestr+"&password="+passwdstrAfterBase64+"&command="+initcmdstrAfterURI;
+
+    document.getElementById("sshlink").innerHTML = sshlinkstr;
+}
 
 jQuery(function($){
   var status = $('#status'),
