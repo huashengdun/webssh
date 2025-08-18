@@ -24,6 +24,18 @@
       .btn-danger {
         margin-left: 5px;
       }
+
+      #btn-fullscreen {
+        bottom: 32px;
+        font-size: 0;
+        margin: 0;
+        opacity: 0.5;
+        padding: 6px;
+        position: fixed;
+        right: 8px;
+        z-index: 256;
+      }
+
       {% if font.family %}
       @font-face {
         font-family: '{{ font.family }}';
@@ -91,11 +103,18 @@
       <div id="terminal"></div>
     </div>
 
+    <button id="btn-fullscreen" type="button" class="btn btn-light">
+      <img id="fullscreen-enter" src="static/icons/arrows-fullscreen.svg" width="18px" height="18px">
+      <img id="fullscreen-exit" src="static/icons/fullscreen-exit.svg" width="18px" height="18px" style="display: none;">
+    </button>
+
     <script src="static/js/jquery.min.js"></script>
     <script src="static/js/popper.min.js"></script>
     <script src="static/js/bootstrap.min.js"></script>
     <script src="static/js/xterm.min.js"></script>
     <script src="static/js/xterm-addon-fit.min.js"></script>
+    <script src="static/js/xterm-addon-webgl.min.js"></script>
+    <script src="static/js/xterm-addon-web-links.min.js"></script>
     <script src="static/js/main.js"></script>
   </body>
 </html>
