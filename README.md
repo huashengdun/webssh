@@ -66,6 +66,12 @@ wssh --logging=debug
 # log to file
 wssh --log-file-prefix=main.log
 
+# specify alternative location for template material
+wssh --template_path=/templates
+
+# specify alternative location for static material
+wssh --static_path=/static
+
 # more options
 wssh --help
 ```
