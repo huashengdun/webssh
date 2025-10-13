@@ -80,6 +80,12 @@
           </div>
         </div>
         <input type="hidden" id="term" name="term" value="xterm-256color">
+        <div class="row">
+          <div class="col">
+            <label for="remember">Remember Password/Private Key</label>
+            <input type="checkbox" id="remember" name="remember" value="1">
+          </div>
+        </div>
         {% module xsrf_form_html() %}
         <button type="submit" class="btn btn-primary">Connect</button>
         <button type="reset" class="btn btn-danger">Reset</button>

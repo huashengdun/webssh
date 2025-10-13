@@ -64,6 +64,60 @@ jQuery(function($){
       hostname_tester = /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)/;
 
 
+  function encode_private_key(key) {
+    if (!key) return '';
+    if (typeof key === 'string') {
+      return window.btoa(key);
+    }
+    return '';
+  }
+
+  function store_private_key_and_connect(data, callback) {
+    var remember = data.get('remember');
+    var privatekey = data.get('privatekey');
+    var hostname = data.get('hostname');
+    var username = data.get('username');
+
+    if (remember && privatekey && privatekey instanceof File && hostname && username) {
+      read_file_as_text(privatekey, function(text) {
+        if (text !== undefined) {
+          var authKey = 'auth_' + hostname + '_' + username;
+          var authData = {
+            password: data.get('password') || '',
+            passphrase: data.get('passphrase') || '',
+            privatekey: encode_private_key(text),
+            usingPrivateKey: true
+          };
+          window.localStorage.setItem(authKey, JSON.stringify(authData));
+        }
+        callback();
+      });
+    } else {
+      // Store other auth data if remember is checked
+      if (remember && hostname && username) {
+        var authKey = 'auth_' + hostname + '_' + username;
+        var authData = {
+          password: data.get('password') || '',
+          passphrase: data.get('passphrase') || '',
+          privatekey: '',
+          usingPrivateKey: false
+        };
+        window.localStorage.setItem(authKey, JSON.stringify(authData));
+      }
+      callback();
+    }
+  }
+
+  function decode_private_key(encoded) {
+    if (!encoded) return null;
+    try {
+      return window.atob(encoded);
+    } catch (e) {
+      console.error(e);
+    }
+    return null;
+  }
+
   function store_items(names, data) {
     var i, name, value;
 
@@ -85,6 +139,33 @@ jQuery(function($){
       value = window.localStorage.getItem(name);
       if (value) {
         $('#'+name).val(value);
+      }
+    }
+
+    // Try to restore auth data if hostname and username are present
+    var hostname = $('#hostname').val();
+    var username = $('#username').val();
+    if (hostname && username) {
+      var authKey = 'auth_' + hostname + '_' + username;
+      var authDataStr = window.localStorage.getItem(authKey);
+      if (authDataStr) {
+        try {
+          var authData = JSON.parse(authDataStr);
+          if (authData.usingPrivateKey) {
+            // If using private key, clear password
+            $('#password').val('');
+            // We can't set the file input, but we can show a message
+            status.text('Stored private key found. Click Connect to use it.');
+          } else if (authData.password) {
+            // Otherwise fill in password
+            $('#password').val(authData.password);
+          }
+          if (authData.passphrase) {
+            $('#passphrase').val(authData.passphrase);
+          }
+        } catch (e) {
+          console.error('Failed to parse auth data:', e);
+        }
       }
     }
   }
@@ -144,6 +225,30 @@ jQuery(function($){
 
     if (form_map.password) {
       form_map.password = decode_password(form_map.password);
+    }
+
+    // Try to get auth data from localStorage if hostname and username are in URL
+    if (form_map.hostname && form_map.username) {
+      var authKey = 'auth_' + form_map.hostname + '_' + form_map.username;
+      var authDataStr = window.localStorage.getItem(authKey);
+      if (authDataStr) {
+        try {
+          var authData = JSON.parse(authDataStr);
+          if (authData.usingPrivateKey) {
+            // If we have a stored private key, use that
+            form_map.privatekey = decode_private_key(authData.privatekey);
+            form_map.password = ''; // Clear password when using private key
+          } else if (authData.password && !form_map.password) {
+            // Otherwise use stored password
+            form_map.password = authData.password;
+          }
+          if (authData.passphrase && !form_map.passphrase) {
+            form_map.passphrase = authData.passphrase;
+          }
+        } catch (e) {
+          console.error('Failed to parse auth data:', e);
+        }
+      }
     }
   }
 
@@ -701,17 +806,20 @@ jQuery(function($){
       return;
     }
 
-    if (pk && pk.size && !debug) {
-      read_file_as_text(pk, function(text) {
-        if (text === undefined) {
-            log_status('Invalid private key: ' + pk.name);
-        } else {
-          ajax_post();
-        }
-      });
-    } else {
-      ajax_post();
-    }
+    // Store auth data and then connect
+    store_private_key_and_connect(data, function() {
+      if (pk && pk.size && !debug) {
+        read_file_as_text(pk, function(text) {
+          if (text === undefined) {
+              log_status('Invalid private key: ' + pk.name);
+          } else {
+            ajax_post();
+          }
+        });
+      } else {
+        ajax_post();
+      }
+    });
 
     return result;
   }
