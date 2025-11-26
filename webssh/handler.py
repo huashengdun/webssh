@@ -82,6 +82,10 @@ class SSHClient(paramiko.SSHClient):
             logging.info('Trying publickey 2fa')
             return self.auth_interactive(username, self.handler)
 
+        if password is not None and self.totp:
+            logging.info('Trying password 2fa')
+            return self.auth_interactive(username, self.handler)
+
         if password is not None:
             logging.info('Trying password authentication')
             try:
