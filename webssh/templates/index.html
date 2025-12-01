@@ -34,6 +34,37 @@
         font-family: '{{ font.family }}';
       }
       {% end %}
+
+      @media (prefers-color-scheme: dark) {
+        html {
+          background-color: #181a1b;
+          color-scheme: dark;
+        }
+        
+        body {
+          background-color: #181a1b;
+          color: #e8e6e3;
+        }
+        
+        .form-control {
+          color: #b5afa6;
+          background-color: #181a1b;
+          border: 1px solid #3c4144;
+        }
+        
+        .form-control:focus {
+          background-color: #181a1b;
+          color: #b5afa6;
+          border: 1px solid #00438c;
+          outline-color: currentcolor;
+          box-shadow: rgba(0, 98, 204, 0.25) 0px 0px 0px 0.2rem;
+        }
+        
+        .form-control::placeholder {
+          color: #9e9689;
+          opacity: 0.5;
+        }
+      }
     </style>
   </head>
   <body>
