@@ -54,6 +54,18 @@ def is_valid_port(port):
     return 0 < port < 65536
 
 
+def is_forbidden_host(hostname):
+    # Prohibit local loopback addresses
+    forbidden_hosts = {
+        '127.0.0.1',
+        '::1',
+        'localhost',
+        'localhost.localdomain',
+        '0.0.0.0'
+    }
+    return hostname.lower() in forbidden_hosts
+
+
 def is_valid_encoding(encoding):
     try:
         u'test'.encode(encoding)
