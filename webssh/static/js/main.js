@@ -386,6 +386,20 @@ jQuery(function($){
     term.fitAddon = new window.FitAddon.FitAddon();
     term.loadAddon(term.fitAddon);
 
+    // OSC 52: let tmux / remote apps copy into the local clipboard (write only)
+    term.parser.addOscHandler(52, function(data) {
+      var b64 = data.slice(data.indexOf(';') + 1);
+      if (b64 && b64 !== '?') {
+        try {
+          var bytes = Uint8Array.from(window.atob(b64), function(c) { return c.charCodeAt(0); });
+          navigator.clipboard.writeText(new TextDecoder().decode(bytes));
+        } catch (e) {
+          console.log('OSC 52 failed', e);
+        }
+      }
+      return true;
+    });
+
     console.log(url);
     if (!msg.encoding) {
       console.log('Unable to detect the default encoding of your server');
